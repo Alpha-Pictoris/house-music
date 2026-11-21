@@ -22,7 +22,9 @@ export class Sampler {
       this.#output = this.#context.createDynamicsCompressor();
       this.#output.threshold.value = -7;
       this.#output.ratio.value = 5;
-      this.#output.connect(this.#context.destination);
+      const master = this.#context.createGain();
+      master.gain.value = 0.8;
+      this.#output.connect(master).connect(this.#context.destination);
       this.#carpet = this.#context.createBiquadFilter();
       this.#carpet.type = "lowpass";
       this.#carpet.frequency.value = 1800;
