@@ -1,0 +1,139 @@
+import { arrangements } from "./arrangements.js";
+import { Score } from "./score.js";
+
+const lookahead = 0.1;
+const near = 1e-9;
+
+export class Transport {
+  #clock;
+  #sink;
+  #score;
+  #next;
+  #origin = 0;
+  #queuedUntil = 0;
+  #cursor = 0;
+  #played = false;
+  #pulses = [];
+  playing = false;
+  mode = "goth";
+
+  constructor(clock, sink) {
+    this.#clock = clock;
+    this.#sink = sink;
+  }
+
+  get #seconds() { return 60 / arrangements[this.mode].bpm; }
+  get #boundary() { return this.#origin + this.#score.beats * this.#seconds; }
+
+  #advance(now) {
+    if (!this.playing || now < this.#boundary) return;
+    const boundary = this.#boundary;
+    this.#score = this.#next;
+    const period = this.#score.beats * this.#seconds;
+    this.#origin = boundary + Math.floor((now - boundary) / period) * period;
+  }
+
+  #beat(now) {
+    return this.playing ? Math.max(0, (now - this.#origin) / this.#seconds) : this.#cursor;
+  }
+
+  #cancel(time, silence = false) {
+    this.#sink.cancelFrom(time, silence);
+    this.#pulses = silence ? [] : this.#pulses.filter(pulse => pulse.time < time);
+    this.#queuedUntil = Math.min(this.#queuedUntil, time);
+  }
+
+  setHouse(house) {
+    const now = this.#clock();
+    this.#advance(now);
+    if (this.#score && this.mode !== house.mode) this.setMode(house.mode, now);
+    else this.mode = house.mode;
+    const next = Score.from(house);
+    if (!this.playing) {
+      const x = this.#score ? this.#score.left + this.#cursor : next.left;
+      this.#cursor = this.#played && x >= next.left && x < next.left + next.beats ? x - next.left : 0;
+      this.#score = this.#next = next;
+      return;
+    }
+    this.#next = next;
+    if (this.#queuedUntil > this.#boundary) this.#cancel(this.#boundary);
+    this.tick(now);
+  }
+
+  setMode(mode, now = this.#clock()) {
+    if (mode === this.mode) return;
+    this.#advance(now);
+    const beat = this.#beat(now);
+    this.mode = mode;
+    if (!this.playing) return;
+    this.#cancel(now);
+    this.#origin = now - beat * this.#seconds;
+    this.#queuedUntil = now;
+    this.tick(now);
+  }
+
+  play() {
+    if (this.playing || !this.#score) return;
+    const now = this.#clock();
+    this.#origin = now - this.#cursor * this.#seconds;
+    this.#queuedUntil = now;
+    this.playing = this.#played = true;
+    this.tick(now);
+  }
+
+  pause() {
+    if (!this.playing) return;
+    const now = this.#clock();
+    this.#advance(now);
+    const x = this.#score.left + this.#beat(now);
+    this.#cancel(now, true);
+    this.#score = this.#next;
+    this.#cursor = x >= this.#score.left && x < this.#score.left + this.#score.beats ? x - this.#score.left : 0;
+    this.playing = false;
+  }
+
+  reset() {
+    this.pause();
+    this.#played = false;
+    this.#cursor = 0;
+  }
+
+  #schedule(score, origin, from, until) {
+    const { bpm, rate } = arrangements[this.mode];
+    for (const event of score.events) {
+      const when = origin + event.beat * this.#seconds;
+      if (when < from - near) continue;
+      if (when >= until - near) break;
+      this.#sink.start(event, when, bpm, rate);
+      this.#pulses.push({ id: event.pieceId, time: when, span: (event.gate ?? 0.45) * this.#seconds });
+    }
+  }
+
+  tick(now = this.#clock()) {
+    if (!this.playing) return;
+    this.#advance(now);
+    const from = Math.max(this.#queuedUntil, now), until = now + lookahead;
+    const boundary = this.#boundary;
+    this.#schedule(this.#score, this.#origin, from, Math.min(until, boundary));
+    if (until > boundary) this.#schedule(this.#next, boundary, Math.max(from, boundary), until);
+    this.#queuedUntil = until;
+    this.#pulses = this.#pulses.filter(pulse => pulse.time + pulse.span + 0.1 >= now);
+  }
+
+  view(now = this.#clock()) {
+    this.#advance(now);
+    const beat = this.#beat(now);
+    const levels = new Map();
+    for (const pulse of this.#pulses) {
+      const age = now - pulse.time;
+      if (age >= 0 && age <= pulse.span) {
+        const weight = Math.min(1, age / 0.02) * Math.exp(-3 * age / pulse.span);
+        levels.set(pulse.id, Math.max(weight, levels.get(pulse.id) ?? 0));
+      }
+    }
+    return {
+      house: this.#score.house, beat, beats: this.#score.beats,
+      sweepX: this.#played ? this.#score.left + beat : null, levels
+    };
+  }
+}
