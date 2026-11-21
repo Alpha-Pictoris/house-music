@@ -16,7 +16,8 @@ function plainRecord(value) {
 
 export function readHouse(value) {
   requireValid(plainRecord(value), "Choose a valid house file.");
-  const { title, mode, rooms, doors, pieces } = value;
+  const { title, rooms, doors, pieces } = value;
+  const mode = value.mode === "goth" ? "moth" : value.mode === "nightcore" ? "chrome" : value.mode;
   requireValid(typeof title === "string" && title.trim() && title.length <= 100, "Use a house title of 1 to 100 characters.");
   requireValid(typeof mode === "string" && Object.hasOwn(arrangements, mode), "Choose a supported house arrangement.");
   requireValid([rooms, doors, pieces].every(Array.isArray), "The house must include rooms, doors and furniture lists.");

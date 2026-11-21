@@ -33,12 +33,12 @@ test("aligned instruments play together and the next downbeat plays once", () =>
   assert.deepEqual(notes.map(n => n.time), [0, 0, 1.875, 1.875]);
 });
 
-test("switching to nightcore keeps the beat and replaces a queued note", () => {
+test("a faster arrangement keeps the beat and replaces a queued note", () => {
   const { transport, notes, advance } = rehearsal(1);
   transport.play();
   advance(0.4);
   const beat = transport.view().beat;
-  transport.setMode("nightcore");
+  transport.setMode("landing");
   assert.equal(transport.view().beat, beat);
   assert.equal(notes.length, 1);
   assert.ok(Math.abs(notes[0].time - (0.4 + (1 - beat) * 0.375)) < 1e-8);
@@ -99,13 +99,13 @@ test("removing the last room cancels its queued downbeat", () => {
   assert.deepEqual(notes.map(n => n.time), [0]);
 });
 
-test("switching back to goth keeps the beat and delays a queued note", () => {
+test("a slower arrangement keeps the beat and delays a queued note", () => {
   const { transport, notes, advance } = rehearsal(1);
-  transport.setMode("nightcore");
+  transport.setMode("landing");
   transport.play();
   advance(0.35);
   const beat = transport.view().beat;
-  transport.setMode("goth");
+  transport.setMode("chrome");
   assert.ok(Math.abs(transport.view().beat - beat) < 1e-8);
   assert.equal(notes.length, 1);
   assert.ok(Math.abs(notes[0].time - 0.38125) < 1e-8);
@@ -123,10 +123,10 @@ test("switching the band live keeps the sweep and pending building edits", () =>
   assert.equal(transport.view().sweepX, x);
   assert.ok(transport.view().events.some(n => n.sample === "bass"));
   assert.ok(!transport.view().events.some(n => n.pieceId === wardrobe.id));
-  editor.setMode("nightcore");
+  editor.setMode("landing");
   transport.setHouse(editor.house);
   assert.ok(Math.abs(transport.view().sweepX - x) < 1e-9);
-  assert.deepEqual(transport.view().events.filter(n => n.sample === "kick").map(n => n.beat), [0, 1, 2, 3]);
+  assert.deepEqual(transport.view().events.filter(n => n.sample === "kick").map(n => n.beat), [0, 1, 1.5, 2]);
   advance(1.6);
   assert.ok(transport.view().events.some(n => n.pieceId === wardrobe.id));
 });

@@ -556,7 +556,7 @@ h2,
   color: var(--muted);
 }
 .mode select {
-  width: 107px;
+  width: 149px;
   border: 0;
   background: #201a24;
   color: var(--text);
@@ -833,7 +833,7 @@ dialog dd {
   }
   .mode select {
     font-size: 12px;
-    width: 88px;
+    width: 122px;
   }
   .score {
     min-width: 65px;
@@ -954,6 +954,9 @@ dialog dd {
 @media (max-width: 365px) {
   .app {
     padding-inline: 6px;
+  }
+  .player-controls {
+    gap: 6px;
   }
   .brand h1 {
     font-size: 30px;

@@ -1,4 +1,4 @@
-import { arrangements } from "./arrangements.js";
+import { arrangements, defaultMode } from "./arrangements.js";
 import { Score } from "./score.js";
 
 const lookahead = 0.1;
@@ -16,7 +16,7 @@ export class Transport {
   #played = false;
   #pulses = [];
   playing = false;
-  mode = "goth";
+  mode = defaultMode;
 
   constructor(clock, sink) {
     this.#clock = clock;
@@ -106,13 +106,12 @@ export class Transport {
   }
 
   #schedule(score, origin, from, until, now = from) {
-    const { bpm, rate } = arrangements[this.mode];
     for (const event of score.events) {
       const when = origin + event.beat * this.#seconds;
       if (when < from - near) continue;
       if (when >= until - near) break;
       const start = Math.max(when, now);
-      this.#sink.start(event, start, bpm, rate);
+      this.#sink.start(event, start, this.mode);
       if (event.pieceId !== null) {
         for (const id of event.together ?? [event.pieceId]) {
           this.#pulses.push({ id, time: start, span: (event.gate ?? 0.45) * this.#seconds });

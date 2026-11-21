@@ -6,7 +6,7 @@ import { readHouse, houseLink, houseFromLink, houseText } from "../../web/librar
 function furnishedHouse() {
   const editor = new HouseEditor();
   editor.rename("夜の家 ♫ 🏠");
-  editor.setMode("nightcore");
+  editor.setMode("landing");
   editor.drawRoom({ x: 0, z: 0 }, { x: 6, z: 4 });
   editor.drawRoom({ x: 6, z: 0 }, { x: 10, z: 4 });
   editor.addDoor({ x: 6, z: 2 });
@@ -63,4 +63,11 @@ test("a truncated link reports a readable error", () => {
   const link = houseLink(furnishedHouse(), "https://example.com/game/");
   assert.throws(() => houseFromLink(link.slice(0, -8)), /house link/i);
   assert.equal(houseFromLink("https://example.com/game/#other"), null);
+});
+
+test("opening a saved arrangement preserves the house and its fittings", () => {
+  const house = furnishedHouse();
+  for (const [from, to] of [["goth", "moth"], ["nightcore", "chrome"]]) {
+    assert.deepEqual(readHouse({ ...house, mode: from }), { ...house, mode: to });
+  }
 });

@@ -1,6 +1,6 @@
 export const nightGarden = {
   title: "Night Garden",
-  mode: "goth",
+  mode: "moth",
   rooms: [
     {
       id: "r1",

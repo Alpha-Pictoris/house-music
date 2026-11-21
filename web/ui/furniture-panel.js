@@ -1,6 +1,7 @@
 import { fittingOf, furniture, newPiece, roomFinishes } from "../building/catalogue.js";
 import { fittings, tunings } from "../building/fittings.js";
 import { phrases } from "../music/phrases.js";
+import { recordingFor, recordingNames } from "../music/arrangements.js";
 import { HouseScene } from "../scene/house-scene.js";
 import { byId } from "./elements.js";
 
@@ -11,6 +12,7 @@ export class FurniturePanel {
   #lastHouse;
   #lastKind;
   #lastFitting;
+  #lastMode;
 
   constructor(controls, audition) {
     this.controls = controls;
@@ -93,8 +95,6 @@ export class FurniturePanel {
       const button = document.createElement("button");
       button.dataset.fitting = id;
       button.style.setProperty("--voice", fitting.colour);
-      button.title = fitting.label + " · " + fitting.voice;
-      button.setAttribute("aria-label", button.title);
       const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       const use = document.createElementNS(icon.namespaceURI, "use");
       use.setAttribute("href", "#i-" + id);
@@ -133,6 +133,16 @@ export class FurniturePanel {
 
   refresh(house) {
     const controls = this.controls;
+    const changedMode = this.#lastMode !== house.mode;
+    if (changedMode) {
+      for (const button of byId("fittings").children) {
+        const fitting = fittings[button.dataset.fitting];
+        const sound = fitting.sample ? recordingNames[recordingFor(house.mode, fitting.sample)] : fitting.voice;
+        button.title = fitting.label + " · " + sound;
+        button.setAttribute("aria-label", button.title);
+      }
+      this.#lastMode = house.mode;
+    }
     if (this.#lastHouse !== house) this.#choices(house);
     if (this.#lastKind !== controls.kind) {
       for (const [kind, card] of this.#cards) card.setAttribute("aria-pressed", String(controls.kind === kind));
@@ -154,14 +164,17 @@ export class FurniturePanel {
     byId("piece-fields").hidden = !indoor;
     if (indoor) {
       const id = fittingOf(piece), fitting = fittings[id];
-      if (this.#lastFitting !== id) {
+      const relative = house.band !== false;
+      const key = [id, house.mode, relative].join("/");
+      if (this.#lastFitting !== key) {
         for (const button of byId("fittings").children) button.setAttribute("aria-pressed", String(button.dataset.fitting === id));
-        byId("tuning").replaceChildren(...tunings(id).map(option => new Option(option.label, option.value)));
-        this.#lastFitting = id;
+        byId("tuning").replaceChildren(...tunings(id, relative).map(option => new Option(
+          fitting.hits ? recordingNames[recordingFor(house.mode, option.value)] : option.label, option.value)));
+        this.#lastFitting = key;
       }
-      byId("fitting-sound").textContent = fitting.label + " · " + fitting.voice;
+      byId("fitting-sound").textContent = byId("fittings").querySelector('[data-fitting="' + id + '"]').title;
       byId("tuning-field").hidden = id === "plain";
-      byId("tuning-label").textContent = fitting.hits ? "Drum hit" : "Root note";
+      byId("tuning-label").textContent = fitting.hits ? "Drum hit" : relative ? "Starting degree" : "Root note";
       byId("tuning").value = piece.hit ?? piece.pitch ?? "";
       byId("phrase").options[0].text = house.band === false ? "Furniture default" : "House riff";
       byId("phrase").value = piece.phrase ?? "";

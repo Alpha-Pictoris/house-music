@@ -11,11 +11,11 @@ export const phrases = {
 
 const drumAccents = ["kick", "hat", "snare", "hat", "kick"];
 
-export function minorPitch(degree) {
-  return minorScale[(degree % 7 + 7) % 7] + 12 * Math.floor(degree / 7);
+export function scalePitch(degree, scale) {
+  return scale[(degree % 7 + 7) % 7] + 12 * Math.floor(degree / 7);
 }
 
-export function notesFor(piece, transpose = 0) {
+export function notesFor(piece, transpose = 0, scale = minorScale) {
   const voice = fittings[fittingOf(piece)];
   if (!voice.sample && !voice.hits) return [];
   const { steps } = phrases[phraseOf(piece)];
@@ -25,7 +25,7 @@ export function notesFor(piece, transpose = 0) {
       const sample = i === 0 ? piece.hit : drumAccents[(interval + i) % drumAccents.length];
       return { offset, sample, semitones: 0, gate: null };
     }
-    const semitones = minorPitch(transpose + rootDegree + interval);
+    const semitones = scalePitch(transpose + rootDegree + interval, scale);
     const next = steps[i + 1];
     const gate = next ? Math.min(voice.gate, (next[0] - offset) * 0.9) : voice.gate;
     return { offset, sample: voice.sample, semitones, gate };

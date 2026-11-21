@@ -1,6 +1,4 @@
-import { arrangements } from "./arrangements.js";
-
-const recordings = ["guitar", "bass", "kick", "snare", "hat", "harp", "celesta"];
+import { arrangements, recordingFor, recordingNames } from "./arrangements.js";
 
 export class Sampler {
   #context;
@@ -23,7 +21,7 @@ export class Sampler {
       this.#output.threshold.value = -7;
       this.#output.ratio.value = 5;
       const master = this.#context.createGain();
-      master.gain.value = 0.8;
+      master.gain.value = 0.7;
       this.#output.connect(master).connect(this.#context.destination);
       this.#carpet = this.#context.createBiquadFilter();
       this.#carpet.type = "lowpass";
@@ -32,7 +30,7 @@ export class Sampler {
     }
     const resumed = this.#context.state === "running" ? Promise.resolve() : this.#context.resume();
     if (!this.#loading) {
-      this.#loading = Promise.all(recordings.map(async name => {
+      this.#loading = Promise.all(Object.keys(recordingNames).map(async name => {
         if (this.#buffers.has(name)) return;
         const response = await fetch(new URL("../audio/" + name + ".wav", import.meta.url));
         if (!response.ok) throw Error("The instrument recordings could not load. Try Play again.");
@@ -54,19 +52,20 @@ export class Sampler {
     if (!notes.length) return;
     await this.enable();
     if (request !== this.#audition || document.hidden) return;
-    const { bpm, rate } = arrangements[mode];
+    const { bpm } = arrangements[mode];
     const now = this.now;
-    for (const note of notes) this.start(note, now + note.offset * 60 / bpm, bpm, rate, true);
+    for (const note of notes) this.start(note, now + note.offset * 60 / bpm, mode, true);
   }
 
-  start(event, when, bpm, rate, audition = false) {
-    const buffer = this.#buffers.get(event.sample);
+  start(event, when, mode, audition = false) {
+    const recording = recordingFor(mode, event.sample);
+    const buffer = this.#buffers.get(recording);
     if (!buffer) return;
     const context = this.#context;
     const source = context.createBufferSource(), level = context.createGain();
-    const speed = rate * 2 ** (event.semitones / 12);
+    const speed = 2 ** (event.semitones / 12);
     const start = Math.max(context.currentTime, when);
-    const length = Math.min(buffer.duration / speed, event.gate === null ? Infinity : event.gate * 60 / bpm);
+    const length = Math.min(buffer.duration / speed, event.gate === null ? Infinity : event.gate * 60 / arrangements[mode].bpm);
     source.buffer = buffer;
     source.playbackRate.value = speed;
     const volume = 0.82 * (event.velocity ?? 1);
@@ -74,7 +73,17 @@ export class Sampler {
     level.gain.linearRampToValueAtTime(volume, start + 0.003);
     level.gain.setValueAtTime(volume, start + Math.max(0.004, length - 0.025));
     level.gain.linearRampToValueAtTime(0, start + length);
-    source.connect(level).connect(event.finish === "moss" ? this.#carpet : this.#output);
+    let filter;
+    if (recording === "filter-chord") {
+      filter = context.createBiquadFilter();
+      filter.Q.value = 1.8;
+      const accent = (event.beat ?? event.offset) % 4;
+      filter.frequency.setValueAtTime(520, start);
+      filter.frequency.exponentialRampToValueAtTime(1700 + 440 * accent, start + Math.min(length * 0.4, 0.075));
+      filter.frequency.exponentialRampToValueAtTime(680, start + length);
+      source.connect(filter).connect(level);
+    } else source.connect(level);
+    level.connect(event.finish === "moss" ? this.#carpet : this.#output);
     if (event.finish === "moonstone") {
       if (!this.#echo) {
         const delay = context.createDelay(), reflection = context.createGain();
@@ -90,6 +99,7 @@ export class Sampler {
     source.onended = () => {
       this.#voices.delete(voice);
       source.disconnect();
+      filter?.disconnect();
       level.disconnect();
     };
     source.start(start);

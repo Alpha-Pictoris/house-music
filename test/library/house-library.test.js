@@ -30,13 +30,13 @@ test("same-title copies remain independent and opening one makes it active", () 
   const library = new HouseLibrary(storage);
   const editor = new HouseEditor();
   const first = library.save(null, editor.house);
-  editor.setMode("nightcore");
+  editor.setMode("landing");
   const second = library.save(null, editor.house);
   assert.notEqual(first, second);
   assert.deepEqual(library.list(), [first, second].map(id => ({ id, title: "Untitled house" })));
-  assert.equal(library.open(first).house.mode, "goth");
+  assert.equal(library.open(first).house.mode, "chrome");
   assert.equal(new HouseLibrary(storage).current().id, first);
-  assert.equal(library.open(second).house.mode, "nightcore");
+  assert.equal(library.open(second).house.mode, "landing");
 });
 
 test("a failed write preserves both the saved bytes and the playable edit", () => {

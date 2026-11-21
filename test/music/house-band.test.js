@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HouseEditor } from "../../web/building/house-editor.js";
+import { arrangements, recordingFor } from "../../web/music/arrangements.js";
 import { Score } from "../../web/music/score.js";
 import { houseFromLink, houseLink } from "../../web/library/house-format.js";
 
@@ -29,7 +30,7 @@ test("furnished bars follow the chords and leave a full empty bar quiet", () => 
   editor.setPhrase(right.id, "single");
   const { events } = Score.from(editor.house);
   assert.ok(!events.some(n => n.beat >= 4 && n.beat < 8));
-  assert.deepEqual([left, right].map(p => events.find(n => n.pieceId === p.id).semitones), [0, 3]);
+  assert.deepEqual([left, right].map(p => events.find(n => n.pieceId === p.id).semitones), [0, 9]);
 });
 
 test("a bass fitting takes the bass line and a second drum fitting shares the kit", () => {
@@ -44,14 +45,22 @@ test("a bass fitting takes the bass line and a second drum fitting shares the ki
   assert.ok(new Set(drums.map(n => n.velocity)).size > 1);
 });
 
-test("goth metal has a syncopated kick and Nightcore has four on the floor", () => {
+test("each arrangement gives the same room a different rhythm section and lead", () => {
   const editor = room(4);
-  editor.place("bed", { x: 0, z: 0 });
-  const kicks = () => Score.from(editor.house).events.filter(n => n.sample === "kick").map(n => n.beat);
-  const goth = kicks();
-  editor.setMode("nightcore");
-  assert.deepEqual(kicks(), [0, 1, 2, 3]);
-  assert.ok(goth.includes(1.5));
+  editor.place("sofa", { x: 0, z: 0 });
+  const patterns = new Set(), leads = new Set();
+  for (const mode of Object.keys(arrangements)) {
+    editor.setMode(mode);
+    const events = Score.from(editor.house).events;
+    const kicks = events.filter(note => note.sample === "kick").map(note => note.beat);
+    patterns.add(kicks.join("/"));
+    leads.add(recordingFor(mode, "guitar"));
+    assert.ok(events.every(note => Number.isFinite(note.semitones) && note.velocity > 0));
+    if (mode === "chrome") assert.deepEqual(kicks, [0, 1, 2, 3]);
+    if (mode === "landing") assert.deepEqual(events.filter(note => note.sample === "guitar").map(note => note.beat), [0.5, 1.5, 2.5, 3.5]);
+  }
+  assert.equal(patterns.size, 5);
+  assert.equal(leads.size, 5);
 });
 
 test("turning the band off preserves the exact solo performance in a shared house", () => {

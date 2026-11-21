@@ -101,7 +101,11 @@ class HouseMusic {
       event.target.value = this.editor.house.title;
     };
     byId("house-title").onkeydown = event => { if (event.key === "Enter") event.target.blur(); };
-    byId("mode").onchange = event => {
+    const menu = byId("mode");
+    if (!menu.options.length) {
+      for (const [mode, { label }] of Object.entries(arrangements)) menu.add(new Option(label, mode));
+    }
+    menu.onchange = event => {
       this.editor.setMode(event.target.value);
       this.#audition();
     };

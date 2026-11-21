@@ -1,7 +1,7 @@
 import { fittingOf, furniture, newPiece, roomFinishes } from "./catalogue.js";
 import { fittings, tunings } from "./fittings.js";
 import { FloorPlan } from "./floor-plan.js";
-import { arrangements } from "../music/arrangements.js";
+import { arrangements, defaultMode } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
 
 function freeze(value) {
@@ -22,7 +22,7 @@ export class HouseEditor extends EventTarget {
   #future = [];
   #sequence = 0;
 
-  constructor(house = { title: "Untitled house", mode: "goth", rooms: [], doors: [], pieces: [] }) {
+  constructor(house = { title: "Untitled house", mode: defaultMode, rooms: [], doors: [], pieces: [] }) {
     super();
     this.#house = freeze(structuredClone(house));
   }
