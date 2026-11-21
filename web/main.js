@@ -1,5 +1,5 @@
 import { HouseEditor } from "./building/house-editor.js";
-import { furniture } from "./building/catalogue.js";
+import { fittingOf, furniture } from "./building/catalogue.js";
 import { arrangements } from "./music/arrangements.js";
 import { Sampler } from "./music/sampler.js";
 import { ScorePanel } from "./ui/score-panel.js";
@@ -37,10 +37,7 @@ class HouseMusic {
     this.transport = new Transport(() => this.sampler.now, this.sampler);
     this.panel = new ScorePanel();
     this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text));
-    this.furniturePanel = new FurniturePanel(this.controls, piece => {
-      const room = this.editor.house.rooms.find(item => item.id === piece.roomId);
-      this.sampler.audition(piece, this.editor.house.mode, room?.finish).catch(error => this.notify(error.message));
-    });
+    this.furniturePanel = new FurniturePanel(this.controls, piece => this.#audition(piece));
     this.files = new HouseFiles(() => this.editor.house, house => this.open(house), text => this.notify(text));
     this.#wireControls();
     this.files.restore();
@@ -49,6 +46,17 @@ class HouseMusic {
   }
 
   notify(text) { byId("plot-hint").textContent = text; }
+
+  #audition(piece) {
+    if (this.transport.playing || this.#loading) return;
+    if (!piece) {
+      const selected = this.controls.selectedPiece;
+      piece = selected && fittingOf(selected) !== "plain" ? selected : this.editor.house.pieces.find(item => fittingOf(item) !== "plain");
+    }
+    if (!piece) return;
+    const notes = this.transport.preview(piece);
+    this.sampler.audition(notes, this.editor.house.mode).catch(error => this.notify(error.message));
+  }
 
   open(house) {
     this.#playRequest++;
@@ -76,6 +84,7 @@ class HouseMusic {
       else this.notify(hints[controls.tool]);
     });
     controls.addEventListener("play", () => this.togglePlay());
+    controls.addEventListener("audition", event => this.#audition(event.detail));
     document.querySelectorAll("[data-tool]").forEach(button => {
       button.onclick = () => {
         controls.use(button.dataset.tool);
@@ -92,7 +101,17 @@ class HouseMusic {
       event.target.value = this.editor.house.title;
     };
     byId("house-title").onkeydown = event => { if (event.key === "Enter") event.target.blur(); };
-    byId("mode").onchange = event => this.editor.setMode(event.target.value);
+    byId("mode").onchange = event => {
+      this.editor.setMode(event.target.value);
+      this.#audition();
+    };
+    byId("band").onclick = () => {
+      this.sampler.cancelAudition();
+      const enabled = this.editor.house.band === false;
+      this.editor.setBand(enabled);
+      this.#audition();
+      this.notify(enabled ? "House band on. The fittings share a beat and chord progression." : "House band off. The sweep plays each fitting at its exact position.");
+    };
     byId("play").onclick = () => this.togglePlay();
     document.addEventListener("keydown", event => {
       if (document.querySelector("dialog[open]") || event.target.matches("input,textarea,select")) return;
@@ -128,12 +147,13 @@ class HouseMusic {
       return;
     }
     this.#loading = true;
+    this.sampler.cancelAudition();
     this.#playButton();
     try {
       await this.sampler.enable();
       if (request !== this.#playRequest || document.hidden) return;
       this.transport.play();
-      if (!this.editor.house.pieces.length) this.notify("Place an instrument to hear the house.");
+      if (!this.transport.view().events.length) this.notify("Place a piece with a musical fitting to hear the house.");
     } catch (error) { this.notify(error.message); }
     finally {
       if (request === this.#playRequest) { this.#loading = false; this.#playButton(); }
@@ -159,6 +179,7 @@ class HouseMusic {
     byId("undo").disabled = !this.editor.canUndo;
     byId("redo").disabled = !this.editor.canRedo;
     byId("mode").value = house.mode;
+    byId("band").setAttribute("aria-pressed", String(house.band !== false));
     byId("bpm").textContent = arrangements[house.mode].bpm;
     document.querySelectorAll("button[data-tool]").forEach(button => {
       button.setAttribute("aria-pressed", String(button.dataset.tool === controls.tool));

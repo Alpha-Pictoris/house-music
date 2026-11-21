@@ -109,7 +109,9 @@ export class HouseEditor extends EventTarget {
     requireValid(FloorPlan.pieceError(this.house, piece));
     const pieces = this.house.pieces;
     const index = pieces.findIndex(item => item.id === piece.id);
-    if (index >= 0 && Object.keys(piece).every(key => piece[key] === pieces[index][key])) return pieces[index];
+    const previous = pieces[index];
+    if (previous && Object.keys(previous).length === Object.keys(piece).length &&
+        Object.keys(piece).every(key => piece[key] === previous[key])) return previous;
     this.#commit({ pieces: index < 0 ? [...pieces, piece] : pieces.map(item => item.id === piece.id ? piece : item) });
     return piece;
   }
@@ -151,9 +153,11 @@ export class HouseEditor extends EventTarget {
   }
 
   setPhrase(id, phrase) {
-    const piece = this.#piece(id);
-    if (fittingOf(piece) === "plain" || !Object.hasOwn(phrases, phrase)) throw Error("Choose a phrase for a musical fitting.");
-    return this.#put({ ...piece, phrase });
+    const piece = { ...this.#piece(id) };
+    if (fittingOf(piece) === "plain" || (phrase !== null && !Object.hasOwn(phrases, phrase))) throw Error("Choose a phrase for a musical fitting.");
+    if (phrase === null) delete piece.phrase;
+    else piece.phrase = phrase;
+    return this.#put(piece);
   }
 
   tune(id, value) {
@@ -194,5 +198,10 @@ export class HouseEditor extends EventTarget {
   setMode(mode) {
     if (!Object.hasOwn(arrangements, mode)) throw Error("Choose an arrangement.");
     if (mode !== this.house.mode) this.#commit({ mode });
+  }
+
+  setBand(enabled) {
+    if (typeof enabled !== "boolean") throw Error("Switch the house band on or off.");
+    if (enabled !== (this.house.band !== false)) this.#commit({ band: enabled });
   }
 }

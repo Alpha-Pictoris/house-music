@@ -19,6 +19,7 @@ export class ScorePanel {
         marker.style.width = (100 * (event.gate ?? 0.12) / view.beats) + "%";
         marker.style.top = lanes[event.fitting] + "px";
         marker.style.background = fittings[event.fitting].colour;
+        if (event.pieceId === null) marker.style.opacity = "0.45";
         return marker;
       });
       byId("score-events").replaceChildren(...markers);

@@ -1,4 +1,3 @@
-import { notesFor } from "./phrases.js";
 import { arrangements } from "./arrangements.js";
 
 const recordings = ["guitar", "bass", "kick", "snare", "hat", "harp", "celesta"];
@@ -42,16 +41,20 @@ export class Sampler {
     await Promise.all([resumed, this.#loading]);
   }
 
-  async audition(piece, mode, finish = "walnut") {
-    const request = ++this.#audition;
+  cancelAudition() {
+    this.#audition++;
     for (const voice of this.#voices) if (voice.audition) this.#stop(voice, this.now);
-    const notes = notesFor(piece);
+  }
+
+  async audition(notes, mode) {
+    this.cancelAudition();
+    const request = this.#audition;
     if (!notes.length) return;
     await this.enable();
     if (request !== this.#audition || document.hidden) return;
     const { bpm, rate } = arrangements[mode];
     const now = this.now;
-    for (const note of notes) this.start({ ...note, finish }, now + note.offset * 60 / bpm, bpm, rate, true);
+    for (const note of notes) this.start(note, now + note.offset * 60 / bpm, bpm, rate, true);
   }
 
   start(event, when, bpm, rate, audition = false) {
@@ -64,9 +67,10 @@ export class Sampler {
     const length = Math.min(buffer.duration / speed, event.gate === null ? Infinity : event.gate * 60 / bpm);
     source.buffer = buffer;
     source.playbackRate.value = speed;
+    const volume = 0.82 * (event.velocity ?? 1);
     level.gain.setValueAtTime(0, start);
-    level.gain.linearRampToValueAtTime(0.82, start + 0.003);
-    level.gain.setValueAtTime(0.82, start + Math.max(0.004, length - 0.025));
+    level.gain.linearRampToValueAtTime(volume, start + 0.003);
+    level.gain.setValueAtTime(volume, start + Math.max(0.004, length - 0.025));
     level.gain.linearRampToValueAtTime(0, start + length);
     source.connect(level).connect(event.finish === "moss" ? this.#carpet : this.#output);
     if (event.finish === "moonstone") {

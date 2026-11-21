@@ -44,17 +44,27 @@ export class Transport {
     this.#queuedUntil = Math.min(this.#queuedUntil, time);
   }
 
-  setHouse(house) {
-    const now = this.#clock();
+  setHouse(house, now = this.#clock()) {
     this.#advance(now);
-    if (this.#score && this.mode !== house.mode) this.setMode(house.mode, now);
-    else this.mode = house.mode;
     const next = Score.from(house);
     if (!this.playing) {
       const x = this.#score ? this.#score.left + this.#cursor : next.left;
       this.#cursor = this.#played && x >= next.left && x < next.left + next.beats ? x - next.left : 0;
       this.#score = this.#next = next;
+      this.mode = house.mode;
       return;
+    }
+    const sounding = this.#score.house;
+    const changedStyle = this.mode !== house.mode || (sounding.band !== false) !== (house.band !== false);
+    if (changedStyle) {
+      const x = this.#score.left + this.#beat(now);
+      this.#cancel(now, true);
+      this.mode = house.mode;
+      const sameLayout = sounding.rooms === house.rooms && sounding.pieces === house.pieces && sounding.doors === house.doors;
+      this.#score = sameLayout ? next : Score.from({ ...sounding, band: house.band, mode: house.mode });
+      const beat = x >= this.#score.left && x < this.#score.left + this.#score.beats ? x - this.#score.left : 0;
+      this.#origin = now - beat * this.#seconds;
+      this.#queuedUntil = now;
     }
     this.#next = next;
     if (this.#queuedUntil > this.#boundary) this.#cancel(this.#boundary);
@@ -62,15 +72,11 @@ export class Transport {
   }
 
   setMode(mode, now = this.#clock()) {
-    if (mode === this.mode) return;
-    this.#advance(now);
-    const beat = this.#beat(now);
-    this.mode = mode;
-    if (!this.playing) return;
-    this.#cancel(now);
-    this.#origin = now - beat * this.#seconds;
-    this.#queuedUntil = now;
-    this.tick(now);
+    if (mode !== this.mode && this.#next) this.setHouse({ ...this.#next.house, mode }, now);
+  }
+
+  preview(piece) {
+    return this.#score.preview(piece);
   }
 
   play() {
@@ -107,7 +113,11 @@ export class Transport {
       if (when >= until - near) break;
       const start = Math.max(when, now);
       this.#sink.start(event, start, bpm, rate);
-      this.#pulses.push({ id: event.pieceId, time: start, span: (event.gate ?? 0.45) * this.#seconds });
+      if (event.pieceId !== null) {
+        for (const id of event.together ?? [event.pieceId]) {
+          this.#pulses.push({ id, time: start, span: (event.gate ?? 0.45) * this.#seconds });
+        }
+      }
     }
   }
 

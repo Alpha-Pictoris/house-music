@@ -1,4 +1,4 @@
-import { furniture, newPiece } from "../building/catalogue.js";
+import { fittingOf, furniture, newPiece } from "../building/catalogue.js";
 import { FloorPlan } from "../building/floor-plan.js";
 
 export class BuildControls extends EventTarget {
@@ -31,6 +31,8 @@ export class BuildControls extends EventTarget {
   }
 
   #changed() { this.dispatchEvent(new Event("change")); }
+
+  #audition(piece) { this.dispatchEvent(new CustomEvent("audition", { detail: piece })); }
 
   reset(editor) {
     this.editor = editor;
@@ -178,7 +180,11 @@ export class BuildControls extends EventTarget {
         return;
       }
       this.select(piece.id);
-      this.notify(furniture[piece.kind].label + (furniture[piece.kind].garden ? " placed." : " placed. Open Fittings to change its sound."));
+      this.#audition(piece);
+      const design = furniture[piece.kind];
+      let hint = "";
+      if (!design.garden) hint = fittingOf(piece) === "plain" ? " Add a fitting to give it a voice." : " Move it along the sweep to change its timing.";
+      this.notify(design.label + " placed." + hint);
     }
   }
 
@@ -205,7 +211,9 @@ export class BuildControls extends EventTarget {
     else if (this.tool === "select" && drag.piece) {
       if (drag.moved) {
         const to = this.#destination(drag.piece, point.x - drag.start.x, point.z - drag.start.z);
-        if (!this.#run(() => this.editor.move(drag.piece.id, to))) { this.preview = null; return; }
+        const moved = this.#run(() => this.editor.move(drag.piece.id, to));
+        if (!moved) { this.preview = null; return; }
+        if (moved !== drag.piece) this.#audition(moved);
       }
       this.select(drag.piece.id);
     } else if (this.tool === "select" && !drag.moved) {
@@ -224,7 +232,8 @@ export class BuildControls extends EventTarget {
       const [dx, dz] = arrows[event.key], step = event.shiftKey ? 1 : 0.25;
       const selected = this.selectedPiece;
       if (this.tool === "select" && selected) {
-        this.#run(() => this.editor.move(selected.id, this.#destination(selected, dx * step, dz * step)));
+        const moved = this.#run(() => this.editor.move(selected.id, this.#destination(selected, dx * step, dz * step)));
+        if (moved && moved !== selected && !event.repeat) this.#audition(moved);
       } else if (this.tool === "orbit") this.scene.orbit(dx * 10, dz * 10);
       else {
         this.pointer = { x: this.pointer.x + dx * step, z: this.pointer.z + dz * step };

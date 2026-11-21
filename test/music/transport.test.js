@@ -8,6 +8,7 @@ function rehearsal(x = 0) {
   let now = 0;
   const notes = [];
   const editor = new HouseEditor();
+  editor.setBand(false);
   editor.drawRoom({ x: 0, z: 0 }, { x: 4, z: 4 });
   editor.place("lamp", { x, z: 0 });
   const sink = {
@@ -108,4 +109,24 @@ test("switching back to goth keeps the beat and delays a queued note", () => {
   assert.ok(Math.abs(transport.view().beat - beat) < 1e-8);
   assert.equal(notes.length, 1);
   assert.ok(Math.abs(notes[0].time - 0.38125) < 1e-8);
+});
+
+test("switching the band live keeps the sweep and pending building edits", () => {
+  const { editor, transport, advance } = rehearsal(1);
+  transport.play();
+  advance(0.375);
+  const x = transport.view().sweepX;
+  const wardrobe = editor.place("wardrobe", { x: 1, z: 2 });
+  transport.setHouse(editor.house);
+  editor.setBand(true);
+  transport.setHouse(editor.house);
+  assert.equal(transport.view().sweepX, x);
+  assert.ok(transport.view().events.some(n => n.sample === "bass"));
+  assert.ok(!transport.view().events.some(n => n.pieceId === wardrobe.id));
+  editor.setMode("nightcore");
+  transport.setHouse(editor.house);
+  assert.ok(Math.abs(transport.view().sweepX - x) < 1e-9);
+  assert.deepEqual(transport.view().events.filter(n => n.sample === "kick").map(n => n.beat), [0, 1, 2, 3]);
+  advance(1.6);
+  assert.ok(transport.view().events.some(n => n.pieceId === wardrobe.id));
 });

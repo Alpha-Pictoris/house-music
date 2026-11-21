@@ -32,6 +32,10 @@ export function readHouse(value) {
   }
 
   const house = { title, mode, rooms: [], doors: [], pieces: [] };
+  if (value.band !== undefined) {
+    requireValid(typeof value.band === "boolean", "The house band setting must be on or off.");
+    house.band = value.band;
+  }
   for (const item of rooms) {
     const id = readId(item);
     const { x, z, width, depth } = item;

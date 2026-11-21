@@ -1,4 +1,4 @@
-import { fittingOf, furniture, newPiece, phraseOf, roomFinishes } from "../building/catalogue.js";
+import { fittingOf, furniture, newPiece, roomFinishes } from "../building/catalogue.js";
 import { fittings, tunings } from "../building/fittings.js";
 import { phrases } from "../music/phrases.js";
 import { HouseScene } from "../scene/house-scene.js";
@@ -27,7 +27,7 @@ export class FurniturePanel {
     byId("room-name").onchange = event => controls.editor.styleRoom(controls.selection, { name: event.target.value });
     byId("room-finish").onchange = event => controls.editor.styleRoom(controls.selection, { finish: event.target.value });
     byId("phrase").onchange = event => {
-      const piece = controls.editor.setPhrase(controls.selection, event.target.value);
+      const piece = controls.editor.setPhrase(controls.selection, event.target.value || null);
       this.audition(piece);
     };
     byId("tuning").onchange = event => {
@@ -38,6 +38,7 @@ export class FurniturePanel {
       this.audition(controls.selectedPiece);
     };
     for (const [id, finish] of Object.entries(roomFinishes)) byId("room-finish").add(new Option(finish.label, id));
+    byId("phrase").add(new Option("House riff", ""));
     for (const [id, phrase] of Object.entries(phrases)) byId("phrase").add(new Option(phrase.label, id));
   }
 
@@ -162,7 +163,8 @@ export class FurniturePanel {
       byId("tuning-field").hidden = id === "plain";
       byId("tuning-label").textContent = fitting.hits ? "Drum hit" : "Root note";
       byId("tuning").value = piece.hit ?? piece.pitch ?? "";
-      byId("phrase").value = phraseOf(piece);
+      byId("phrase").options[0].text = house.band === false ? "Furniture default" : "House riff";
+      byId("phrase").value = piece.phrase ?? "";
     }
     byId("rotate").disabled = !piece || furniture[piece.kind].layer === "wall";
     byId("rotate-preview").hidden = controls.tool !== "place" || !controls.kind || furniture[controls.kind].layer === "wall";

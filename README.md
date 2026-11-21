@@ -4,13 +4,15 @@ Draw a house and play it as a track. Build a bedroom around a harp-strung bed, h
 
 ## Make a house
 
-1. Drag across the empty plot or tap two opposite corners to draw a room. Add rooms along existing walls and use **Door** to join them.
-2. Open **Furnish**. Choose a piece, turn it if needed, then tap the floor. Lay a rug under the dining set, fit a window to an outside wall, or plant a tree in the garden.
-3. Select a room and open **Style room** to name it and change its finish. Walnut sounds warm and dry, moonstone gives notes a short echo, and moss carpet softens them.
-4. Select an indoor piece and open **Fittings**. A thorn carving plays guitar, iron rings play bass, brass studs play drums, cut glass plays celesta, and silver strings play harp. Plain pieces stay quiet. The fitting appears on the furniture.
-5. Pick a phrase and press **Play**. One sofa can play a whole hook. Move it one floor unit to the right to start one beat later. Pieces at the same point along the sweep sound together.
+1. Drag across the empty plot or tap two opposite corners to draw a room.
+2. Choose the velvet sofa in **Furnish** and tap a spot on the floor. You'll hear a bar of its guitar riff with bass and drums. Press **Play** to loop it.
+3. Try a dining set across the room. Its cut-glass fitting adds a celesta answering the guitar. Move it while paused to preview the new rhythm.
 
-Goth metal runs at 128 BPM. Nightcore raises the pitch and plays the same house at 160 BPM. Changes made during playback join on the next pass.
+**House band** starts on. It rounds musical starts to the nearest half beat and fits the riffs to a sequence of D minor, B flat, F and C. The loop runs from the first musical bar to the last. Empty bars between them make space. Goth metal has a syncopated kick at 128 BPM. Nightcore pitches the instruments up and plays a four-on-the-floor beat at 160 BPM.
+
+Add iron rings to play the bass line or brass studs to take over the drums. Thorn carvings play guitar, cut glass plays celesta, and silver strings play harp. Use **Fittings** to change a voice, pick a phrase, or leave a piece plain. Switch **House band** off to hear just your fittings at their exact floor positions. A unit along the sweep is one beat. Building edits join on the next pass.
+
+Extend the house along a wall and use **Door** to join the rooms. Lay a rug under the dining set, fit a window, or plant a tree in the garden. Open **Style room** to name a room and change its finish. Walnut sounds warm and dry, moonstone adds a short echo, and moss carpet softens the notes.
 
 Houses save to **Library** on this device. **Share** gives you a playable link or a house file. Change a friend's arrangement and choose **Save a copy** to keep your remix.
 

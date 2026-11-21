@@ -44,12 +44,13 @@ test("room finishes and fittings travel with a furnished house", () => {
   editor.fitPiece(table.id, "thorn");
   editor.setPhrase(table.id, "rise");
   const score = Score.from(editor.house);
-  assert.deepEqual(score.events.map(note => [note.sample, note.beat]), [["guitar", 2], ["guitar", 2.5], ["guitar", 3]]);
-  assert.equal(new Set(score.events.map(note => note.semitones)).size, 3);
-  assert.ok(score.events.every(note => note.finish === "moonstone"));
+  const part = score.events.filter(note => note.pieceId === table.id);
+  assert.deepEqual(part.map(note => [note.sample, note.beat]), [["guitar", 2], ["guitar", 2.5], ["guitar", 3]]);
+  assert.equal(new Set(part.map(note => note.semitones)).size, 3);
+  assert.ok(part.every(note => note.finish === "moonstone"));
   assert.deepEqual(houseFromLink(houseLink(editor.house, "https://example.com/")), editor.house);
   editor.fitPiece(table.id, "plain");
   assert.equal(Score.from(editor.house).events.length, 0);
   editor.undo();
-  assert.equal(Score.from(editor.house).events.length, 3);
+  assert.deepEqual(Score.from(editor.house).events, score.events);
 });

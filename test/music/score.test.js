@@ -12,6 +12,7 @@ test("bare ground and an empty room are silent", () => {
 
 test("moving the wardrobe shifts only the guitar", () => {
   const editor = new HouseEditor();
+  editor.setBand(false);
   editor.drawRoom({ x: 0, z: 0 }, { x: 8, z: 6 });
   const guitar = editor.place("wardrobe", { x: 2, z: 0 });
   editor.place("mirror", { x: 2, z: 3 });
@@ -36,6 +37,7 @@ test("a decimal room ending on a bar line adds no extra bar", () => {
 
 test("the same fitting plays the same phrase on a bed and a sofa", () => {
   const editor = new HouseEditor();
+  editor.setBand(false);
   editor.drawRoom({ x: 0, z: 0 }, { x: 8, z: 6 });
   const bed = editor.place("bed", { x: 0, z: 0 });
   const sofa = editor.place("sofa", { x: 0, z: 3 });
@@ -53,6 +55,7 @@ test("the same fitting plays the same phrase on a bed and a sofa", () => {
 
 test("a phrase at the right wall continues through the first beat", () => {
   const editor = new HouseEditor();
+  editor.setBand(false);
   editor.drawRoom({ x: 0, z: 0 }, { x: 4, z: 4 });
   const lamp = editor.place("lamp", { x: 3, z: 0 });
   editor.setPhrase(lamp.id, "arch");

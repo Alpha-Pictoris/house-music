@@ -526,6 +526,29 @@ h2,
 .play:hover {
   background: #edfac0;
 }
+.band-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.band-toggle span {
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  border: 1px solid currentColor;
+}
+.band-toggle[aria-pressed="true"] { color: var(--lime); }
+.band-toggle[aria-pressed="true"] span { background: currentColor; }
+@media (max-width: 365px) {
+  .transport { flex-wrap: wrap; }
+}
 .mode {
   display: grid;
   gap: 1px;
