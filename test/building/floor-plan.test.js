@@ -42,3 +42,18 @@ test("an invalid doorway point leaves the shared wall intact", () => {
   assert.throws(() => editor.addDoor({ x: NaN, z: 3 }));
   assert.deepEqual(editor.house.doors, []);
 });
+
+test("a front door cuts just its own wall and can later join an extension", () => {
+  const editor = new HouseEditor();
+  const original = editor.drawRoom({ x: 0, z: 0 }, { x: 4, z: 4 });
+  const door = editor.addDoor({ x: 2, z: 4 });
+  assert.deepEqual(door.rooms, [original.id]);
+  const walls = FloorPlan.walls(editor.house);
+  assert.equal(walls.filter(wall => wall.axis === "x" && wall.at === 0).length, 1);
+  assert.deepEqual(walls.filter(wall => wall.axis === "x" && wall.at === 4).map(wall => [wall.start, wall.end]), [[0, 1.5], [2.5, 4]]);
+  assert.throws(() => editor.place("window", { x: 2, z: 4 }), /door/i);
+  const extension = editor.drawRoom({ x: 1, z: 4 }, { x: 4, z: 7 });
+  assert.deepEqual(editor.house.doors[0].rooms, [original.id, extension.id]);
+  editor.undo();
+  assert.deepEqual(editor.house.doors[0], door);
+});

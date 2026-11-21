@@ -7,6 +7,13 @@ const overlaps = (a, b) => a.x < b.x + b.width - epsilon && b.x < a.x + a.width 
 const inside = (room, box) => box.x >= room.x - epsilon && box.z >= room.z - epsilon
   && box.x + box.width <= room.x + room.width + epsilon && box.z + box.depth <= room.z + room.depth + epsilon;
 
+function touchesWindow(door, piece) {
+  const opening = FloorPlan.windowOpening(piece);
+  const along = opening.axis === "x" ? door.x : door.z;
+  const across = opening.axis === "x" ? door.z : door.x;
+  return Math.abs(across - opening.at) < epsilon && along + 0.5 > opening.start + epsilon && along - 0.5 < opening.end - epsilon;
+}
+
 function snap(value, edges) {
   let distance = 0.2;
   let snapped = value;
@@ -38,6 +45,7 @@ export class FloorPlan {
     if (house.pieces.some(piece => furniture[piece.kind].layer === "wall" && !FloorPlan.windowFits(expanded, piece))) {
       return "Move the window before extending its wall.";
     }
+    if (house.doors.some(door => !FloorPlan.doorAt(expanded, door, epsilon))) return "Leave room for the existing doorway.";
     return "";
   }
 
@@ -67,6 +75,7 @@ export class FloorPlan {
       if (piece.roomId !== null || house.rooms.some(candidate => overlaps(box, candidate))) return "Place this piece in the garden.";
     } else if (item.layer === "wall") {
       if (!room || !FloorPlan.windowFits(house, piece)) return "Choose an outside wall for the window.";
+      if (house.doors.some(door => touchesWindow(door, piece))) return "Leave the doorway open.";
     } else if (!room || !inside(room, box)) return "Place the whole piece inside a room.";
     if (house.pieces.some(other => other.id !== piece.id && furniture[other.kind].layer === item.layer && overlaps(box, FloorPlan.footprint(other)))) {
       return "Leave enough space between the pieces.";
@@ -91,6 +100,12 @@ export class FloorPlan {
         roomId: room.id, turn: horizontal ? (back ? 0 : 2) : (back ? 1 : 3) } };
     }
     return nearest?.placement ?? null;
+  }
+
+  static windowOpening(piece) {
+    const { x, z, width, depth } = FloorPlan.footprint(piece);
+    if (piece.turn % 2 === 0) return { axis: "x", at: piece.turn === 0 ? z : z + depth, start: x, end: x + width };
+    return { axis: "z", at: piece.turn === 1 ? x : x + width, start: z, end: z + depth };
   }
 
   static windowFits(house, piece) {
@@ -131,7 +146,7 @@ export class FloorPlan {
     if (![point.x, point.z].every(Number.isFinite)) return null;
     let best = null, nearest = tolerance;
     for (const wall of FloorPlan.wallSpans(house)) {
-      if (wall.rooms.length !== 2 || wall.end - wall.start < 1 - epsilon) continue;
+      if (wall.end - wall.start < 1 - epsilon) continue;
       const along = wall.axis === "x" ? point.x : point.z;
       const across = wall.axis === "x" ? point.z : point.x;
       const centre = round(Math.max(wall.start + 0.5, Math.min(wall.end - 0.5, along)));
@@ -145,7 +160,8 @@ export class FloorPlan {
 
   static doorError(house, door) {
     const wall = FloorPlan.doorAt(house, door, epsilon);
-    if (!wall || door.rooms.length !== 2 || !wall.rooms.every(id => door.rooms.includes(id))) return "Choose a shared wall with room for a doorway.";
+    if (!wall || door.rooms.length !== wall.rooms.length || !wall.rooms.every(id => door.rooms.includes(id))) return "Choose a wall with room for a doorway.";
+    if (house.pieces.some(piece => furniture[piece.kind].layer === "wall" && touchesWindow(door, piece))) return "Leave space for the window.";
     const collision = house.doors.some(other => other.id !== door.id && wall.rooms.every(id => other.rooms.includes(id))
       && Math.hypot(other.x - door.x, other.z - door.z) < 1 - epsilon);
     return collision ? "Leave space for this doorway." : "";
@@ -153,7 +169,9 @@ export class FloorPlan {
 
   static walls(house) {
     return FloorPlan.wallSpans(house).flatMap(wall => {
-      const openings = house.doors.filter(door => wall.rooms.length === 2 && wall.rooms.every(id => door.rooms.includes(id)))
+      const openings = house.doors.filter(door => door.rooms.length === wall.rooms.length && wall.rooms.every(id => door.rooms.includes(id))
+        && Math.abs((wall.axis === "x" ? door.z : door.x) - wall.at) < epsilon
+        && (wall.axis === "x" ? door.x : door.z) >= wall.start && (wall.axis === "x" ? door.x : door.z) <= wall.end)
         .map(door => wall.axis === "x" ? door.x : door.z).sort((a, b) => a - b);
       const parts = [];
       let start = wall.start;

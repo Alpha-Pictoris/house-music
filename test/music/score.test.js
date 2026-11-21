@@ -33,3 +33,28 @@ test("a decimal room ending on a bar line adds no extra bar", () => {
   const { left, beats } = Score.from(editor.house);
   assert.deepEqual([left, beats], [-8, 12]);
 });
+
+test("the same fitting plays the same phrase on a bed and a sofa", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: 0, z: 0 }, { x: 8, z: 6 });
+  const bed = editor.place("bed", { x: 0, z: 0 });
+  const sofa = editor.place("sofa", { x: 0, z: 3 });
+  for (const piece of [bed, sofa]) {
+    editor.fitPiece(piece.id, "thorn");
+    editor.setPhrase(piece.id, "rise");
+  }
+  const { events } = Score.from(editor.house);
+  for (const id of [bed.id, sofa.id]) {
+    assert.deepEqual(events.filter(note => note.pieceId === id).map(note => [note.sample, note.beat, note.semitones]), [
+      ["guitar", 0, 0], ["guitar", 0.5, 3], ["guitar", 1, 7]
+    ]);
+  }
+});
+
+test("a phrase at the right wall continues through the first beat", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: 0, z: 0 }, { x: 4, z: 4 });
+  const lamp = editor.place("lamp", { x: 3, z: 0 });
+  editor.setPhrase(lamp.id, "arch");
+  assert.deepEqual(Score.from(editor.house).events.map(event => event.beat), [0, 0.5, 3, 3.5]);
+});

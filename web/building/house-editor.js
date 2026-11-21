@@ -66,7 +66,13 @@ export class HouseEditor extends EventTarget {
   drawRoom(start, end) {
     const room = { id: this.#id("r"), ...FloorPlan.roomBetween(this.house, start, end) };
     requireValid(FloorPlan.roomError(this.house, room));
-    this.#commit({ rooms: [...this.house.rooms, room] });
+    const rooms = [...this.house.rooms, room];
+    const expanded = { ...this.house, rooms };
+    const doors = this.house.doors.map(door => {
+      const owners = FloorPlan.doorAt(expanded, door).rooms;
+      return owners.length === door.rooms.length ? door : { ...door, rooms: owners };
+    });
+    this.#commit({ rooms, doors });
     return room;
   }
 
@@ -163,7 +169,7 @@ export class HouseEditor extends EventTarget {
 
   addDoor(point) {
     const target = FloorPlan.doorAt(this.house, point);
-    if (!target) throw Error("Choose a wall shared by two rooms.");
+    if (!target) throw Error("Choose a wall with room for a doorway.");
     const door = { id: this.#id("d"), rooms: target.rooms, x: target.x, z: target.z };
     requireValid(FloorPlan.doorError(this.house, door));
     this.#commit({ doors: [...this.house.doors, door] });

@@ -53,9 +53,9 @@ export function readHouse(value) {
   for (const item of doors) {
     const id = readId(item);
     const { rooms: owners, x, z } = item;
-    requireValid(Array.isArray(owners) && owners.length === 2 && owners[0] !== owners[1]
-      && roomIds.has(owners[0]) && roomIds.has(owners[1]), "Each door needs two existing rooms.");
-    const door = { id, rooms: [owners[0], owners[1]], x, z };
+    requireValid(Array.isArray(owners) && owners.length >= 1 && owners.length <= 2 && new Set(owners).size === owners.length
+      && owners.every(owner => roomIds.has(owner)), "Each doorway needs an existing wall.");
+    const door = { id, rooms: [...owners], x, z };
     const error = FloorPlan.doorError(house, door);
     requireValid(!error, error);
     house.doors.push(door);
