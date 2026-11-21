@@ -1,7 +1,12 @@
 import {FloorPlan} from '../building/floor-plan.js';
 import {furniture} from '../building/catalogue.js';
-import {doorMark, footprintMark, originMark, plot, walls, roomFloor} from './architecture.js';
+import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor} from './architecture.js';
 import {drawModel} from './furniture-art.js';
+import {drawDomestic, livingModels} from './domestic-art.js';
+import {roomModels} from './rooms-art.js';
+import {gardenModels} from './garden-art.js';
+import {landscape} from './landscape.js';
+import {ornament} from './fittings-art.js';
 import {InkMesh, channels, clamp, dot, instance, transformPoint} from './ink-mesh.js';
 import {CanvasInkRenderer, WebInkRenderer} from './ink-renderer.js';
 
@@ -11,8 +16,8 @@ const blue = '#8de9df';
 const coral = '#ff8b82';
 const lavender = '#c5abdb';
 const models = new Map();
+const houseModels = {...livingModels, ...roomModels, ...gardenModels};
 const quarterTurns = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-const voices = {wardrobe: 1, mirror: 2, lamp: 3};
 const motionPreference = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 const quantizedLevel = level => Math.round(level * 100) / 100;
 
@@ -21,7 +26,7 @@ function previewKey(preview) {
   const placement = preview.piece ?? preview;
   return [
     preview.type, preview.valid, placement.x, placement.z,
-    placement.width, placement.depth, placement.kind, placement.turn, placement.axis
+    placement.width, placement.depth, placement.kind, placement.turn, placement.axis, placement.finish, placement.fitting
   ].join('|');
 }
 
@@ -33,24 +38,39 @@ function sameLevels(current, previous) {
   return true;
 }
 
-function pieceItem(piece, options) {
+function pieceItems(piece, options = {}) {
   const {kind, turn = 0} = piece;
   const {x, z, width, depth} = FloorPlan.footprint(piece);
+  const definition = furniture[kind];
   if (!models.has(kind)) {
     const mesh = new InkMesh();
-    const dimensions = drawModel(kind, mesh);
-    const catalogue = furniture[kind];
+    let scale = [1, 1, 1];
+    if (houseModels[kind]) {
+      drawDomestic(houseModels[kind], mesh);
+    } else {
+      const dimensions = drawModel(kind, mesh);
+      scale = [definition.width / dimensions.width, definition.height / dimensions.height, definition.depth / dimensions.depth];
+    }
     mesh.model = true;
-    models.set(kind, {mesh, scale: [
-      catalogue.width / dimensions.width,
-      catalogue.height / dimensions.height,
-      catalogue.depth / dimensions.depth
-    ]});
+    mesh.canvasFront = kind === 'window';
+    models.set(kind, {mesh, scale});
   }
   const {mesh, scale} = models.get(kind);
-  return instance(mesh, {
-    scale, origin: [x + width / 2, 0, z + depth / 2], turn: quarterTurns[turn], voice: voices[kind], ...options
+  const origin = [x + width / 2, definition.garden ? -0.061 : 0, z + depth / 2];
+  const direction = quarterTurns[turn];
+  const fitting = ornament(kind, piece.fitting ?? definition.fitting);
+  const level = fitting ? (options.level ?? 0) : 0;
+  const body = instance(mesh, {
+    ...options, scale, origin, turn: direction, level: level * 0.5, pose: 0, wobble: 1 / 0.43
   });
+  if (!fitting) return [body];
+  const [sx, y, sz] = fitting.local, [cos, sin] = direction;
+  const ornamentOrigin = [origin[0] + cos * sx + sin * sz, y, origin[2] - sin * sx + cos * sz];
+  const size = fitting.size;
+  return [body, instance(fitting.mesh, {
+    ...options, origin: ornamentOrigin, turn: direction, scale: [size, size, size], voice: fitting.voice, level,
+    pose: options.pose ?? 1
+  })];
 }
 
 class IsometricCamera {
@@ -120,8 +140,8 @@ function resize(canvas, width, height) {
 
 function samePlacement(a, b, type) {
   if (!a || a.x !== b.x || a.z !== b.z) return false;
-  if (type === 'pieces') return a.kind === b.kind && a.turn === b.turn;
-  if (type === 'rooms') return a.width === b.width && a.depth === b.depth;
+  if (type === 'pieces') return a.kind === b.kind && a.turn === b.turn && a.fitting === b.fitting;
+  if (type === 'rooms') return a.width === b.width && a.depth === b.depth && a.finish === b.finish;
   return true;
 }
 
@@ -162,7 +182,7 @@ export class HouseScene {
     const {renderer, target} = rendererFor(canvas);
     this.renderer = renderer;
     this.target = target;
-    this.ground = instance(plot(), {catchesSweep: false, canvasLayer: 0});
+    this.ground = instance(plot(), {catchesSweep: false, canvasLayer: 0, inkLift: 0.000001});
     this.origin = instance(originMark(), {canvasLayer: 0});
     const mesh = new InkMesh();
     mesh.segment([0, -0.05, -1], [0, -0.05, 1], yellow, 1.3);
@@ -173,19 +193,22 @@ export class HouseScene {
     });
   }
 
-  static thumbnail(canvas, kind) {
+  static thumbnail(canvas, kind, fitting) {
     const definition = furniture[kind];
-    const item = pieceItem({kind, x: 0, z: 0, turn: 0});
-    const {renderer, target} = rendererFor(canvas);
+    const items = pieceItems({kind, fitting, x: 0, z: 0, turn: 0});
+    canvas.dataset.renderer = 'canvas';
+    const renderer = new CanvasInkRenderer(canvas.getContext('2d'));
+    const target = canvas;
     const motion = motionPreference();
     const repaint = () => {
       const {width, height} = canvas.getBoundingClientRect();
       if (!width || !height) return;
       resize(target, width, height);
-      const center = [definition.width / 2, definition.height * 0.52, definition.depth / 2];
-      const camera = new IsometricCamera(width, height, 0.27, 0.22, center);
-      camera.fit([definition.width * 1.25, definition.height * 1.13, definition.depth * 1.2], 1);
-      renderer.draw(target, camera, [item], {drawing: 0.8, wobble: motion?.matches ? 0 : 0.62});
+      const center = [definition.width / 2, definition.height * 0.55, definition.depth / 2];
+      const elevation = definition.height < 0.15 ? 0.87 : 0.34;
+      const camera = new IsometricCamera(width, height, 0.36, elevation, center);
+      camera.fit([definition.width * 1.21, definition.height * 1.15 + 0.28, definition.depth * 1.17], 1);
+      renderer.draw(target, camera, items, {drawing: 0.8, wobble: motion?.matches ? 0 : 0.62});
     };
     repaint();
     motion?.addEventListener('change', repaint);
@@ -233,16 +256,17 @@ export class HouseScene {
 
   fit(house = emptyHouse) {
     this.magnification = 1;
-    this.fitted = house.rooms.length > 0;
+    const grounds = [...house.rooms, ...house.pieces.map(piece => FloorPlan.footprint(piece))];
+    this.fitted = grounds.length > 0;
     this.camera = null;
     if (!this.fitted) {
       this.center = [0, 0.65, 0];
       return;
     }
-    const left = Math.min(...house.rooms.map(room => room.x));
-    const right = Math.max(...house.rooms.map(room => room.x + room.width));
-    const back = Math.min(...house.rooms.map(room => room.z));
-    const front = Math.max(...house.rooms.map(room => room.z + room.depth));
+    const left = Math.min(...grounds.map(room => room.x));
+    const right = Math.max(...grounds.map(room => room.x + room.width));
+    const back = Math.min(...grounds.map(room => room.z));
+    const front = Math.max(...grounds.map(room => room.z + room.depth));
     this.center = [(left + right) / 2, 1.35, (back + front) / 2];
     this.bounds = [right - left + 1.6, 3.7, front - back + 1.6];
   }
@@ -255,8 +279,8 @@ export class HouseScene {
     let nearest = nearestDepth(instance(wallMesh), camera, x, y);
     let id = null;
     for (const piece of house.pieces) {
-      const item = pieceItem(piece, {level: this.lastLevels?.get(piece.id) ?? 0, pose: this.motion?.matches ? 0 : 1});
-      const depth = nearestDepth(item, camera, x, y);
+      const body = pieceItems(piece, {level: this.lastLevels?.get(piece.id) ?? 0, pose: this.motion?.matches ? 0 : 1});
+      const depth = Math.max(...body.map(item => nearestDepth(item, camera, x, y)));
       if (depth <= nearest) continue;
       nearest = depth;
       id = piece.id;
@@ -265,28 +289,40 @@ export class HouseScene {
   }
 
   architecture(house) {
-    const {rooms, doors} = house;
-    if (this.structure?.rooms === rooms && this.structure.doors === doors) return this.structure;
-    if (this.draftStructure?.rooms === rooms && this.draftStructure.doors === doors) return this.draftStructure;
+    const {rooms, doors, pieces} = house;
+    const candidates = [this.structure, this.draftStructure].filter(entry => entry?.rooms === rooms && entry.doors === doors);
+    const cached = candidates.find(entry => entry.pieces === pieces);
+    if (cached) return cached;
+    const windows = pieces.filter(piece => furniture[piece.kind].layer === 'wall');
+    const garden = pieces.filter(piece => furniture[piece.kind].garden);
+    const sameMembers = (a,b) => a.length === b.length && a.every((piece,i) => piece === b[i]);
+    const shared = candidates.find(entry => sameMembers(entry.windows,windows) && sameMembers(entry.garden,garden));
+    if (shared) {
+      shared.pieces = pieces;
+      return shared;
+    }
     const floors = house.rooms.map(room => {
-      const key = JSON.stringify([room.x, room.z, room.width, room.depth]);
+      const key = JSON.stringify([room.x, room.z, room.width, room.depth, room.finish]);
       if (!this.floorCache.has(key)) {
         if (this.floorCache.size >= 48) this.floorCache.delete(this.floorCache.keys().next().value);
         this.floorCache.set(key, roomFloor(room));
       }
       return this.floorCache.get(key);
     });
-    const entries = {rooms, doors, floors, wallMesh: walls(house)};
+    const entries = {
+      rooms, doors, pieces, windows, garden, floors,
+      wallMesh: walls(house, windows), entries: exteriorEntries(house), grounds: landscape(rooms, garden)
+    };
     this.draftStructure = this.structure;
     this.structure = entries;
     return entries;
   }
 
-  mark(x, z, width, depth, colour, fill = false) {
-    const key = JSON.stringify([width, depth, colour, fill]);
+  mark(x, z, width, depth, colour, fill = false, onset = false) {
+    const key = JSON.stringify([width, depth, colour, fill, onset]);
     if (!this.markCache.has(key)) {
       if (this.markCache.size >= 24) this.markCache.delete(this.markCache.keys().next().value);
-      this.markCache.set(key, footprintMark(width, depth, colour, fill));
+      this.markCache.set(key, footprintMark(width, depth, colour, fill, onset));
     }
     return instance(this.markCache.get(key), {origin: [x, 0, z], opacity: fill ? 0.29 : 1});
   }
@@ -313,13 +349,16 @@ export class HouseScene {
     this.lastFrame = {camera, house, draftHouse, selection, placement, sweepX, drawing, reducedMotion};
     this.lastLevels = new Map();
     if (levels) for (const [id, level] of levels) this.lastLevels.set(id, quantizedLevel(level));
+    this.ground.inkOpacity = house.rooms.length ? 0.34 : 1;
     this.ground.origin = [Math.round(this.center[0] / 5) * 5, 0, Math.round(this.center[2] / 5) * 5];
     const items = [this.ground, this.origin];
     const rendered = this.architecture(house);
+    items.push(instance(rendered.grounds, {canvasLayer: 1.5, canvasFlat: true, catchesSweep: false}));
     for (const floor of rendered.floors) items.push(instance(floor, {canvasLayer: 2}));
-    items.push(instance(rendered.wallMesh));
+    items.push(instance(rendered.wallMesh, {canvasLayer: 3.25, canvasInkOffset: 0.2}));
+    items.push(instance(rendered.entries, {canvasLayer: 3.5, canvasInkOffset: 0.2}));
     for (const piece of house.pieces) {
-      items.push(pieceItem(piece, {level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
+      items.push(...pieceItems(piece, {level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
     }
 
     const activeRooms = new Map(house.rooms.map(room => [room.id, room]));
@@ -337,7 +376,7 @@ export class HouseScene {
       }
       for (const piece of draftHouse.pieces) {
         if (!samePlacement(activePieces.get(piece.id), piece, 'pieces')) {
-          items.push(pieceItem(piece, {opacity: 0.48, tint: channels(lavender), tintAmount: 0.26}));
+          items.push(...pieceItems(piece, {opacity: 0.48, tint: channels(lavender), tintAmount: 0.26}));
         }
       }
       const draftPieces = new Set(draftHouse.pieces.map(piece => piece.id));
@@ -365,14 +404,14 @@ export class HouseScene {
     const selectedRoom = draftHouse.rooms.find(room => room.id === selection);
     const selectedPiece = draftHouse.pieces.find(piece => piece.id === selection);
     const selectedArea = selectedRoom ?? (selectedPiece && FloorPlan.footprint(selectedPiece));
-    if (selectedArea) items.push(this.mark(selectedArea.x, selectedArea.z, selectedArea.width, selectedArea.depth, yellow));
+    if (selectedArea) items.push(this.mark(selectedArea.x, selectedArea.z, selectedArea.width, selectedArea.depth, yellow, false, Boolean(selectedPiece)));
     if (preview) {
       const colour = preview.valid ? blue : coral;
       if (preview.type === 'room') items.push(this.mark(preview.x, preview.z, preview.width, preview.depth, colour, true));
       if (preview.type === 'piece') {
         const area = FloorPlan.footprint(preview.piece);
         items.push(this.mark(area.x, area.z, area.width, area.depth, colour));
-        items.push(pieceItem(preview.piece, {opacity: 0.45, tint: channels(colour), tintAmount: 0.38}));
+        items.push(...pieceItems(preview.piece, {opacity: 0.45, tint: channels(colour), tintAmount: 0.38}));
       }
       if (preview.type === 'door') items.push(this.doorway(preview.x, preview.z, preview.axis, colour));
     }

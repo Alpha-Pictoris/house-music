@@ -59,9 +59,9 @@ export function transformPoint([x, y, z], item) {
   x *= width;
   y *= height;
   z *= depth;
-  if (item.voice === 1) x += level * 0.13 * smooth((y - 0.16) / 2.9);
-  if (item.voice === 2) z += level * 0.075 * y;
-  if (item.voice === 3) y += level * 0.095 * smooth((y - 1.3) / 0.9);
+  if (item.voice === 1) x += level * 0.12 * smooth((y - 0.05) / 0.47);
+  if (item.voice === 2) z += level * 0.11 * y;
+  if (item.voice === 3) y += level * 0.075 * smooth((y - 0.01) / 0.3);
   return [cos * x + sin * z + tx, y + ty, -sin * x + cos * z + tz];
 }
 

@@ -15,7 +15,7 @@ function arch(x,bottom,z,width,height,shoulder=0.72) {
 }
 function diamond(x,y,z,w,h) { return [[x,y+h,z],[x+w,y,z],[x,y-h,z],[x-w,y,z]]; }
 
-function brushFor(mesh) {
+export function brushFor(mesh) {
   const {face, line, segment} = mesh;
   function box(x0,y0,z0,x1,y1,z1,fill,ink,width=1) {
     const back=panel(x0,y0,x1,y1,z0), front=panel(x0,y0,x1,y1,z1);

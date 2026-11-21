@@ -3,14 +3,14 @@ import {channels, dot, transformPoint} from './ink-mesh.js';
 const projection = `
 uniform vec3 uRight,uUp,uEye,uCenter,uOrigin,uObjectScale,uTint;
 uniform vec2 uTurn,uSize;
-uniform float uScale,uLevel,uPose,uVoice,uTintAmount,uOpacity,uDrawing,uSweep,uWobble;
+uniform float uScale,uLevel,uPose,uVoice,uTintAmount,uOpacity,uDrawing,uSweep,uWobble,uInkLift;
 attribute vec3 aPoint,aColour;
 varying mediump vec3 vColour;
 vec3 world(vec3 p) {
   p *= uObjectScale;
-  if (uVoice == 1.0) p.x += uPose * 0.13 * smoothstep(0.16,3.06,p.y);
-  if (uVoice == 2.0) p.z += uPose * 0.075 * p.y;
-  if (uVoice == 3.0) p.y += uPose * 0.095 * smoothstep(1.3,2.2,p.y);
+  if (uVoice == 1.0) p.x += uPose * 0.12 * smoothstep(0.05,0.52,p.y);
+  if (uVoice == 2.0) p.z += uPose * 0.11 * p.y;
+  if (uVoice == 3.0) p.y += uPose * 0.075 * smoothstep(0.01,0.31,p.y);
   return vec3(uTurn.x*p.x+uTurn.y*p.z,p.y,-uTurn.y*p.x+uTurn.x*p.z)+uOrigin;
 }
 vec3 project(vec3 p) {
@@ -53,7 +53,7 @@ void main() {
   vec2 wobble = 0.64*vec2(sin(a+uDrawing),sin(b-1.3*uDrawing))
               + 0.36*vec2(sin(2.6*b-0.8*uDrawing),sin(2.3*a+1.7*uDrawing));
   wobble *= uWobble*(uVoice < 0.5 ? 0.43 : 1.0);
-  gl_Position = vec4(at.xy+2.0*(wobble+normal*vAcross)/uSize,at.z-0.00008,1.0);
+  gl_Position = vec4(at.xy+2.0*(wobble+normal*vAcross)/uSize,at.z-uInkLift,1.0);
   vColour = mix(aColour,uTint,uTintAmount)*(1.0+0.35*uLevel);
 }`;
 
@@ -68,7 +68,7 @@ void main() {
 }`;
 
 const uniforms = ['Right','Up','Eye','Center','Origin','ObjectScale','Tint','Turn','Size',
-  'Scale','Level','Pose','Voice','TintAmount','Opacity','Drawing','Sweep','Wobble'];
+  'Scale','Level','Pose','Voice','TintAmount','Opacity','Drawing','Sweep','Wobble','InkLift'];
 
 class InkProgram {
   constructor(gl, vertex, fragment, fields) {
@@ -106,7 +106,7 @@ class InkProgram {
     this.frame = frame;
   }
 
-  draw(buffer, count, item) {
+  draw(buffer, count, item, opacity = item.opacity) {
     if (!count) return;
     const {gl, u} = this;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -123,8 +123,9 @@ class InkProgram {
     gl.uniform1f(u.Pose, item.pose * item.level);
     gl.uniform1f(u.Voice, item.voice);
     gl.uniform1f(u.TintAmount, item.tintAmount);
-    gl.uniform1f(u.Opacity, item.opacity);
+    gl.uniform1f(u.Opacity, opacity);
     gl.uniform1f(u.Wobble, this.frame.wobble * item.wobble);
+    gl.uniform1f(u.InkLift, item.inkLift ?? 0.00008);
     gl.uniform1f(u.Sweep, item.catchesSweep ? (this.frame.sweepX ?? 30000) : 30000);
     gl.drawArrays(gl.TRIANGLES, 0, count / this.stride);
   }
@@ -180,7 +181,9 @@ export class WebInkRenderer {
     for (const item of ghosts) this.surface.draw(this.buffers.get(item.mesh)[0], item.mesh.surfaces.length, item);
     this.surface.end();
     this.ink.begin(camera, frame);
-    for (const item of items) this.ink.draw(this.buffers.get(item.mesh)[1], item.mesh.strokes.length, item);
+    for (const item of items) {
+      this.ink.draw(this.buffers.get(item.mesh)[1], item.mesh.strokes.length, item, item.opacity * (item.inkOpacity ?? 1));
+    }
     this.ink.end();
   }
 }
@@ -196,11 +199,13 @@ export class CanvasInkRenderer {
     ctx.clearRect(0, 0, camera.width, camera.height);
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    const commands = items.flatMap(item => item.mesh.commands.map(command => {
+    const commands = items.flatMap(item => item.mesh.commands.map((command, index) => {
       const points = command.points.map(point => transformPoint(point, item));
-      const depth = points.reduce((sum, point) => sum + dot(point, camera.eye), 0) / points.length;
-      const layer = item.canvasLayer === undefined ? 4 : item.canvasLayer + (command.width ? 1 : 0);
-      return {points, depth: depth + (command.width ? 0.02 : 0), layer, command, item};
+      const depth = item.canvasFlat ? index : item.mesh.canvasFront
+        ? dot(item.origin, camera.eye) + 0.56 + (index / item.mesh.commands.length) * 0.06
+        : points.reduce((sum, point) => sum + dot(point, camera.eye), 0) / points.length;
+      const layer = item.canvasLayer === undefined ? 4 : item.canvasLayer + (command.width ? (item.canvasInkOffset ?? 1) : 0);
+      return {points, depth: depth + (!item.mesh.canvasFront && command.width ? 0.02 : 0), layer, command, item};
     })).sort((a, b) => a.layer - b.layer || a.depth - b.depth);
     for (const {points, command, item} of commands) {
       ctx.beginPath();
@@ -223,7 +228,7 @@ export class CanvasInkRenderer {
         const rgb = channels(colour).map((n, i) => (n * (1 - item.tintAmount) + item.tint[i] * item.tintAmount) * brightness);
         colour = `rgb(${rgb.map(n => Math.min(255, Math.round(255 * n))).join(',')})`;
       }
-      ctx.globalAlpha = item.opacity;
+      ctx.globalAlpha = item.opacity * (command.width ? (item.inkOpacity ?? 1) : 1);
       if (command.width) {
         ctx.lineWidth = command.width * (1 + item.level * 0.17);
         ctx.strokeStyle = colour;
