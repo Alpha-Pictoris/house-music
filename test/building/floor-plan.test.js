@@ -28,3 +28,17 @@ test("undo restores a removed room with its door and furniture", () => {
   editor.undo();
   assert.equal(editor.house, furnished);
 });
+
+test("a doorway fits an exactly one-unit shared span", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: 0, z: 0 }, { x: 4, z: 2.3 });
+  editor.drawRoom({ x: 4, z: 1.3 }, { x: 8, z: 5 });
+  editor.addDoor({ x: 4, z: 1.8 });
+  assert.equal(FloorPlan.walls(editor.house).filter(wall => wall.rooms.length === 2).length, 0);
+});
+
+test("an invalid doorway point leaves the shared wall intact", () => {
+  const editor = joinedRooms();
+  assert.throws(() => editor.addDoor({ x: NaN, z: 3 }));
+  assert.deepEqual(editor.house.doors, []);
+});

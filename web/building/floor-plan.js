@@ -86,9 +86,10 @@ export class FloorPlan {
   }
 
   static doorAt(house, point, tolerance = 0.6) {
+    if (![point.x, point.z].every(Number.isFinite)) return null;
     let best = null, nearest = tolerance;
     for (const wall of FloorPlan.wallSpans(house)) {
-      if (wall.rooms.length !== 2 || wall.end - wall.start < 1) continue;
+      if (wall.rooms.length !== 2 || wall.end - wall.start < 1 - epsilon) continue;
       const along = wall.axis === "x" ? point.x : point.z;
       const across = wall.axis === "x" ? point.z : point.x;
       const centre = round(Math.max(wall.start + 0.5, Math.min(wall.end - 0.5, along)));
@@ -115,10 +116,10 @@ export class FloorPlan {
       const parts = [];
       let start = wall.start;
       for (const centre of openings) {
-        if (centre - 0.5 > start) parts.push({ ...wall, start, end: centre - 0.5 });
+        if (centre - 0.5 > start + epsilon) parts.push({ ...wall, start, end: centre - 0.5 });
         start = centre + 0.5;
       }
-      if (start < wall.end) parts.push({ ...wall, start });
+      if (start < wall.end - epsilon) parts.push({ ...wall, start });
       return parts;
     });
   }

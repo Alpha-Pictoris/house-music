@@ -41,10 +41,10 @@ test("one undo reverses a move and redo restores it", () => {
   assert.equal(editor.house.pieces[0].x, 4);
 });
 
-test("tuning a duplicate leaves the first lamp alone", () => {
+test("tuning a duplicate leaves the original guitar pitch alone", () => {
   const editor = parlour();
-  const lamp = editor.place("lamp", { x: 1, z: 1 });
-  const copy = editor.duplicate(lamp.id, { x: 4, z: 1 });
-  editor.tune(copy.id, "snare");
-  assert.deepEqual(editor.house.pieces.map(piece => piece.hit), ["kick", "snare"]);
+  const guitar = editor.place("wardrobe", { x: 1, z: 1 });
+  const copy = editor.duplicate(guitar.id, { x: 4, z: 1 });
+  editor.tune(copy.id, 55);
+  assert.deepEqual(editor.house.pieces.map(piece => piece.pitch), [50, 55]);
 });
