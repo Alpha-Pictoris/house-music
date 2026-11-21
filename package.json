@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node scripts/build.mjs",
     "test": "node --test",
-    "start": "python3 -m http.server 5173 --directory web"
+    "start": "npm run build && python3 -m http.server 5173 --directory dist"
   }
 }
