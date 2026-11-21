@@ -6,6 +6,8 @@ import {drawDomestic, livingModels} from './domestic-art.js';
 import {roomModels} from './rooms-art.js';
 import {gardenModels} from './garden-art.js';
 import {landscape} from './landscape.js';
+import {MarchingBand} from './marching-band.js';
+import {marcherItem} from './marcher-art.js';
 import {ornament} from './fittings-art.js';
 import {InkMesh, channels, clamp, dot, instance, transformPoint} from './ink-mesh.js';
 import {CanvasInkRenderer, WebInkRenderer} from './ink-renderer.js';
@@ -176,6 +178,7 @@ export class HouseScene {
   camera = null;
   floorCache = new Map();
   markCache = new Map();
+  parade = new MarchingBand();
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -252,6 +255,11 @@ export class HouseScene {
   zoom(factor) {
     this.magnification = clamp(this.magnification * factor, 0.42, 4);
     this.camera = null;
+  }
+
+  enter(house) {
+    this.parade = new MarchingBand();
+    this.fit(house);
   }
 
   fit(house = emptyHouse) {
@@ -333,20 +341,21 @@ export class HouseScene {
     return instance(this.markCache.get(key), {origin: [x, 0, z], opacity});
   }
 
-  draw({house = emptyHouse, draftHouse = house, selection = null, preview = null, sweepX = null, levels, time = 0} = {}) {
-    this.lastRequest = {house, draftHouse, selection, preview, sweepX, levels, time};
+  draw({house = emptyHouse, draftHouse = house, selection = null, preview = null, sweepX = null, levels, beat = null, time = 0} = {}) {
+    this.lastRequest = {house, draftHouse, selection, preview, sweepX, levels, beat, time};
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const camera = this.updateCamera(rect);
     const changedSize = resize(this.target, rect.width, rect.height);
     const reducedMotion = this.motion?.matches ?? false;
     const drawing = reducedMotion ? 0 : Math.floor(time * 9) * 0.71 % (Math.PI * 200);
+    const players = this.parade.frame(draftHouse, camera, time, beat, reducedMotion);
     const placement = previewKey(preview);
     const previous = this.lastFrame;
     if (!changedSize && previous?.camera === camera && previous.house === house && previous.draftHouse === draftHouse &&
         previous.selection === selection && previous.placement === placement && previous.sweepX === sweepX &&
-        previous.drawing === drawing && previous.reducedMotion === reducedMotion && sameLevels(levels, this.lastLevels)) return;
-    this.lastFrame = {camera, house, draftHouse, selection, placement, sweepX, drawing, reducedMotion};
+        previous.players === players && previous.drawing === drawing && previous.reducedMotion === reducedMotion && sameLevels(levels, this.lastLevels)) return;
+    this.lastFrame = {camera, house, draftHouse, selection, placement, sweepX, drawing, reducedMotion, players};
     this.lastLevels = new Map();
     if (levels) for (const [id, level] of levels) this.lastLevels.set(id, quantizedLevel(level));
     this.ground.inkOpacity = house.rooms.length ? 0.34 : 1;
@@ -360,6 +369,7 @@ export class HouseScene {
     for (const piece of house.pieces) {
       items.push(...pieceItems(piece, {level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
     }
+    for (const player of players) items.push(marcherItem(player));
 
     const activeRooms = new Map(house.rooms.map(room => [room.id, room]));
     const activeDoors = new Map(house.doors.map(door => [door.id, door]));

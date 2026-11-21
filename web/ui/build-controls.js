@@ -38,7 +38,7 @@ export class BuildControls extends EventTarget {
     this.editor = editor;
     this.selection = null;
     this.pointer = { x: 0, z: 0 };
-    this.scene.fit(editor.house);
+    this.scene.enter(editor.house);
     this.use(editor.house.rooms.length ? "select" : "room");
   }
 

@@ -113,7 +113,6 @@ class HouseMusic {
       this.sampler.cancelAudition();
       const enabled = this.editor.house.band === false;
       this.editor.setBand(enabled);
-      this.#audition();
       this.notify(enabled ? "House band on. The fittings share a beat and chord progression." : "House band off. The sweep plays each fitting at its exact position.");
     };
     byId("play").onclick = () => this.togglePlay();
@@ -198,7 +197,8 @@ class HouseMusic {
       const view = this.transport.view(), house = this.editor.house;
       byId("empty-guide").hidden = Boolean(house.rooms.length || house.pieces.length || this.controls.preview);
       this.scene.draw({ house: view.house, draftHouse: house, selection: this.controls.selection,
-        preview: this.controls.preview, sweepX: view.sweepX, levels: view.levels, time: ms / 1000 });
+        preview: this.controls.preview, sweepX: view.sweepX, levels: view.levels,
+        beat: this.transport.playing ? view.beat : null, time: ms / 1000 });
       this.panel.draw(view);
     }
     requestAnimationFrame(time => this.#frame(time));
