@@ -1,4 +1,4 @@
-import { HouseLibrary } from "../library/house-library.js";
+import { HouseLibrary, HouseSaveConflict } from "../library/house-library.js";
 import { houseFromLink, houseLink, houseText, readHouse } from "../library/house-format.js";
 import { nightGarden } from "../houses/night-garden.js";
 
@@ -36,7 +36,7 @@ export class HouseFiles {
     byId("open-file").onclick = () => byId("file-input").click();
     byId("file-input").onchange = event => this.#readFile(event.target);
     byId("keep-copy").onclick = () => this.keep();
-    byId("return-home").onclick = () => { this.#clearLink(); this.restore(); };
+    byId("return-home").onclick = () => this.#returnHome();
     byId("copy-url").onclick = () => this.#copy();
     byId("download").onclick = () => this.download();
     window.addEventListener("hashchange", () => this.restore());
@@ -81,6 +81,22 @@ export class HouseFiles {
     try {
       this.#id = this.library.save(this.#id, house);
       this.#saveStatus("");
+    } catch (error) {
+      if (error instanceof HouseSaveConflict) {
+        this.#draft = true;
+        byId("draft-label").textContent = "Unsaved edits";
+        byId("draft-bar").hidden = false;
+      }
+      this.#saveStatus(error.message);
+    }
+  }
+
+  #returnHome() {
+    try {
+      const saved = this.#draft && this.#id ? this.library.open(this.#id) : null;
+      this.#clearLink();
+      if (saved) this.#load(saved.house, saved.id, false);
+      else this.restore();
     } catch (error) { this.#saveStatus(error.message); }
   }
 
@@ -109,7 +125,7 @@ export class HouseFiles {
       for (const entry of houses) {
         const button = document.createElement("button");
         button.textContent = entry.title;
-        if (entry.id === this.#id) button.setAttribute("aria-current", "true");
+        if (!this.#draft && entry.id === this.#id) button.setAttribute("aria-current", "true");
         button.onclick = () => {
           try {
             const saved = this.library.open(entry.id);

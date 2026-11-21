@@ -76,3 +76,23 @@ test("corrupted and unavailable storage report errors without replacing saves", 
   assert.equal(storage.getItem(key), "{broken");
   assert.throws(() => new HouseLibrary(null).current(), /storage/i);
 });
+
+test("a stale edit to the same house can be saved as a separate copy", () => {
+  const storage = memoryStorage();
+  const firstTab = new HouseLibrary(storage);
+  const secondTab = new HouseLibrary(storage);
+  const first = new HouseEditor();
+  const id = firstTab.save(null, first.house);
+  const second = new HouseEditor(secondTab.current().house);
+
+  first.drawRoom({ x: 0, z: 0 }, { x: 6, z: 4 });
+  firstTab.save(id, first.house);
+  second.rename("My arrangement");
+  assert.throws(() => secondTab.save(id, second.house), /another tab/i);
+  assert.deepEqual(secondTab.open(id).house, first.house);
+
+  const copy = secondTab.save(null, second.house);
+  assert.notEqual(copy, id);
+  assert.deepEqual(secondTab.open(copy).house, second.house);
+  assert.deepEqual(secondTab.open(id).house, first.house);
+});

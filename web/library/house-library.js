@@ -2,8 +2,15 @@ import { readHouse } from "./house-format.js";
 
 const key = "house-music.library";
 
+export class HouseSaveConflict extends Error {
+  constructor() {
+    super("This house changed in another tab. Save a copy to keep your edits.");
+  }
+}
+
 export class HouseLibrary {
   #storage;
+  #opened = new Map();
 
   constructor(storage) {
     this.#storage = storage;
@@ -49,7 +56,10 @@ export class HouseLibrary {
 
   current() {
     const { activeId, houses } = this.#read();
-    return houses.find(entry => entry.id === activeId) ?? null;
+    const entry = houses.find(entry => entry.id === activeId);
+    if (!entry) return null;
+    this.#opened.set(entry.id, JSON.stringify(entry.house));
+    return entry;
   }
 
   open(id) {
@@ -60,6 +70,7 @@ export class HouseLibrary {
       library.activeId = id;
       this.#write(library);
     }
+    this.#opened.set(id, JSON.stringify(entry.house));
     return entry;
   }
 
@@ -74,10 +85,12 @@ export class HouseLibrary {
     } else {
       const entry = library.houses.find(entry => entry.id === id);
       if (!entry) throw Error("This house is no longer in the saved library. Save a copy to keep your edits.");
+      if (this.#opened.get(id) !== JSON.stringify(entry.house)) throw new HouseSaveConflict();
       entry.house = snapshot;
     }
     library.activeId = id;
     this.#write(library);
+    this.#opened.set(id, JSON.stringify(snapshot));
     return id;
   }
 }

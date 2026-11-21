@@ -217,6 +217,7 @@ export class BuildControls extends EventTarget {
   }
 
   #key(event) {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
     const arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     if (arrows[event.key]) {
       event.preventDefault();
