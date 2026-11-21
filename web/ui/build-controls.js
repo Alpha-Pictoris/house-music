@@ -9,6 +9,7 @@ export class BuildControls extends EventTarget {
   #anchor = null;
   #gesture = null;
   #copy = null;
+  #turn = 0;
 
   constructor(canvas, scene, editor, notify) {
     super();
@@ -51,7 +52,7 @@ export class BuildControls extends EventTarget {
   }
 
   choose(kind, source = null) {
-    if (!this.editor.house.rooms.length) {
+    if (!this.editor.house.rooms.length && !furniture[kind].garden) {
       this.use("room");
       this.notify("Draw a room to place the " + furniture[kind].label.toLowerCase() + ".");
       return;
@@ -59,6 +60,7 @@ export class BuildControls extends EventTarget {
     this.use("place");
     this.kind = kind;
     this.#copy = source;
+    this.#turn = source?.turn ?? 0;
     this.#changed();
   }
 
@@ -74,7 +76,13 @@ export class BuildControls extends EventTarget {
     catch (error) { this.notify(error.message); return null; }
   }
 
-  rotate() { this.#run(() => this.editor.rotate(this.selection)); }
+  rotate() {
+    if (this.tool === "place" && this.kind) {
+      if (furniture[this.kind].layer === "wall") return;
+      this.#turn = (this.#turn + 1) % 4;
+      this.#hover(this.pointer);
+    } else if (this.selectedPiece) this.#run(() => this.editor.rotate(this.selection));
+  }
   tune(value) { this.#run(() => this.editor.tune(this.selection, value)); }
   duplicate() {
     const piece = this.selectedPiece;
@@ -98,10 +106,16 @@ export class BuildControls extends EventTarget {
     this.preview = { type: "piece", piece: placed, valid: !FloorPlan.pieceError(this.editor.house, placed) };
   }
 
+  #destination(piece, dx, dz) {
+    const box = FloorPlan.footprint(piece);
+    if (furniture[piece.kind].layer === "wall") return { x: box.x + box.width / 2 + dx, z: box.z + box.depth / 2 + dz };
+    return { x: box.x + dx, z: box.z + dz };
+  }
+
   #hover(point) {
     if (this.tool === "room" && this.#anchor) this.#roomPreview(this.#anchor, point);
     if (this.tool === "place" && this.kind) {
-      this.#piecePreview({ ...(this.#copy ?? newPiece(this.kind)), id: null }, point);
+      this.#piecePreview({ ...(this.#copy ?? newPiece(this.kind)), id: null, turn: this.#turn }, point);
     }
     if (this.tool === "door") {
       const door = FloorPlan.doorAt(this.editor.house, point);
@@ -132,7 +146,7 @@ export class BuildControls extends EventTarget {
     drag.moved = true;
     if (this.tool === "room") this.#roomPreview(this.#anchor ?? drag.start, point);
     else if (this.tool === "select" && drag.piece) {
-      this.#piecePreview(drag.piece, { x: drag.piece.x + point.x - drag.start.x, z: drag.piece.z + point.z - drag.start.z });
+      this.#piecePreview(drag.piece, this.#destination(drag.piece, point.x - drag.start.x, point.z - drag.start.z));
     } else if (this.tool === "orbit" || this.tool === "select") {
       this.scene.orbit(event.clientX - drag.lastX, event.clientY - drag.lastY);
     } else this.#hover(point);
@@ -157,10 +171,14 @@ export class BuildControls extends EventTarget {
   }
 
   #placeAt(point) {
-    const piece = this.#run(() => this.#copy ? this.editor.duplicate(this.#copy.id, point) : this.editor.place(this.kind, point));
+    const piece = this.#run(() => this.#copy ? this.editor.duplicate(this.#copy.id, point, this.#turn) : this.editor.place(this.kind, point, undefined, this.#turn));
     if (piece) {
+      if (piece.kind === "path" && !this.#copy) {
+        this.notify("Flagstone laid. Tap to extend the path.");
+        return;
+      }
       this.select(piece.id);
-      this.notify(furniture[piece.kind].label + " placed.");
+      this.notify(furniture[piece.kind].label + (furniture[piece.kind].garden ? " placed." : " placed. Open Fittings to change its sound."));
     }
   }
 
@@ -186,8 +204,8 @@ export class BuildControls extends EventTarget {
     else if (this.tool === "door") this.#doorAt(point);
     else if (this.tool === "select" && drag.piece) {
       if (drag.moved) {
-        const to = { x: drag.piece.x + point.x - drag.start.x, z: drag.piece.z + point.z - drag.start.z };
-        this.#run(() => this.editor.move(drag.piece.id, to));
+        const to = this.#destination(drag.piece, point.x - drag.start.x, point.z - drag.start.z);
+        if (!this.#run(() => this.editor.move(drag.piece.id, to))) { this.preview = null; return; }
       }
       this.select(drag.piece.id);
     } else if (this.tool === "select" && !drag.moved) {
@@ -205,7 +223,7 @@ export class BuildControls extends EventTarget {
       const [dx, dz] = arrows[event.key], step = event.shiftKey ? 1 : 0.25;
       const selected = this.selectedPiece;
       if (this.tool === "select" && selected) {
-        this.#run(() => this.editor.move(selected.id, { x: selected.x + dx * step, z: selected.z + dz * step }));
+        this.#run(() => this.editor.move(selected.id, this.#destination(selected, dx * step, dz * step)));
       } else if (this.tool === "orbit") this.scene.orbit(dx * 10, dz * 10);
       else {
         this.pointer = { x: this.pointer.x + dx * step, z: this.pointer.z + dz * step };
@@ -220,7 +238,7 @@ export class BuildControls extends EventTarget {
       } else if (this.tool === "place") this.#placeAt(this.pointer);
       else if (this.tool === "door") this.#doorAt(this.pointer);
     } else if (event.key === "Escape") this.use(this.editor.house.rooms.length ? "select" : "room");
-    else if (event.key.toLowerCase() === "r" && this.selectedPiece) this.rotate();
+    else if (event.key.toLowerCase() === "r") this.rotate();
     else if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); this.remove(); }
     else if (event.key === " ") { event.preventDefault(); this.dispatchEvent(new Event("play")); }
   }

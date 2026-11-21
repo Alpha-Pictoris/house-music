@@ -1,7 +1,8 @@
 import { HouseLibrary } from "../library/house-library.js";
 import { houseFromLink, houseLink, houseText, readHouse } from "../library/house-format.js";
+import { nightGarden } from "../houses/night-garden.js";
 
-const byId = id => document.getElementById(id);
+import { byId } from "./elements.js";
 
 export class HouseFiles {
   #id = null;
@@ -44,6 +45,7 @@ export class HouseFiles {
   #clearLink() {
     const url = new URL(location.href);
     url.hash = "";
+    url.searchParams.delete("visit");
     history.replaceState(null, "", url);
   }
 
@@ -60,6 +62,11 @@ export class HouseFiles {
     try {
       const shared = houseFromLink(location.href);
       if (shared) { this.#load(shared, null, true); return; }
+      if (new URL(location.href).searchParams.get("visit") === "night-garden") {
+        this.#load(readHouse(nightGarden), null, true);
+        byId("draft-label").textContent = "Visiting Night Garden";
+        return;
+      }
       const local = this.library.current();
       this.#load(local?.house, local?.id ?? null, false);
     } catch (error) {
@@ -135,7 +142,9 @@ export class HouseFiles {
 
   share() {
     try {
-      const url = houseLink(this.getHouse(), location.href);
+      const base = new URL(location.href);
+      base.searchParams.delete("visit");
+      const url = houseLink(this.getHouse(), base);
       byId("share-url").value = url;
       const large = url.length > 6000;
       byId("download").classList.toggle("action", large);
