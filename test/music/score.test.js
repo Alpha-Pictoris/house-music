@@ -26,3 +26,10 @@ test("a room to the left adds whole bars", () => {
   const { left, beats } = Score.from(editor.house);
   assert.deepEqual([left, beats], [-4, 12]);
 });
+
+test("a decimal room ending on a bar line adds no extra bar", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: -7.999, z: 0 }, { x: 4, z: 4 });
+  const { left, beats } = Score.from(editor.house);
+  assert.deepEqual([left, beats], [-8, 12]);
+});

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HouseEditor } from "../../web/building/house-editor.js";
+import { readHouse } from "../../web/library/house-format.js";
 import { Transport } from "../../web/music/transport.js";
 
 function rehearsal(x = 0) {
@@ -64,4 +65,47 @@ test("pause cancels future starts and resume keeps the floor position", () => {
   advance(3);
   transport.play();
   assert.ok(Math.abs(transport.view().sweepX - x) < 1e-8);
+});
+
+test("a slightly late tick plays an unqueued downbeat once", () => {
+  const { transport, notes, advance } = rehearsal();
+  transport.play();
+  advance(1.76);
+  advance(1.88);
+  advance(1.9);
+  assert.deepEqual(notes.map(n => n.time), [0, 1.88]);
+});
+
+test("a valid house with an anchor within placement tolerance plays on the downbeat", () => {
+  const { editor, transport, notes } = rehearsal();
+  const house = readHouse({
+    ...editor.house,
+    pieces: [{ ...editor.house.pieces[0], x: -0.000005 }]
+  });
+  transport.setHouse(house);
+  transport.play();
+  assert.deepEqual(notes.map(n => n.time), [0]);
+});
+
+test("removing the last room cancels its queued downbeat", () => {
+  const { editor, transport, notes, advance } = rehearsal();
+  transport.play();
+  advance(1.8);
+  editor.remove(editor.house.rooms[0].id);
+  transport.setHouse(editor.house);
+  advance(1.88);
+  assert.deepEqual(transport.view().house.rooms, []);
+  assert.deepEqual(notes.map(n => n.time), [0]);
+});
+
+test("switching back to goth keeps the beat and delays a queued note", () => {
+  const { transport, notes, advance } = rehearsal(1);
+  transport.setMode("nightcore");
+  transport.play();
+  advance(0.35);
+  const beat = transport.view().beat;
+  transport.setMode("goth");
+  assert.ok(Math.abs(transport.view().beat - beat) < 1e-8);
+  assert.equal(notes.length, 1);
+  assert.ok(Math.abs(notes[0].time - 0.38125) < 1e-8);
 });

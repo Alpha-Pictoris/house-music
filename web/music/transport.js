@@ -2,6 +2,7 @@ import { arrangements } from "./arrangements.js";
 import { Score } from "./score.js";
 
 const lookahead = 0.1;
+const downbeatGrace = 0.025;
 const near = 1e-9;
 
 export class Transport {
@@ -98,23 +99,25 @@ export class Transport {
     this.#cursor = 0;
   }
 
-  #schedule(score, origin, from, until) {
+  #schedule(score, origin, from, until, now = from) {
     const { bpm, rate } = arrangements[this.mode];
     for (const event of score.events) {
       const when = origin + event.beat * this.#seconds;
       if (when < from - near) continue;
       if (when >= until - near) break;
-      this.#sink.start(event, when, bpm, rate);
-      this.#pulses.push({ id: event.pieceId, time: when, span: (event.gate ?? 0.45) * this.#seconds });
+      const start = Math.max(when, now);
+      this.#sink.start(event, start, bpm, rate);
+      this.#pulses.push({ id: event.pieceId, time: start, span: (event.gate ?? 0.45) * this.#seconds });
     }
   }
 
   tick(now = this.#clock()) {
     if (!this.playing) return;
     this.#advance(now);
-    const from = Math.max(this.#queuedUntil, now), until = now + lookahead;
+    const earliest = this.#origin >= now - downbeatGrace ? this.#origin : now;
+    const from = Math.max(this.#queuedUntil, earliest), until = now + lookahead;
     const boundary = this.#boundary;
-    this.#schedule(this.#score, this.#origin, from, Math.min(until, boundary));
+    this.#schedule(this.#score, this.#origin, from, Math.min(until, boundary), now);
     if (until > boundary) this.#schedule(this.#next, boundary, Math.max(from, boundary), until);
     this.#queuedUntil = until;
     this.#pulses = this.#pulses.filter(pulse => pulse.time + pulse.span + 0.1 >= now);
