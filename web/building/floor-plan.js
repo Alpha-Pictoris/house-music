@@ -31,6 +31,13 @@ export class FloorPlan {
     if (room.width < 2 || room.depth < 2) return "Draw a room at least two units wide and deep.";
     if ([room.x, room.z, room.x + room.width, room.z + room.depth].some(n => Math.abs(n) > 256)) return "Draw closer to the centre of the plot.";
     if (house.rooms.some(other => other.id !== room.id && overlaps(other, room))) return "Place the new room beside the existing walls.";
+    if (house.pieces.some(piece => furniture[piece.kind].garden && overlaps(room, FloorPlan.footprint(piece)))) {
+      return "Move the garden pieces before building here.";
+    }
+    const expanded = { ...house, rooms: [...house.rooms, room] };
+    if (house.pieces.some(piece => furniture[piece.kind].layer === "wall" && !FloorPlan.windowFits(expanded, piece))) {
+      return "Move the window before extending its wall.";
+    }
     return "";
   }
 
@@ -51,12 +58,47 @@ export class FloorPlan {
 
   static pieceError(house, piece) {
     const box = FloorPlan.footprint(piece);
+    const item = furniture[piece.kind];
+    if (![box.x, box.z, box.x + box.width, box.z + box.depth].every(n => Number.isFinite(n) && Math.abs(n) <= 256)) {
+      return "Choose a spot on the plot.";
+    }
     const room = house.rooms.find(candidate => candidate.id === piece.roomId);
-    if (!room || !inside(room, box)) return "Place the whole piece inside a room.";
-    if (house.pieces.some(other => other.id !== piece.id && overlaps(box, FloorPlan.footprint(other)))) {
+    if (item.garden) {
+      if (piece.roomId !== null || house.rooms.some(candidate => overlaps(box, candidate))) return "Place this piece in the garden.";
+    } else if (item.layer === "wall") {
+      if (!room || !FloorPlan.windowFits(house, piece)) return "Choose an outside wall for the window.";
+    } else if (!room || !inside(room, box)) return "Place the whole piece inside a room.";
+    if (house.pieces.some(other => other.id !== piece.id && furniture[other.kind].layer === item.layer && overlaps(box, FloorPlan.footprint(other)))) {
       return "Leave enough space between the pieces.";
     }
     return "";
+  }
+
+  static windowAt(house, point, reach = 0.85) {
+    let nearest = null;
+    const { width, depth } = furniture.window;
+    for (const wall of FloorPlan.wallSpans(house)) {
+      if (wall.rooms.length !== 1 || wall.end - wall.start < width - epsilon) continue;
+      const room = house.rooms.find(item => item.id === wall.rooms[0]);
+      const horizontal = wall.axis === "x";
+      const back = Math.abs(wall.at - (horizontal ? room.z : room.x)) < epsilon;
+      const along = horizontal ? point.x : point.z;
+      const start = round(Math.max(wall.start, Math.min(wall.end - width, along - width / 2)));
+      const distance = Math.hypot((horizontal ? point.z : point.x) - wall.at, along - start - width / 2);
+      if (distance > reach || (nearest && nearest.distance <= distance)) continue;
+      const edge = round(wall.at - (back ? 0 : depth));
+      nearest = { distance, placement: { x: horizontal ? start : edge, z: horizontal ? edge : start,
+        roomId: room.id, turn: horizontal ? (back ? 0 : 2) : (back ? 1 : 3) } };
+    }
+    return nearest?.placement ?? null;
+  }
+
+  static windowFits(house, piece) {
+    const box = FloorPlan.footprint(piece);
+    const point = { x: box.x + box.width / 2, z: box.z + box.depth / 2 };
+    const wall = FloorPlan.windowAt(house, point);
+    return wall?.roomId === piece.roomId && wall.turn === piece.turn &&
+      Math.abs(wall.x - piece.x) < epsilon && Math.abs(wall.z - piece.z) < epsilon;
   }
 
   static wallSpans(house) {

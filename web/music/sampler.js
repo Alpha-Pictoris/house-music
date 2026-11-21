@@ -1,7 +1,7 @@
-import { voiceFor } from "../building/catalogue.js";
+import { notesFor } from "./phrases.js";
 import { arrangements } from "./arrangements.js";
 
-const recordings = ["guitar", "bass", "kick", "snare", "hat"];
+const recordings = ["guitar", "bass", "kick", "snare", "hat", "harp", "celesta"];
 
 export class Sampler {
   #context;
@@ -9,6 +9,9 @@ export class Sampler {
   #buffers = new Map();
   #loading;
   #voices = new Set();
+  #audition = 0;
+  #carpet;
+  #echo;
 
   get now() { return this.#context?.currentTime ?? 0; }
 
@@ -21,6 +24,10 @@ export class Sampler {
       this.#output.threshold.value = -7;
       this.#output.ratio.value = 5;
       this.#output.connect(this.#context.destination);
+      this.#carpet = this.#context.createBiquadFilter();
+      this.#carpet.type = "lowpass";
+      this.#carpet.frequency.value = 1800;
+      this.#carpet.connect(this.#output);
     }
     const resumed = this.#context.state === "running" ? Promise.resolve() : this.#context.resume();
     if (!this.#loading) {
@@ -35,10 +42,16 @@ export class Sampler {
     await Promise.all([resumed, this.#loading]);
   }
 
-  async audition(piece, mode) {
+  async audition(piece, mode, finish = "walnut") {
+    const request = ++this.#audition;
+    for (const voice of this.#voices) if (voice.audition) this.#stop(voice, this.now);
+    const notes = notesFor(piece);
+    if (!notes.length) return;
     await this.enable();
+    if (request !== this.#audition || document.hidden) return;
     const { bpm, rate } = arrangements[mode];
-    this.start(voiceFor(piece), this.now, bpm, rate, true);
+    const now = this.now;
+    for (const note of notes) this.start({ ...note, finish }, now + note.offset * 60 / bpm, bpm, rate, true);
   }
 
   start(event, when, bpm, rate, audition = false) {
@@ -55,7 +68,17 @@ export class Sampler {
     level.gain.linearRampToValueAtTime(0.82, start + 0.003);
     level.gain.setValueAtTime(0.82, start + Math.max(0.004, length - 0.025));
     level.gain.linearRampToValueAtTime(0, start + length);
-    source.connect(level).connect(this.#output);
+    source.connect(level).connect(event.finish === "moss" ? this.#carpet : this.#output);
+    if (event.finish === "moonstone") {
+      if (!this.#echo) {
+        const delay = context.createDelay(), reflection = context.createGain();
+        delay.delayTime.value = 0.135;
+        reflection.gain.value = 0.22;
+        delay.connect(reflection).connect(this.#output);
+        this.#echo = delay;
+      }
+      level.connect(this.#echo);
+    }
     const voice = { source, level, start: when, audition, stopped: false };
     this.#voices.add(voice);
     source.onended = () => {
@@ -68,17 +91,24 @@ export class Sampler {
   }
 
   cancelFrom(when, silence = false) {
+    if (silence) {
+      this.#audition++;
+      this.#echo?.disconnect();
+      this.#echo = null;
+    }
     for (const voice of this.#voices) {
-      if (voice.stopped || (!silence && (voice.audition || voice.start < when))) continue;
-      voice.stopped = true;
-      if (voice.start >= when) {
-        voice.source.stop(Math.max(when, this.now));
-      } else {
-        const gain = voice.level.gain;
-        gain.cancelScheduledValues(when);
-        gain.setTargetAtTime(0, when, 0.003);
-        voice.source.stop(when + 0.02);
-      }
+      if (silence || (!voice.audition && voice.start >= when)) this.#stop(voice, when);
+    }
+  }
+
+  #stop(voice, when) {
+    if (voice.stopped) return;
+    voice.stopped = true;
+    if (voice.start >= when) voice.source.stop(Math.max(when, this.now));
+    else {
+      voice.level.gain.cancelScheduledValues(when);
+      voice.level.gain.setTargetAtTime(0, when, 0.003);
+      voice.source.stop(when + 0.02);
     }
   }
 }

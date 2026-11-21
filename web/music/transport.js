@@ -135,7 +135,7 @@ export class Transport {
       }
     }
     return {
-      house: this.#score.house, beat, beats: this.#score.beats,
+      house: this.#score.house, events: this.#score.events, beat, beats: this.#score.beats,
       sweepX: this.#played ? this.#score.left + beat : null, levels
     };
   }

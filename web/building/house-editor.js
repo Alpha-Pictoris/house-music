@@ -1,6 +1,8 @@
-import { newPiece, tunings } from "./catalogue.js";
+import { fittingOf, furniture, newPiece, roomFinishes } from "./catalogue.js";
+import { fittings, tunings } from "./fittings.js";
 import { FloorPlan } from "./floor-plan.js";
 import { arrangements } from "../music/arrangements.js";
+import { phrases } from "../music/phrases.js";
 
 function freeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -68,6 +70,20 @@ export class HouseEditor extends EventTarget {
     return room;
   }
 
+  styleRoom(id, change) {
+    const room = this.house.rooms.find(item => item.id === id);
+    if (!room) throw Error("Select a room.");
+    const updated = { ...room };
+    if (change.finish !== undefined) {
+      if (!Object.hasOwn(roomFinishes, change.finish)) throw Error("Choose a room finish.");
+      updated.finish = change.finish;
+    }
+    if (change.name !== undefined) updated.name = change.name.trim().slice(0, 40);
+    if (updated.name !== room.name || updated.finish !== room.finish) {
+      this.#commit({ rooms: this.house.rooms.map(item => item.id === id ? updated : item) });
+    }
+  }
+
   #piece(id) {
     const piece = this.house.pieces.find(item => item.id === id);
     if (!piece) throw Error("Select a piece of furniture.");
@@ -76,7 +92,10 @@ export class HouseEditor extends EventTarget {
 
   preview(piece, point) {
     const placed = { ...piece, x: Math.round(point.x * 1000) / 1000, z: Math.round(point.z * 1000) / 1000 };
-    placed.roomId = FloorPlan.roomFor(this.house, placed)?.id ?? null;
+    const item = furniture[piece.kind];
+    placed.roomId = null;
+    if (item.layer === "wall") Object.assign(placed, FloorPlan.windowAt(this.house, point));
+    else if (!item.garden) placed.roomId = FloorPlan.roomFor(this.house, placed)?.id ?? null;
     return placed;
   }
 
@@ -89,8 +108,10 @@ export class HouseEditor extends EventTarget {
     return piece;
   }
 
-  place(kind, point, tuning) {
+  place(kind, point, tuning, turn = 0) {
     const piece = newPiece(kind);
+    if (!Number.isInteger(turn) || turn < 0 || turn > 3) throw Error("Choose a quarter turn.");
+    piece.turn = turn;
     if (tuning !== undefined) this.#setTuning(piece, tuning);
     return this.#put(this.preview({ ...piece, id: this.#id("p") }, point));
   }
@@ -99,13 +120,34 @@ export class HouseEditor extends EventTarget {
 
   rotate(id) {
     const piece = this.#piece(id);
+    if (furniture[piece.kind].layer === "wall") throw Error("Move the window to another wall to turn it.");
     return this.#put({ ...piece, turn: (piece.turn + 1) % 4 });
   }
 
   #setTuning(piece, value) {
-    if (!tunings(piece.kind).some(option => option.value === value)) throw Error("Choose a note or drum hit from the catalogue.");
-    if (piece.kind === "lamp") piece.hit = value;
+    const fitting = fittingOf(piece);
+    if (!tunings(fitting).some(option => option.value === value)) throw Error("Choose a note or drum hit from the catalogue.");
+    if (fittings[fitting].hits) piece.hit = value;
     else piece.pitch = value;
+  }
+
+  fitPiece(id, fitting) {
+    const piece = this.#piece(id);
+    if (!Object.hasOwn(fittings, fitting) || furniture[piece.kind].garden) throw Error("Choose a fitting for an indoor piece.");
+    if (fitting === fittingOf(piece)) return piece;
+    const updated = { ...piece, fitting };
+    delete updated.pitch;
+    delete updated.hit;
+    const voice = fittings[fitting];
+    if (voice.hits) updated.hit = "kick";
+    if (voice.sample) updated.pitch = voice.root;
+    return this.#put(updated);
+  }
+
+  setPhrase(id, phrase) {
+    const piece = this.#piece(id);
+    if (fittingOf(piece) === "plain" || !Object.hasOwn(phrases, phrase)) throw Error("Choose a phrase for a musical fitting.");
+    return this.#put({ ...piece, phrase });
   }
 
   tune(id, value) {
@@ -114,8 +156,9 @@ export class HouseEditor extends EventTarget {
     return this.#put(piece);
   }
 
-  duplicate(id, point) {
-    return this.#put(this.preview({ ...this.#piece(id), id: this.#id("p") }, point));
+  duplicate(id, point, turn = this.#piece(id).turn) {
+    if (!Number.isInteger(turn) || turn < 0 || turn > 3) throw Error("Choose a quarter turn.");
+    return this.#put(this.preview({ ...this.#piece(id), turn, id: this.#id("p") }, point));
   }
 
   addDoor(point) {

@@ -1,28 +1,35 @@
-const minorScale = [0, 2, 3, 5, 7, 8, 10, 12];
-const notes = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+import { fittings } from "./fittings.js";
 
 export const furniture = {
-  wardrobe: { label: "Wardrobe", voice: "Distorted guitar", colour: "#ff897b", width: 1.85, depth: 1, height: 3.1, sample: "guitar", root: 50, gate: 1 },
-  mirror: { label: "Mirror", voice: "Picked bass", colour: "#76e7df", width: 1.45, depth: 0.65, height: 2.7, sample: "bass", root: 38, gate: 0.5 },
-  lamp: { label: "Lamp", voice: "Drum kit", colour: "#d8eb90", width: 1, depth: 1, height: 2.3, hits: { kick: "Kick", snare: "Snare", hat: "Closed hat" } }
+  sofa:     { label: "Velvet sofa",   group: "Living",   width: 2.5,  depth: 1.2,  height: 1.45, fitting: "thorn", phrase: "answer" },
+  table:    { label: "Dining set",    group: "Living",   width: 2.1,  depth: 1.8,  height: 1.35, fitting: "glass", phrase: "arch" },
+  bookcase: { label: "Bookcase",      group: "Living",   width: 1.65, depth: 0.65, height: 2.65, fitting: "wire", phrase: "fall" },
+  lamp:     { label: "Lamp",          group: "Living",   width: 1,    depth: 1,    height: 2.3,  fitting: "stud" },
+  bed:      { label: "Bed",           group: "Bedroom",  width: 2.05, depth: 2.9,  height: 1.7,  fitting: "wire", phrase: "rise" },
+  wardrobe: { label: "Wardrobe",      group: "Bedroom",  width: 1.85, depth: 1,    height: 3.1,  fitting: "thorn" },
+  mirror:   { label: "Mirror",        group: "Bedroom",  width: 1.45, depth: 0.65, height: 2.7,  fitting: "ring" },
+  stove:    { label: "Kitchen range", group: "Fixtures", width: 1.35, depth: 1.05, height: 1.65, fitting: "stud", phrase: "answer" },
+  tub:      { label: "Clawfoot bath", group: "Fixtures", width: 2,    depth: 1.05, height: 1,    fitting: "ring", phrase: "fall" },
+  window:   { label: "Lancet window", group: "Fixtures", width: 1.4,  depth: 0.18, height: 2.5,  fitting: "plain", layer: "wall" },
+  rug:      { label: "Woven rug",     group: "Decor",    width: 2.5,  depth: 1.7,  height: 0.06, fitting: "plain", layer: "floor" },
+  fern:     { label: "Potted fern",   group: "Decor",    width: 1,    depth: 1,    height: 1.4,  fitting: "plain" },
+  tree:     { label: "Crooked tree",  group: "Garden",   width: 2,    depth: 2,    height: 3.25, fitting: "plain", garden: true },
+  path:     { label: "Flagstone",     group: "Garden",   width: 1,    depth: 1,    height: 0.08, fitting: "plain", garden: true, layer: "floor" },
+  fountain: { label: "Fountain",      group: "Garden",   width: 1.65, depth: 1.65, height: 1.5,  fitting: "plain", garden: true }
 };
 
-export function tunings(kind) {
-  const item = furniture[kind];
-  if (item.hits) return Object.entries(item.hits).map(([value, label]) => ({ value, label }));
-  return minorScale.map(step => {
-    const value = item.root + step;
-    return { value, label: notes[value % 12] + (Math.floor(value / 12) - 1) };
-  });
-}
+export const roomFinishes = {
+  walnut: { label: "Walnut & damask", sound: "Warm and dry" },
+  moonstone: { label: "Moonstone tile", sound: "A bright, short echo" },
+  moss: { label: "Moss carpet", sound: "Soft and close" }
+};
 
-export function voiceFor(piece) {
-  const item = furniture[piece.kind];
-  return { sample: item.sample ?? piece.hit, semitones: item.root ? piece.pitch - item.root : 0, gate: item.gate ?? null };
-}
+export const fittingOf = piece => piece.fitting ?? furniture[piece.kind].fitting;
+export const phraseOf = piece => piece.phrase ?? furniture[piece.kind].phrase ?? "single";
 
 export function newPiece(kind) {
-  if (!Object.hasOwn(furniture, kind)) throw Error("Choose a piece of furniture.");
-  const item = furniture[kind];
-  return { kind, turn: 0, ...(item.hits ? { hit: "kick" } : { pitch: item.root }) };
+  if (!Object.hasOwn(furniture, kind)) throw Error("Choose a piece from the catalogue.");
+  const voice = fittings[furniture[kind].fitting];
+  const tuning = voice.hits ? { hit: "kick" } : voice.sample ? { pitch: voice.root } : {};
+  return { kind, turn: 0, ...tuning };
 }

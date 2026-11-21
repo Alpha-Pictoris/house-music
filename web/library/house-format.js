@@ -1,6 +1,8 @@
-import { furniture, tunings } from "../building/catalogue.js";
+import { fittingOf, furniture, roomFinishes } from "../building/catalogue.js";
+import { fittings, tunings } from "../building/fittings.js";
 import { FloorPlan } from "../building/floor-plan.js";
 import { arrangements } from "../music/arrangements.js";
+import { phrases } from "../music/phrases.js";
 
 function requireValid(condition, message) {
   if (!condition) throw Error(message);
@@ -34,6 +36,14 @@ export function readHouse(value) {
     const id = readId(item);
     const { x, z, width, depth } = item;
     const room = { id, x, z, width, depth };
+    if (item.name !== undefined) {
+      requireValid(typeof item.name === "string" && item.name.length <= 40, "Use a room name of up to 40 characters.");
+      room.name = item.name;
+    }
+    if (item.finish !== undefined) {
+      requireValid(typeof item.finish === "string" && Object.hasOwn(roomFinishes, item.finish), "Choose a known room finish.");
+      room.finish = item.finish;
+    }
     const error = FloorPlan.roomError(house, room);
     requireValid(!error, error);
     house.rooms.push(room);
@@ -55,12 +65,25 @@ export function readHouse(value) {
     const id = readId(item);
     const { kind, roomId, x, z, turn } = item;
     requireValid(typeof kind === "string" && Object.hasOwn(furniture, kind), "The house contains an unknown piece of furniture.");
-    requireValid(roomIds.has(roomId), "Each piece of furniture needs an existing room.");
+    const design = furniture[kind];
+    requireValid(design.garden ? roomId === null : roomIds.has(roomId), "Each indoor piece needs an existing room.");
     requireValid(Number.isFinite(x) && Number.isFinite(z) && Number.isInteger(turn) && turn >= 0 && turn < 4,
       "The house contains an invalid furniture position or turn.");
-    const tuning = furniture[kind].hits ? "hit" : "pitch";
-    requireValid(tunings(kind).some(option => option.value === item[tuning]), "Choose a note or drum hit from the catalogue.");
-    const piece = { id, kind, roomId, x, z, turn, [tuning]: item[tuning] };
+    const piece = { id, kind, roomId, x, z, turn };
+    if (item.fitting !== undefined) {
+      requireValid(!design.garden && typeof item.fitting === "string" && Object.hasOwn(fittings, item.fitting), "Choose an indoor fitting.");
+      piece.fitting = item.fitting;
+    }
+    if (item.phrase !== undefined) {
+      requireValid(!design.garden && typeof item.phrase === "string" && Object.hasOwn(phrases, item.phrase), "Choose a known musical phrase.");
+      piece.phrase = item.phrase;
+    }
+    const fitting = fittingOf(piece);
+    if (fitting !== "plain") {
+      const tuning = fittings[fitting].hits ? "hit" : "pitch";
+      requireValid(tunings(fitting).some(option => option.value === item[tuning]), "Choose a note or drum hit from the catalogue.");
+      piece[tuning] = item[tuning];
+    }
     const error = FloorPlan.pieceError(house, piece);
     requireValid(!error, error);
     house.pieces.push(piece);
@@ -69,7 +92,7 @@ export function readHouse(value) {
 }
 
 export function houseText(house) {
-  return JSON.stringify(readHouse(house), null, 2);
+  return JSON.stringify(readHouse(house));
 }
 
 export function houseLink(house, baseURL) {
