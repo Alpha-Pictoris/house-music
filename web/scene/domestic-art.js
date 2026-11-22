@@ -87,6 +87,19 @@ function table(brush) {
   segment([0.16,1.046,-0.49],[0.16,1.046,0.36],'#b58170',0.9);
 }
 
+function stampedSpine({line, segment}, x, y) {
+  const at = (u, v) => [x+u,y+v,0.217];
+  const silver = '#c6e1db';
+  line(oval(x,y+0.225,0.217,0.059,0.109,'xy',20),silver,0.8,true);
+  line([at(-0.022,0.250),at(0.021,0.250),at(0.021,0.195),at(-0.022,0.195)],silver,0.58);
+  segment(at(0.021,0.223),at(-0.013,0.223),silver,0.58);
+  for (const side of [-1,1]) {
+    line([at(side*0.060,0.213),at(side*0.078,0.213),at(side*0.078,0.078),at(side*0.098,0.069)],gold,0.76);
+  }
+  segment(at(-0.10,0.065),at(0.10,0.065),gold,0.6);
+  segment(at(-0.054,0.036),at(-0.029,0.065),gold,0.55);
+}
+
 function bookcase(brush) {
   const {box, line, segment} = brush;
   const ink = '#b5b8db';
@@ -99,9 +112,11 @@ function bookcase(brush) {
     for (let i = 0; i < 7; i++) {
       const height = 0.27 + ((i * 13 + row * 7) % 11) / 58;
       const [fill, colour] = books[(i + row * 3) % books.length];
-      box(x,y,-0.22,x+0.12,y+height,0.21,fill,colour,0.71);
-      segment([x+0.02,y+height-0.06,0.214],[x+0.1,y+height-0.06,0.214],colour,0.62);
-      x += 0.145 + (i === 2 ? 0.06 : 0);
+      const stamped = row === 2 && i === 3, width = stamped ? 0.22 : 0.12;
+      box(x,y,-0.22,x+width,y+height,0.21,fill,colour,0.71);
+      if (stamped) stampedSpine(brush,x+width/2,y);
+      else segment([x+0.02,y+height-0.06,0.214],[x+0.1,y+height-0.06,0.214],colour,0.62);
+      x += width + 0.025 + (i === 2 ? 0.06 : 0);
     }
   }
   line([[-0.67,2.56,0.322],[0,2.64,0.322],[0.67,2.56,0.322]],gold,1);

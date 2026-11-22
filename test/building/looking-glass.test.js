@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { furniture } from "../../web/building/catalogue.js";
 import { HouseEditor } from "../../web/building/house-editor.js";
 import { LookingGlass } from "../../web/building/looking-glass.js";
 import { houseFromLink, houseLink } from "../../web/library/house-format.js";
@@ -11,10 +12,12 @@ function parlour() {
   return { editor, shelf, read: () => glass.read(editor.house) };
 }
 
-test("the writing follows the mirror into and out of the bookcase's room", () => {
+test("the bedroom looking glass reveals writing only in the bookcase's room", () => {
   const { editor, shelf, read } = parlour();
+  const kind = Object.keys(furniture).find(key => furniture[key].group === "Bedroom" && furniture[key].label === "Looking glass");
+  assert.ok(kind);
   editor.drawRoom({ x: 8, z: 0 }, { x: 14, z: 6 });
-  const mirror = editor.place("mirror", { x: 9, z: 1 });
+  const mirror = editor.place(kind, { x: 9, z: 1 });
   assert.equal(read().writing.size, 0);
   editor.move(mirror.id, { x: 5, z: 1 });
   assert.equal(read().writing.get(shelf.id).pool, null);

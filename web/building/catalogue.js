@@ -16,7 +16,7 @@ export const furniture = {
   clock:    { label: "Longcase clock", group: "Decor", width: 0.84, depth: 0.66, height: 2.5, fitting: "plain" },
   bed:      { label: "Bed",           group: "Bedroom",  width: 2.05, depth: 2.9,  height: 1.7,  fitting: "wire", phrase: "rise" },
   wardrobe: { label: "Wardrobe",      group: "Bedroom",  width: 1.85, depth: 1,    height: 3.1,  fitting: "thorn" },
-  mirror:   { label: "Mirror",        group: "Bedroom",  width: 1.45, depth: 0.65, height: 2.7,  fitting: "ring" },
+  mirror:   { label: "Looking glass", group: "Bedroom",  width: 1.45, depth: 0.65, height: 2.7,  fitting: "ring" },
   stove:    { label: "Kitchen range", group: "Fixtures", width: 1.35, depth: 1.05, height: 1.65, fitting: "stud", phrase: "answer" },
   tub:      { label: "Clawfoot bath", group: "Fixtures", width: 2,    depth: 1.05, height: 1,    fitting: "ring", phrase: "fall" },
   window:   { label: "Lancet window", group: "Fixtures", width: 1.4,  depth: 0.18, height: 2.5,  fitting: "plain", layer: "wall" },

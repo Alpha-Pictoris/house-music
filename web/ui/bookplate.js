@@ -1,5 +1,5 @@
-const spine = "One of the spines is stamped with a looking glass.";
-const verse = "Set a bottled moon at my left, a little book at my right. Between them, ring the water awake.";
+const spine = "A silver oval stands on the floorboards, tall as the bookcase. Inside, the titles read backwards.";
+const verse = "The shelf hums from left to right. Moonlight under cork, a single chime, the rustle of pages.";
 const water = "Beneath the boards, three golden fish are swimming.";
 
 export function bookcaseInscription(discovery) {

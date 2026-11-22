@@ -243,8 +243,9 @@ export class BuildControls extends EventTarget {
       this.#audition(piece);
       const design = furniture[piece.kind];
       let hint = "";
-      if (!design.garden) hint = fittingOf(piece) === "plain" ? " Open Fittings to choose an instrument." : " Move it along the sweep to change its timing.";
-      if (FurnitureSpots.slots(piece.kind).length) hint = " Double-tap or double-click to arrange objects.";
+      if (!design.garden && !FurnitureSpots.slots(piece.kind).length) {
+        hint = fittingOf(piece) === "plain" ? " Open Fittings to choose an instrument." : " Move it along the sweep to change its timing.";
+      }
       this.notify(design.label + " placed." + hint);
     }
   }
@@ -289,7 +290,6 @@ export class BuildControls extends EventTarget {
           this.#openOnClick = true;
         } else {
           this.#lastTap = { id: drag.piece.id, time, x, y, type };
-          this.notify("Double-tap or double-click to arrange objects.");
         }
       }
     } else if (this.tool === "select" && !drag.moved) {
