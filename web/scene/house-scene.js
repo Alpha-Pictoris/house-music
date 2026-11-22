@@ -258,7 +258,7 @@ export class HouseScene {
   }
 
   enter(house) {
-    this.parade = new MarchingBand();
+    this.parade = new MarchingBand(house.rooms.length > 0 && house.band !== false);
     this.fit(house);
   }
 

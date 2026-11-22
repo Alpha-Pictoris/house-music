@@ -1,142 +1,163 @@
-import { furniture } from '../building/catalogue.js';
-import { FloorPlan } from '../building/floor-plan.js';
+import { BandFloor } from './band-floor.js';
 
 const instruments = ['trombone', 'drum', 'sousaphone'];
-const entrance = [-0.85, 0.53];
-const tau = 2 * Math.PI;
 const empty = [];
-const lerp = (a, b, t) => a + (b - a) * t;
+const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
-class ParadeRoute {
-  constructor(house) {
-    const obstacles = house.pieces.filter(piece => furniture[piece.kind].garden && furniture[piece.kind].layer !== 'floor');
-    const boxes = [...house.rooms, ...obstacles.map(piece => FloorPlan.footprint(piece))];
-    const left = Math.min(...boxes.map(box => box.x)) - 0.72;
-    const right = Math.max(...boxes.map(box => box.x + box.width)) + 0.72;
-    const back = Math.min(...boxes.map(box => box.z)) - 0.72;
-    const front = Math.max(...boxes.map(box => box.z + box.depth)) + 0.72;
-    this.bounds = [left, right, back, front];
-    const bend = 0.43;
-    this.points = [[left + bend, front], [right - bend, front], [right, front - bend], [right, back + bend],
-      [right - bend, back], [left + bend, back], [left, back + bend], [left, front - bend]];
-    this.length = 0;
-    this.edges = this.points.map(([x, z], i) => {
-      const [endX, endZ] = this.points[(i + 1) % this.points.length];
-      const length = Math.hypot(endX - x, endZ - z);
-      const edge = { x, z, dx: (endX - x) / length, dz: (endZ - z) / length, start: this.length, length };
-      this.length += length;
-      return edge;
-    });
-  }
-
-  at(distance) {
-    const along = distance % this.length;
-    const edge = this.edges.findLast(edge => edge.start <= along);
-    return { x: edge.x + edge.dx * (along - edge.start), z: edge.z + edge.dz * (along - edge.start),
-      dx: edge.dx, dz: edge.dz };
-  }
-
-  nearest(x, z) {
-    let best = Infinity, distance = 0;
-    for (const edge of this.edges) {
-      const along = Math.max(0, Math.min(edge.length, (x - edge.x) * edge.dx + (z - edge.z) * edge.dz));
-      const gap = Math.hypot(x - edge.x - along * edge.dx, z - edge.z - along * edge.dz);
-      if (gap < best) { best = gap; distance = edge.start + along; }
-    }
-    return distance % this.length;
-  }
-}
-
-function offstage(camera, x, z, [dx, dz]) {
-  const start = camera.project([x, 0, z]), next = camera.project([x + dx, 0, z + dz]);
-  const margin = 2.3 * camera.scale + 6;
+function offstage(camera, gate) {
+  const start = camera.project([gate.x, 0, gate.z]);
+  const next = camera.project([gate.x + gate.dx, 0, gate.z + gate.dz]);
+  const margin = camera.scale * 2.1 + 6;
   const edge = (at, velocity, size) => Math.abs(velocity) < 0.0001 ? Infinity :
     ((velocity > 0 ? size + margin : -margin) - at) / velocity;
-  return Math.max(0, Math.min(edge(start.x, next.x - start.x, camera.width), edge(start.y, next.y - start.y, camera.height)));
+  const distance = Math.max(0, Math.min(edge(start.x, next.x - start.x, camera.width), edge(start.y, next.y - start.y, camera.height))) + 0.25;
+  return { x: gate.x + distance * gate.dx, z: gate.z + distance * gate.dz };
+}
+
+class Musician {
+  path = [];
+  visit = 0;
+  waiting = 0;
+  gone = false;
+
+  constructor(index, floor, camera, settled) {
+    this.index = index;
+    this.angle = 0.5 + index * 0.36;
+    this.gate = floor.gates[index];
+    const start = settled ? floor.destinations(index, 0).find(p => floor.path(this.gate, p)) ?? this.gate : offstage(camera, this.gate);
+    this.x = start.x;
+    this.z = start.z;
+    this.visit = settled ? 1 : 0;
+  }
+
+  turn(floor, camera, enabled) {
+    this.path = [];
+    this.waiting = 0;
+    if (enabled) {
+      if (this.gone) {
+        const start = offstage(camera, this.gate);
+        this.x = start.x;
+        this.z = start.z;
+        this.gone = false;
+      }
+      return;
+    }
+    if (this.gone) return;
+    const gates = [...floor.gates].sort((a, b) => gap(this, a) - gap(this, b));
+    for (const gate of gates) {
+      const end = offstage(camera, gate);
+      const path = floor.path(this, end);
+      if (!path) continue;
+      this.gate = gate;
+      this.path = path;
+      return;
+    }
+  }
+
+  #wander(floor, reserved) {
+    const stops = floor.destinations(this.index, this.visit++);
+    const available = stop => gap(this, stop) > 0.45 && reserved.every(p => gap(stop, p) > 0.5);
+    for (const stop of stops.filter(available)) {
+      const path = floor.path(this, stop);
+      if (path) { this.path = path; return; }
+    }
+    this.waiting = 0.65;
+  }
+
+  #walk(dt, speed) {
+    let remaining = dt * speed;
+    while (this.path.length && remaining > 0) {
+      const next = this.path[0], dx = next.x - this.x, dz = next.z - this.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance < 1e-6) { this.path.shift(); continue; }
+      const travel = Math.min(remaining, distance);
+      this.x += dx / distance * travel;
+      this.z += dz / distance * travel;
+      const angle = Math.atan2(dx, dz) - this.angle;
+      this.angle += Math.atan2(Math.sin(angle), Math.cos(angle)) * Math.min(1, dt * 9);
+      remaining -= travel;
+      if (travel === distance) this.path.shift();
+    }
+  }
+
+  step(floor, camera, enabled, dt, music, reduced, reserved) {
+    if (this.gone) return null;
+    let action = 'idle', pose = 0;
+    if (music !== null) {
+      const period = [11, 16, 13][this.index];
+      const kick = (music + period - [3, 7, 5][this.index]) % period;
+      const indoors = floor.groundAt(this) > 0;
+      if (enabled && !reduced && indoors && kick >= 0 && kick < 1) {
+        action = 'kick';
+        pose = Math.min(11, Math.floor(kick * 12));
+      } else {
+        this.waiting = Math.max(0, this.waiting - dt);
+        if (enabled && !this.path.length && !this.waiting) this.#wander(floor, reserved);
+        if (!enabled && !this.path.length) {
+          const end = offstage(camera, this.gate);
+          if (gap(this, end) < 0.3) { this.gone = true; return null; }
+          this.turn(floor, camera, false);
+        }
+        if (this.path.length) {
+          const speed = indoors ? 0.90 + this.index * 0.13 : Math.max(2.3, 0.15 * camera.width / camera.scale);
+          this.#walk(dt, speed);
+          if (enabled && !this.path.length) this.waiting = 0.6 + this.index * 0.3;
+          action = 'walk';
+          pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * (reduced ? 4 : 12)) * (reduced ? 3 : 1);
+        } else if (enabled && !reduced) {
+          action = 'sway';
+          pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * 12);
+        }
+      }
+    }
+    return { instrument: instruments[this.index], x: this.x, z: this.z, angle: this.angle,
+      ground: floor.groundAt(this), action, step: pose };
+  }
 }
 
 export class MarchingBand {
-  #rooms;
-  #pieces;
-  #route;
+  #layout;
+  #floor;
   #players = [];
-  #time;
   #poses = empty;
-  #enabled = false;
+  #time;
+  #phase = null;
+  #music = 0;
+  #enabled;
+  #settled;
 
-  #grounds(house) {
-    if (this.#rooms === house.rooms && this.#pieces === house.pieces) return;
-    this.#rooms = house.rooms;
-    this.#pieces = house.pieces;
-    if (!house.rooms.length) return;
-    const route = new ParadeRoute(house);
-    if (this.#route?.bounds.every((n, i) => n === route.bounds[i])) return;
-    for (const player of this.#players) {
-      const last = this.#route.at(player.distance);
-      player.distance = route.nearest(last.x, last.z);
-    }
-    this.#route = route;
-  }
-
-  #enter(camera) {
-    this.#players = instruments.map((instrument, i) => {
-      const distance = (2 - i) * 0.97 + 0.12;
-      const { x, z } = this.#route.at(distance);
-      const away = offstage(camera, x, z, entrance) + 0.28 + i * 0.75;
-      return { instrument, distance, away, exit: entrance, x: x + away * entrance[0], z: z + away * entrance[1],
-        angle: Math.atan2(-entrance[0], -entrance[1]) };
-    });
-  }
+  constructor(settled = false) { this.#settled = settled; }
 
   frame(house, camera, time, beat, reduced = false) {
-    this.#grounds(house);
     const enabled = house.band !== false && house.rooms.length > 0;
+    const layout = this.#layout;
+    const edited = !layout || house.rooms !== layout.rooms || house.doors !== layout.doors || house.pieces !== layout.pieces;
     const switched = enabled !== this.#enabled;
-    if (!switched && this.#time !== undefined && time - this.#time < 1 / 15) return this.#poses;
-    const dt = Math.max(0, Math.min(0.45, time - (this.#time ?? time)));
+    const paused = beat === null;
+    if (!edited && !switched && paused && this.#phase === null) return this.#poses;
+    if (!edited && !switched && !paused && this.#phase !== null && time - this.#time < 1 / 15) return this.#poses;
+    const dt = this.#phase === null || paused ? 0 : Math.max(0, Math.min(0.4, time - this.#time));
     this.#time = time;
+    if (!paused && this.#phase !== null) this.#music += (beat % 4 - this.#phase + 4) % 4;
+    this.#phase = paused ? null : beat % 4;
     this.#enabled = enabled;
-    if (!this.#players.length) {
-      if (!enabled) return empty;
-      this.#enter(camera);
+    this.#layout = house;
+    if (edited && house.rooms.length) this.#floor = new BandFloor(house);
+    if (!this.#floor) return empty;
+    if (!this.#players.length && enabled) {
+      this.#players = instruments.map((_, i) => new Musician(i, this.#floor, camera, this.#settled));
+      this.#settled = false;
+    }
+    if (edited || switched) {
+      for (const player of this.#players) player.turn(this.#floor, camera, enabled);
     }
     const poses = [];
-    const stride = Math.max(2.65, 0.18 * camera.width / camera.scale);
-    const music = beat ?? time * 1.55;
-    for (const [i, player] of this.#players.entries()) {
-      let point = this.#route.at(player.distance);
-      if (switched && !enabled && player.away === 0) {
-        // The left normal faces outwards along the entire circuit.
-        player.exit = [0.9 * -point.dz - 0.436 * point.dx, 0.9 * point.dx - 0.436 * point.dz];
-      }
-      const dancing = enabled && !reduced && player.away === 0 && music % 4 >= 2.25;
-      if (!enabled) player.away += dt * stride;
-      else if (player.away > 0) player.away = Math.max(0, player.away - dt * stride);
-      else if (!dancing && !reduced) {
-        player.distance = (player.distance + dt * (beat === null ? 1.15 : 1.75)) % this.#route.length;
-        point = this.#route.at(player.distance);
-      }
-      const x = point.x + player.away * player.exit[0], z = point.z + player.away * player.exit[1];
-      const dx = x - player.x, dz = z - player.z, gap = Math.hypot(dx, dz);
-      const travel = Math.min(1, dt * stride / (gap || 1));
-      player.x = lerp(player.x, x, travel);
-      player.z = lerp(player.z, z, travel);
-      if (!enabled && offstage(camera, player.x, player.z, player.exit) === 0) continue;
-      const facing = dancing ? 0.35 + 0.23 * Math.sin(music * Math.PI) : gap > 0.002 ? Math.atan2(dx, dz) : player.angle;
-      const turn = Math.atan2(Math.sin(facing - player.angle), Math.cos(facing - player.angle));
-      player.angle += turn * Math.min(1, dt * 8);
-      const cycle = ((enabled && player.away === 0 ? music / 2 : time * 1.48) + i * 0.09) % 1;
-      const still = reduced && enabled && player.away === 0;
-      poses.push({ instrument: player.instrument, x: player.x, z: player.z, angle: player.angle,
-        step: reduced ? (still ? 0 : Math.floor(cycle * 4) * 3) : Math.floor(cycle * 12),
-        lift: reduced ? 0 : (dancing ? 0.15 : 0.048) * (1 - Math.cos(tau * cycle * 2)) / 2,
-        sway: dancing ? 0.085 * Math.sin(tau * cycle) : 0 });
+    for (const player of this.#players) {
+      const reserved = this.#players.filter(other => other !== player && !other.gone).map(other => other.path.at(-1) ?? other);
+      const pose = player.step(this.#floor, camera, enabled, dt, paused ? null : this.#music, reduced, reserved);
+      if (pose) poses.push(pose);
     }
     if (!poses.length) this.#players = [];
-    if (reduced && !switched && poses.length === this.#poses.length && poses.every((p, i) => {
-      const old = this.#poses[i];
-      return old && p.x === old.x && p.z === old.z && p.step === old.step && p.angle === old.angle;
-    })) return this.#poses;
     this.#poses = poses.length ? poses : empty;
     return this.#poses;
   }

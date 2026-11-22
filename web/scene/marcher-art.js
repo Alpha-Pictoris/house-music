@@ -30,12 +30,14 @@ function limb(brush, joints, radii, fill, ink) {
   band(brush, joints.map(([x,y,z], i) => oval(x,y,z,radii[i],radii[i]*0.84,'xz',6)), fill, ink);
 }
 
-function legs(brush, wave, ink) {
+function legs(brush, wave, kick, footSide, ink) {
   for (const side of [-1, 1]) {
-    const phase = wave * side, knee = Math.max(0, phase);
-    const x = side * 0.112, foot = 0.047 + knee * 0.235, z = phase * 0.245;
+    const swing = wave * side, knee = Math.max(0, swing);
+    const reach = side === footSide ? kick : 0;
+    const hip = side * 0.112, x = hip + side * reach * 0.22;
+    const foot = 0.040 + knee * 0.12 + reach * 0.34, z = swing * 0.22 + reach * 0.60;
     const ankle = [x, foot + 0.13, z];
-    limb(brush, [[x,0.70,0], [x + 0.025*side,0.36 + knee*0.185,0.08 + 0.22*phase], ankle],
+    limb(brush, [[hip,0.70,0], [hip + side*(0.02+reach*0.09),0.36 + knee*0.11+reach*0.24,0.055 + 0.17*swing + 0.23*reach], ankle],
       [0.084,0.07,0.044], seam, ink);
     band(brush, [oval(x,foot,z+0.052,0.074,0.142,'xz',8),
       oval(x,ankle[1],z,0.054,0.066,'xz',8)], '#302834', '#dcbd9b');
@@ -109,10 +111,24 @@ function sousaphone(brush) {
   return [[-0.20,1.03,0.11],[0.13,1.13,0.19]];
 }
 
-function model(instrument, step) {
-  const mesh = new InkMesh(0.15), brush = brushFor(mesh);
+function upperBody(mesh, angle) {
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const tilt = ([x,y,z]) => [x*cos - (y-0.67)*sin, 0.67 + x*sin + (y-0.67)*cos, z];
+  return brushFor({
+    face: (points, colour) => mesh.face(points.map(tilt), colour),
+    line: (points, ...ink) => mesh.line(points.map(tilt), ...ink),
+    segment: (a, b, ...ink) => mesh.segment(tilt(a), tilt(b), ...ink)
+  });
+}
+
+function model(instrument, step, action) {
+  const mesh = new InkMesh(0.15);
   const wave = Math.sin(step * Math.PI / 6), palette = uniforms[instrument];
-  legs(brush, wave, palette.braid);
+  const kick = action === 'kick' ? Math.sin(step * Math.PI / 11) ** 1.4 : 0;
+  const footSide = instrument === 'drum' ? -1 : 1;
+  legs(brushFor(mesh), action === 'walk' ? wave : 0, kick, footSide, palette.braid);
+  const lean = action === 'kick' ? kick * 0.17 * footSide : wave * (action === 'sway' ? 0.16 : 0.105);
+  const brush = upperBody(mesh, lean);
   jacket(brush, palette);
   shako(brush, palette, wave);
   const hands = { trombone, drum: snare, sousaphone }[instrument](brush,wave);
@@ -123,14 +139,16 @@ function model(instrument, step) {
     brush.line(oval(...hand,0.047,0.041,'xz',6),bone,1,true);
   });
   mesh.model = true;
+  mesh.strokes = Float32Array.from(mesh.strokes);
+  mesh.surfaces = Float32Array.from(mesh.surfaces);
   return mesh;
 }
 
-export function marcherItem({ instrument, x, z, angle, step, lift, sway }) {
-  const key = instrument + step;
-  if (!models.has(key)) models.set(key, model(instrument, step));
+export function marcherItem({ instrument, x, z, angle, ground, action, step }) {
+  const key = instrument + action + step;
+  if (!models.has(key)) models.set(key, model(instrument, step, action));
   return instance(models.get(key), {
-    origin: [x + Math.cos(angle)*sway, -0.067 + lift, z - Math.sin(angle)*sway],
+    origin: [x, ground, z],
     turn: [Math.cos(angle),Math.sin(angle)], catchesSweep: false, wobble: 1.35
   });
 }
