@@ -31,6 +31,14 @@ test("an overlapping drop preserves the last valid placement", () => {
   assert.equal(editor.house, before);
 });
 
+test("a sofa against a wall keeps its place when there is no room to turn", () => {
+  const editor = parlour();
+  const sofa = editor.place("sofa", { x: 1, z: 4.7 });
+  const before = editor.house;
+  for (const direction of ["left", "right"]) assert.throws(() => editor.rotate(sofa.id, direction), /inside a room/);
+  assert.equal(editor.house, before);
+});
+
 test("one undo reverses a move and redo restores it", () => {
   const editor = parlour();
   const piece = editor.place("mirror", { x: 1, z: 1 });

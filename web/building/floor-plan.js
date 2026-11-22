@@ -81,6 +81,12 @@ export class FloorPlan {
     return { x: piece.x, z: piece.z, width: sideways ? item.depth : item.width, depth: sideways ? item.width : item.depth };
   }
 
+  static turn(turn, direction) {
+    if (direction === "left") return (turn + 1) % 4;
+    if (direction === "right") return (turn + 3) % 4;
+    throw Error("Choose a left or right turn.");
+  }
+
   static roomAt(house, point) {
     return house.rooms.find(room => RoomShape.at(room, point));
   }

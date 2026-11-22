@@ -7,6 +7,7 @@
     <title>House Music</title>
     <link rel="icon" href="./mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./studio.css" />
     <script type="module" src="./main.js"></script>
   </head>
   <body>
@@ -15,6 +16,15 @@
         <symbol id="i-room" viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5zM3 9v7l9 5 9-5V9m-9 5v7" /></symbol>
         <symbol id="i-select" viewBox="0 0 24 24"><path d="m5 3 13 9-6 1.5-2.5 6z" /></symbol>
         <symbol id="i-door" viewBox="0 0 24 24"><path d="M4 20h16M7 20V5l9-2v17m-3-8h.1" /></symbol>
+        <symbol id="i-pan" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20m-13-7 3-3 3 3m-6 14 3 3 3-3M5 9l-3 3 3 3m14-6 3 3-3 3"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
+        <symbol id="i-curio" viewBox="0 0 24 24"><path d="M2 12q10-13 20 0-10 13-20 0zM12 2v3m0 14v3"/><circle cx="12" cy="12" r="3"/></symbol>
+        <symbol id="i-living" viewBox="0 0 24 24"><path d="M6 13V8q0-3 3-3h6q3 0 3 3v5M3 11h3l1 4h10l1-4h3l-1 8H4zm3 8v2m12-2v2"/></symbol>
+        <symbol id="i-shelf" viewBox="0 0 24 24"><path d="M3 12h18M5 12v8m14-8v8M7 9V4h2v5m4 0 1-6 3 1-1 5"/></symbol>
+        <symbol id="i-decor" viewBox="0 0 24 24"><path d="M9 3h6l-1 5c0 2 4 4 4 7a6 6 0 0 1-12 0c0-3 4-5 4-7z"/></symbol>
+        <symbol id="i-bedroom" viewBox="0 0 24 24"><path d="M3 7v13m18-9v9M3 16h18M5 12h5V8H5zm5 0h10v4"/></symbol>
+        <symbol id="i-fixtures" viewBox="0 0 24 24"><path d="M3 13h18l-2 5H6zm2 5-1 3m14-3 1 3M6 13V6a3 3 0 0 1 6 0"/></symbol>
+        <symbol id="i-garden" viewBox="0 0 24 24"><path d="M5 20C7 12 13 9 19 4M5 15C1 8 11 5 21 3c-1 11-6 16-14 13"/></symbol>
         <symbol id="i-orbit" viewBox="0 0 24 24">
           <ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(-30 12 12)" />
           <circle cx="12" cy="12" r="2" />
@@ -110,26 +120,19 @@
       <p id="save-status" class="save-status" role="status" hidden></p>
       <main class="workspace">
         <section class="studio" aria-label="House editor">
-          <div class="toolbar">
+          <div class="toolbar" role="toolbar" aria-label="Plot tools">
             <div class="tools" role="group" aria-label="Building tools">
-              <button type="button" data-tool="room" aria-pressed="true">
-                <svg class="icon" aria-hidden="true"><use href="#i-room"></use></svg
-                ><span>Build room</span></button
-              ><button type="button" data-tool="select" aria-pressed="false">
-                <svg class="icon" aria-hidden="true"><use href="#i-select"></use></svg
-                ><span>Select</span></button
-              ><button type="button" data-tool="door" aria-pressed="false">
-                <svg class="icon" aria-hidden="true"><use href="#i-door"></use></svg><span>Door</span></button
-              ><button type="button" data-tool="orbit" aria-pressed="false">
-                <svg class="icon" aria-hidden="true"><use href="#i-orbit"></use></svg><span>Orbit</span>
-              </button>
+              <button data-tool="room" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-room"/></svg>Build room</button>
+              <button data-tool="select" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-select"/></svg>Select</button>
+              <button data-tool="door" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-door"/></svg>Door</button>
+            </div>
+            <div class="tools camera-tools" role="group" aria-label="Camera">
+              <button data-tool="pan" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-pan"/></svg>Pan</button>
+              <button data-tool="orbit" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-orbit"/></svg>Orbit</button>
             </div>
             <div class="history">
-              <button type="button" class="icon-button" id="undo" aria-label="Undo" title="Undo">
-                <svg class="icon" aria-hidden="true"><use href="#i-undo"></use></svg></button
-              ><button type="button" class="icon-button" id="redo" aria-label="Redo" title="Redo">
-                <svg class="icon" aria-hidden="true"><use href="#i-redo"></use></svg>
-              </button>
+              <button class="icon-button" id="undo" aria-label="Undo" title="Undo"><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg></button>
+              <button class="icon-button" id="redo" aria-label="Redo" title="Redo"><svg class="icon" aria-hidden="true"><use href="#i-redo"/></svg></button>
             </div>
           </div>
           <div id="stage" class="stage" data-empty="true">
@@ -144,10 +147,14 @@
               <h2>Draw your first room<span>.</span></h2>
               <p>Drag across the plot or tap two corners.</p>
             </div>
+            <div class="rotation" id="rotation" role="group" aria-label="Furniture rotation" hidden>
+              <span class="rotation-label">Rotate <strong id="turn-piece"></strong></span>
+              <button id="turn-left" aria-label="Rotate left" title="Rotate left (,)"><svg class="icon turn-left" aria-hidden="true"><use href="#i-rotate"/></svg></button>
+              <span id="turn-angle"></span>
+              <button id="turn-right" aria-label="Rotate right" title="Rotate right (.)"><svg class="icon" aria-hidden="true"><use href="#i-rotate"/></svg></button>
+            </div>
             <div class="view-controls" role="group" aria-label="Plot controls">
-              <button id="rotate-preview" aria-label="Turn before placing" title="Turn before placing" hidden>
-                <svg class="icon" aria-hidden="true"><use href="#i-rotate"></use></svg>Turn</button
-              ><button type="button" class="icon-button" id="zoom-out" aria-label="Zoom out" title="Zoom out">
+              <button type="button" class="icon-button" id="zoom-out" aria-label="Zoom out" title="Zoom out">
                 <svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg></button
               ><button
                 type="button"
@@ -168,77 +175,6 @@
             ><span id="counts">0 rooms · 0 pieces</span>
           </div>
         </section>
-        <aside class="catalogue" aria-label="House catalogue">
-          <div class="catalogue-tabs" role="group" aria-label="Catalogue view">
-            <button id="browse-tab" aria-pressed="true">Furnish</button>
-            <button id="detail-tab" aria-pressed="false" disabled>Details</button>
-          </div>
-          <div id="browse-panel">
-            <div id="furniture-groups" class="groups" role="group" aria-label="Furniture collection"></div>
-            <div class="cards" id="furniture-cards"></div>
-            <template id="furniture-card">
-              <button type="button" class="furniture-card" aria-pressed="false">
-                <span class="sample-art"><canvas aria-hidden="true"></canvas></span>
-                <span class="card-text"><strong></strong><span class="material-label"></span></span>
-                <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
-              </button>
-            </template>
-          </div>
-          <section id="inspector" class="inspector" aria-label="House details" hidden>
-            <label class="field"
-              >Selection
-              <select id="selection"></select
-            ></label>
-            <div id="room-fields" class="detail-fields" hidden>
-              <label class="field"
-                >Room name<input id="room-name" maxlength="40" placeholder="Name this room"
-              /></label>
-              <label class="field">Finish<select id="room-finish"></select></label>
-              <p class="acoustic-note" id="room-sound"></p>
-            </div>
-            <div id="piece-fields" class="detail-fields" hidden>
-              <button type="button" id="arrange-objects" class="object-action" hidden>Arrange objects</button>
-              <div id="fittings" class="fittings" role="group" aria-label="Musical fitting"></div>
-              <p class="acoustic-note" id="fitting-sound"></p>
-              <div id="tuning-field" class="detail-fields">
-                <label class="field">Phrase<select id="phrase"></select></label>
-                <label class="field"
-                  ><span id="tuning-label">Note</span
-                  ><select id="tuning"></select
-                ></label>
-              </div>
-            </div>
-            <div class="object-tools">
-              <button
-                type="button"
-                class="icon-button"
-                id="rotate"
-                aria-label="Rotate piece"
-                title="Rotate piece"
-              >
-                <svg class="icon" aria-hidden="true"><use href="#i-rotate"></use></svg>
-              </button>
-              <button
-                type="button"
-                class="icon-button"
-                id="duplicate"
-                aria-label="Duplicate piece"
-                title="Duplicate piece"
-              >
-                <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
-              </button>
-              <button
-                type="button"
-                class="icon-button"
-                id="remove"
-                aria-label="Remove selection"
-                title="Remove selection"
-              >
-                <svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg>
-              </button>
-            </div>
-          </section>
-        </aside>
         <section class="transport" aria-label="Score playback">
           <div class="player-controls">
             <button id="play" class="play" aria-pressed="false">
@@ -266,6 +202,78 @@
             </div>
           </details>
         </section>
+        <aside class="catalogue" aria-label="House catalogue">
+          <div class="drawer-bar">
+            <div class="catalogue-tabs" role="group" aria-label="Catalogue view">
+              <button id="browse-tab" aria-pressed="true">Furnish</button>
+              <button id="detail-tab" aria-pressed="false" disabled>Details</button>
+            </div>
+            <label class="catalogue-search" id="search-field">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+              <input type="search" id="furniture-search" aria-label="Find furniture" placeholder="Find furniture" autocomplete="off" />
+            </label>
+            <button id="toggle-catalogue" aria-controls="drawer-body" aria-expanded="true" aria-label="Hide catalogue" title="Hide catalogue"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="drawer-body">
+            <div id="browse-panel">
+              <div id="furniture-groups" class="groups" role="group" aria-label="Furniture collection"></div>
+              <div class="cards" id="furniture-cards"></div>
+              <p id="no-furniture" role="status" hidden>No matching furniture.</p>
+              <template id="furniture-card">
+                <button type="button" class="furniture-card" aria-pressed="false">
+                  <span class="sample-art"><canvas aria-hidden="true"></canvas></span>
+                  <span class="card-text"><strong></strong><span class="material-label"></span></span>
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </template>
+            </div>
+            <section id="inspector" class="inspector" aria-label="House details" hidden>
+              <label class="field"
+                >Selection
+                <select id="selection"></select
+              ></label>
+              <div id="room-fields" class="detail-fields" hidden>
+                <label class="field"
+                  >Room name<input id="room-name" maxlength="40" placeholder="Name this room"
+                /></label>
+                <label class="field">Finish<select id="room-finish"></select></label>
+                <p class="acoustic-note" id="room-sound"></p>
+              </div>
+              <div id="piece-fields" class="detail-fields" hidden>
+                <button type="button" id="arrange-objects" class="object-action" hidden>Arrange objects</button>
+                <div id="fittings" class="fittings" role="group" aria-label="Musical fitting"></div>
+                <p class="acoustic-note" id="fitting-sound"></p>
+                <div id="tuning-field" class="detail-fields">
+                  <label class="field">Phrase<select id="phrase"></select></label>
+                  <label class="field"
+                    ><span id="tuning-label">Note</span
+                    ><select id="tuning"></select
+                  ></label>
+                </div>
+              </div>
+              <div class="object-tools">
+                <button
+                  type="button"
+                  class="icon-button"
+                  id="duplicate"
+                  aria-label="Duplicate piece"
+                  title="Duplicate piece"
+                >
+                  <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-button"
+                  id="remove"
+                  aria-label="Remove selection"
+                  title="Remove selection"
+                >
+                  <svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg>
+                </button>
+              </div>
+            </section>
+          </div>
+        </aside>
       </main>
       <footer class="page-footer">
         <button id="help-button">
@@ -368,10 +376,12 @@
           line and drums. Moving a piece shifts its musical start to the nearest half beat. Switch House
           band off for exact floor timing. Edits to the house join on the next pass.
         </dd>
+        <dt>View and rotate</dt>
+        <dd>Drag with Pan to move the map or Orbit to turn it. Two fingers move and pinch the map in any tool. A middle-button drag pans with a mouse. Select furniture or choose a piece to place, then use the curved arrows beside the plot to turn it.</dd>
         <dt>Keyboard</dt>
         <dd>
           Focus the plot. Arrow keys move by a quarter unit. Hold Shift for a full unit. Enter places a corner
-          or piece. With a table or shelf selected, Enter lets you arrange its objects. R rotates, Delete removes and Space plays.
+          or piece. With a table or shelf selected, Enter lets you arrange its objects. Comma turns furniture left, period or R turns it right. Delete removes and Space plays.
         </dd>
       </dl>
     </dialog>

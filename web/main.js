@@ -16,6 +16,7 @@ const hints = {
   room: "Draw two corners. Start inside a room to extend it.",
   select: "Drag furniture to move it. Drag empty ground to turn the house.",
   door: "Choose a wall to open a doorway.",
+  pan: "Drag to move the map. Use the arrow keys to pan.",
   orbit: "Drag to turn the plot.",
   place: "Choose a spot inside a room."
 };

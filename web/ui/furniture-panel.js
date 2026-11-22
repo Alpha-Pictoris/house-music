@@ -4,11 +4,16 @@ import { phrases } from "../music/phrases.js";
 import { instrumentName, tuningOptions } from "../music/arrangements.js";
 import { HouseScene } from "../scene/house-scene.js";
 import { FurnitureSpots } from "../building/furniture-spots.js";
-import { byId } from "./elements.js";
+import { byId, icon } from "./elements.js";
+
+const collectionIcons = {
+  Curiosities: "curio", Living: "living", [tablesAndShelves]: "shelf",
+  Decor: "decor", Bedroom: "bedroom", Fixtures: "fixtures", Garden: "garden"
+};
 
 export class FurniturePanel {
   #details = false;
-  #group = "Living";
+  #group = "Curiosities";
   #cards = new Map();
   #lastHouse;
   #lastKind;
@@ -20,11 +25,13 @@ export class FurniturePanel {
     this.audition = audition;
     this.#buildCatalogue();
     this.#buildFittings();
+    byId("furniture-search").oninput = () => this.#filterCatalogue();
     byId("browse-tab").onclick = () => this.show(false);
     byId("detail-tab").onclick = () => this.show(true);
     byId("arrange-objects").onclick = () => controls.arrange();
-    byId("rotate").onclick = () => controls.rotate();
-    byId("rotate-preview").onclick = () => controls.rotate();
+    byId("toggle-catalogue").onclick = () => this.#expand(byId("drawer-body").hidden);
+    byId("turn-left").onclick = () => { controls.rotate("left"); this.#focusPlot(); };
+    byId("turn-right").onclick = () => { controls.rotate("right"); this.#focusPlot(); };
     byId("duplicate").onclick = () => { controls.duplicate(); this.show(false); this.#focusPlot(); };
     byId("remove").onclick = () => controls.remove();
     byId("selection").onchange = event => controls.select(event.target.value);
@@ -60,7 +67,7 @@ export class FurniturePanel {
     const groups = new Set(catalogue.map(([, item]) => item.group));
     for (const group of groups) {
       const button = document.createElement("button");
-      button.textContent = group;
+      button.append(icon(collectionIcons[group]), group);
       button.dataset.group = group;
       button.onclick = () => this.#openGroup(group);
       byId("furniture-groups").append(button);
@@ -69,10 +76,11 @@ export class FurniturePanel {
       const fitting = fittings[item.fitting];
       const card = byId("furniture-card").content.firstElementChild.cloneNode(true);
       card.dataset.kind = kind;
-      card.style.setProperty("--fitting-colour", fitting.colour);
+      card.dataset.collection = item.group;
+      card.style.setProperty("--fitting-colour", item.ink ?? fitting.colour);
       card.querySelector("strong").textContent = item.label;
       const spots = FurnitureSpots.slots(kind).length;
-      card.querySelector(".material-label").textContent = spots ? "Holds " + spots + " objects" : item.garden ? "Outdoors" : fitting.label;
+      card.querySelector(".material-label").textContent = item.detail ?? (spots ? "Holds " + spots + " objects" : item.garden ? "Outdoors" : fitting.label);
       card.onclick = () => {
         this.audition(newPiece(kind));
         this.controls.choose(kind);
@@ -86,12 +94,26 @@ export class FurniturePanel {
 
   #openGroup(group) {
     this.#group = group;
-    for (const button of byId("furniture-groups").children) button.setAttribute("aria-pressed", String(button.dataset.group === group));
+    byId("furniture-search").value = "";
+    this.#filterCatalogue();
+  }
+
+  #filterCatalogue() {
+    const query = byId("furniture-search").value.trim().toLowerCase();
+    let matches = 0;
+    for (const button of byId("furniture-groups").children) button.setAttribute("aria-pressed", String(!query && button.dataset.group === this.#group));
     for (const [kind, card] of this.#cards) {
-      card.hidden = group === tablesAndShelves ? !FurnitureSpots.slots(kind).length : furniture[kind].group !== group;
+      const design = furniture[kind], holdsObjects = FurnitureSpots.slots(kind).length > 0;
+      const collection = this.#group === tablesAndShelves ? holdsObjects : design.group === this.#group;
+      const name = [design.label, design.group, holdsObjects ? tablesAndShelves : ""].join(" ").toLowerCase();
+      card.hidden = query ? !name.includes(query) : !collection;
+      if (card.hidden) continue;
+      matches++;
       const canvas = card.querySelector("canvas");
-      if (!card.hidden && !canvas.dataset.renderer) HouseScene.thumbnail(canvas, kind);
+      if (!canvas.dataset.renderer) HouseScene.thumbnail(canvas, kind);
     }
+    byId("no-furniture").hidden = matches > 0;
+    byId("furniture-cards").hidden = !matches;
   }
 
   #buildFittings() {
@@ -99,14 +121,8 @@ export class FurniturePanel {
       const button = document.createElement("button");
       button.dataset.fitting = id;
       button.style.setProperty("--fitting-colour", fitting.colour);
-      const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      const use = document.createElementNS(icon.namespaceURI, "use");
-      use.setAttribute("href", "#i-" + id);
-      icon.setAttribute("class", "icon");
-      icon.setAttribute("aria-hidden", "true");
-      icon.append(use);
       const label = { plain: "Plain", thorn: "Thorns", ring: "Rings", stud: "Studs", glass: "Glass", wire: "Strings" }[id];
-      button.append(icon, label);
+      button.append(icon(id), label);
       button.onclick = () => this.audition(this.controls.editor.fitPiece(this.controls.selection, id));
       byId("fittings").append(button);
     }
@@ -114,10 +130,20 @@ export class FurniturePanel {
 
   show(details) {
     this.#details = details;
+    this.#expand(true);
     byId("browse-panel").hidden = details;
     byId("inspector").hidden = !details;
     byId("browse-tab").setAttribute("aria-pressed", String(!details));
     byId("detail-tab").setAttribute("aria-pressed", String(details));
+  }
+
+  #expand(open) {
+    byId("drawer-body").hidden = !open;
+    byId("search-field").hidden = !open || this.#details;
+    const button = byId("toggle-catalogue");
+    button.setAttribute("aria-expanded", String(open));
+    button.title = open ? "Hide catalogue" : "Show catalogue";
+    button.setAttribute("aria-label", button.title);
   }
 
   #choices(house) {
@@ -183,8 +209,12 @@ export class FurniturePanel {
       byId("phrase").options[0].text = house.band === false ? "Furniture default" : "House riff";
       byId("phrase").value = piece.phrase ?? "";
     }
-    byId("rotate").disabled = !piece || furniture[piece.kind].layer === "wall";
-    byId("rotate-preview").hidden = controls.tool !== "place" || !controls.kind || furniture[controls.kind].layer === "wall";
+    const rotating = controls.rotatingPiece;
+    byId("rotation").hidden = !rotating;
+    if (rotating) {
+      byId("turn-piece").textContent = furniture[rotating.kind].label;
+      byId("turn-angle").textContent = ((4 - rotating.turn) % 4) * 90 + "°";
+    }
     byId("duplicate").disabled = !piece;
     byId("remove").disabled = !controls.selection;
   }

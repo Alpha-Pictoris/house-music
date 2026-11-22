@@ -4,7 +4,7 @@ import {parlourModels} from './parlour-art.js';
 import {CurioArt, curioModels} from './curios.js';
 import {RoomShape} from '../building/room-shape.js';
 import {furniture} from '../building/catalogue.js';
-import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor, roomOutline} from './architecture.js';
+import {compassRose, doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor, roomOutline} from './architecture.js';
 import {drawModel} from './furniture-art.js';
 import {drawDomestic, livingModels} from './domestic-art.js';
 import {roomModels} from './rooms-art.js';
@@ -196,6 +196,7 @@ export class HouseScene {
     this.target = target;
     this.ground = instance(plot(), {catchesSweep: false, canvasLayer: 0, inkLift: 0.000001});
     this.origin = instance(originMark(), {canvasLayer: 0});
+    this.compass = instance(compassRose(), {canvasLayer: 0.5, wobble: 0.45, catchesSweep: false});
     const mesh = new InkMesh();
     mesh.segment([0, -0.05, -1], [0, -0.05, 1], yellow, 1.3);
     this.sweep = mesh;
@@ -267,6 +268,14 @@ export class HouseScene {
     const rect = this.canvas.getBoundingClientRect();
     const point = this.updateCamera(rect).project([x, height, z]);
     return {x: rect.left + point.x, y: rect.top + point.y};
+  }
+
+  pan(from, to, zoom = 1) {
+    const held = this.groundAt(from.x, from.y);
+    if (zoom !== 1) this.zoom(zoom);
+    const ground = this.groundAt(to.x, to.y);
+    this.center = [this.center[0] + held.x - ground.x, this.center[1], this.center[2] + held.z - ground.z];
+    this.camera = null;
   }
 
   orbit(dx, dy) {
@@ -394,6 +403,7 @@ export class HouseScene {
     this.ground.inkOpacity = house.rooms.length ? 0.34 : 1;
     this.ground.origin = [Math.round(this.center[0] / 5) * 5, 0, Math.round(this.center[2] / 5) * 5];
     const items = [this.ground, this.origin];
+    if (!draftHouse.rooms.length && !draftHouse.pieces.length) items.push(this.compass);
     const rendered = this.architecture(house);
     items.push(instance(rendered.grounds, {canvasLayer: 1.5, canvasFlat: true, catchesSweep: false}));
     for (const floor of rendered.floors) items.push(instance(floor, {canvasLayer: 2}));

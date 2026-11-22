@@ -23,6 +23,28 @@ export function originMark() {
   return mesh;
 }
 
+export function compassRose() {
+  const mesh = new InkMesh(0.22);
+  const point = (angle, radius) => [Math.cos(angle) * radius, -0.077, Math.sin(angle) * radius];
+  const ring = (radius, ink) => mesh.line(Array.from({length:96}, (_,i) => point(i*Math.PI/48,radius)),ink,0.8,true);
+  ring(2.50,"#685370");
+  ring(2.65,"#785c76");
+  ring(3.51,"#57425c");
+  for (let i=0; i<48; i++) {
+    const t=i*Math.PI/24;
+    mesh.segment(point(t,2.65),point(t,i%6 === 0 ? 2.91 : 2.72),i%6 === 0 ? "#b58b88" : "#745570",0.85);
+  }
+  for (let i=0; i<8; i++) {
+    const t=i*Math.PI/4, tip=point(t,i%2 ? 1.60 : 2.46);
+    mesh.line([point(t-0.35,0.56),tip,point(t+0.35,0.56),point(t,0.81)],"#956e8b",1.05,true);
+    mesh.segment(point(t,0.81),tip,"#715270",0.68);
+    const jewel=point(t,3.50);
+    mesh.line([[jewel[0]-0.045,jewel[1],jewel[2]], [jewel[0],jewel[1],jewel[2]-0.08],
+      [jewel[0]+0.045,jewel[1],jewel[2]], [jewel[0],jewel[1],jewel[2]+0.08]],"#b88e96",1,true);
+  }
+  return mesh;
+}
+
 export function rectangle(x, z, width, depth, y = 0) {
   return [[x, y, z], [x + width, y, z], [x + width, y, z + depth], [x, y, z + depth]];
 }

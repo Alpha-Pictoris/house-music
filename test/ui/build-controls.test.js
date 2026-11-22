@@ -23,7 +23,42 @@ test("modified canvas keys leave browser shortcuts and global undo available", (
   assert.equal(editor.house, original);
 
   press("r");
-  assert.equal(controls.selectedPiece.turn, 1);
+  assert.equal(controls.selectedPiece.turn, 3);
+  press(",");
+  assert.equal(controls.selectedPiece.turn, 0);
+});
+
+test("a turn before placement carries into the room and can be reversed in place", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: -3, z: -3 }, { x: 5, z: 5 });
+  const canvas = new EventTarget(), controls = new BuildControls(canvas, {}, editor, () => {});
+  const key = key => canvas.dispatchEvent(Object.assign(new Event("keydown"), { key }));
+  controls.choose("sofa");
+  key(".");
+  assert.equal(controls.preview.piece.turn, 3);
+  key("Enter");
+  const { id, x, z } = controls.selectedPiece;
+  key(",");
+  assert.deepEqual([controls.selectedPiece.id, controls.selectedPiece.x, controls.selectedPiece.z, controls.selectedPiece.turn], [id, x, z, 0]);
+  editor.undo();
+  assert.equal(controls.selectedPiece.turn, 3);
+});
+
+test("a pinch or middle drag while building leaves the room unbuilt", () => {
+  const canvas = Object.assign(new EventTarget(), { focus() {}, setPointerCapture() {}, hasPointerCapture: () => false });
+  const editor = new HouseEditor(), pans = [];
+  const scene = { groundAt: (x, z) => ({ x, z }), pan: (...args) => pans.push(args) };
+  new BuildControls(canvas, scene, editor, assert.fail);
+  function pointer(action, pointerId, x, z, pointerType = "touch", button = 0) {
+    canvas.dispatchEvent(Object.assign(new Event("pointer" + action), { pointerId, clientX: x, clientY: z, pointerType, button }));
+  }
+  pointer("down", 1, 0, 0); pointer("down", 2, 10, 0);
+  pointer("move", 2, 20, 0); pointer("up", 1, 0, 0);
+  pointer("move", 2, 22, 2); pointer("up", 2, 22, 2);
+  pointer("down", 3, 0, 0, "mouse", 1); pointer("move", 3, 10, 8, "mouse", 1); pointer("up", 3, 10, 8, "mouse", 1);
+  assert.equal(pans.length, 2);
+  assert.deepEqual([pans[0][0].x, pans[0][1].x, pans[0][2]], [5, 10, 2]);
+  assert.equal(editor.house.rooms.length, 0);
 });
 
 test("a double tap opens the selected table once", () => {

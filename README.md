@@ -5,7 +5,7 @@ Draw a house and play it as a track. Put thorn finials on a velvet sofa, hang a 
 ## Make a house
 
 1. Drag across the empty plot or tap two opposite corners to draw a room.
-2. Choose the velvet sofa in **Furnish** and tap the floor. In **Chrome Attic** its thorn carving plays a clipped clavinet over bass and drums. Press **Play** to loop it.
+2. Open **Furnish → Living**, choose the velvet sofa and tap the floor. In **Chrome Attic** its thorn carving plays a clipped clavinet over bass and drums. Press **Play** to loop it.
 3. Place a dining set across the room. Its cut glass adds a lead line. Move it while paused to preview the rhythm, or change **Arrangement** to hear the same room with a different band.
 
 **House band** starts on. It fits the riffs to shared chords and rounds musical starts to the nearest half beat. The loop runs from the first musical bar to the last. The band plays its hook more softly under a furniture melody and leaves empty bars silent. Even a one-bar house gets a different answer on the next pass.
@@ -26,11 +26,15 @@ With **Build room**, start inside a room and draw beyond a wall to add an alcove
 
 Open **Furnish → Tables & shelves**. Double-click or double-tap a table or shelf, choose a spot, then add a bottle, book, bell or pocket orrery. Objects start silent. Choose an **Instrument** and the object plays a short accent over the band as the sweep passes. Moving or turning the furniture carries its objects with it.
 
+In **Curiosities**, the rising hourglass runs sand uphill, two moths circle the lantern, and a hallway recedes inside the Elsewhere door. Press **Play** to set them in motion. Add a fitting if you want one to play an instrument.
+
+Select a piece or pick one from the catalogue to see its **Rotate** controls beside the plot. Each arrow turns it a quarter turn. **Pan** moves the view and **Orbit** turns it. Two fingers drag or pinch the map in any tool. On a mouse, drag with the middle button to pan and scroll to zoom. **Fit house in view** recentres the plot. Fold the catalogue with its chevron for more building space.
+
 Houses save to **Library** on this device. **Share** gives you a playable link or a house file. Change a friend's arrangement and choose **Save a copy** to keep your remix.
 
 ### Keyboard
 
-Focus the plot. The arrows move the cursor or nudge a selected piece by a quarter unit. Hold Shift for a full unit. Enter sets a corner or places a piece, R turns furniture, Delete removes, Space plays or pauses, and Escape cancels a placement. Open the details tab beside **Furnish** for a list of selectable rooms, doors and pieces.
+Focus the plot. The arrow keys move the cursor or nudge a selected piece by a quarter unit. Hold Shift for a full unit. In **Pan**, the arrows move the view. Comma turns furniture left, period or R turns it right. Enter sets a corner or places a piece, Delete removes, Space plays or pauses, and Escape cancels a placement. Open the details tab beside **Furnish** for a list of selectable rooms, doors and pieces.
 
 ## Run locally
 

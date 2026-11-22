@@ -157,11 +157,11 @@ export class HouseEditor extends EventTarget {
 
   move(id, point) { return this.#put(this.preview(this.#piece(id), point)); }
 
-  rotate(id) {
+  rotate(id, direction = "left") {
     const piece = this.#piece(id);
     if (isSmallObject(piece.kind)) throw Error("Turn the furniture to turn its objects.");
     if (furniture[piece.kind].layer === "wall") throw Error("Move the window to another wall to turn it.");
-    return this.#put({ ...piece, turn: (piece.turn + 1) % 4 });
+    return this.#put({ ...piece, turn: FloorPlan.turn(piece.turn, direction) });
   }
 
   #setTuning(piece, value) {
