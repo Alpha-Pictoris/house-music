@@ -806,7 +806,7 @@ dialog dd {
     margin-top: 4px;
   }
   .workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .studio {
     grid-row: 1;
@@ -818,6 +818,7 @@ dialog dd {
   }
   .transport {
     grid-row: 2;
+    flex-wrap: wrap;
     padding: 10px;
     gap: 10px;
   }
@@ -1122,7 +1123,11 @@ dialog dd {
     grid-template-columns: 70px 1fr;
   }
   .score-disclosure {
-    max-width: 34%;
+    width: auto;
+    flex: 1 1 3em;
+  }
+  .score-disclosure[open] {
+    flex-basis: 100%;
   }
 }
 .tour-link {
