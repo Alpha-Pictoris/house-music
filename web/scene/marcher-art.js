@@ -30,14 +30,12 @@ function limb(brush, joints, radii, fill, ink) {
   band(brush, joints.map(([x,y,z], i) => oval(x,y,z,radii[i],radii[i]*0.84,'xz',6)), fill, ink);
 }
 
-function legs(brush, wave, kick, footSide, ink) {
+function legs(brush, wave, ink) {
   for (const side of [-1, 1]) {
     const swing = wave * side, knee = Math.max(0, swing);
-    const reach = side === footSide ? kick : 0;
-    const hip = side * 0.112, x = hip + side * reach * 0.22;
-    const foot = 0.040 + knee * 0.12 + reach * 0.34, z = swing * 0.22 + reach * 0.60;
-    const ankle = [x, foot + 0.13, z];
-    limb(brush, [[hip,0.70,0], [hip + side*(0.02+reach*0.09),0.36 + knee*0.11+reach*0.24,0.055 + 0.17*swing + 0.23*reach], ankle],
+    const x = side * 0.112, z = swing * 0.22;
+    const foot = 0.04 + knee * 0.12, ankle = [x, foot + 0.13, z];
+    limb(brush, [[x,0.70,0], [x + side*0.02,0.36 + knee*0.11,0.055 + 0.17*swing], ankle],
       [0.084,0.07,0.044], seam, ink);
     band(brush, [oval(x,foot,z+0.052,0.074,0.142,'xz',8),
       oval(x,ankle[1],z,0.054,0.066,'xz',8)], '#302834', '#dcbd9b');
@@ -124,11 +122,8 @@ function upperBody(mesh, angle) {
 function model(instrument, step, action) {
   const mesh = new InkMesh(0.15);
   const wave = Math.sin(step * Math.PI / 6), palette = uniforms[instrument];
-  const kick = action === 'kick' ? Math.sin(step * Math.PI / 11) ** 1.4 : 0;
-  const footSide = instrument === 'drum' ? -1 : 1;
-  legs(brushFor(mesh), action === 'walk' ? wave : 0, kick, footSide, palette.braid);
-  const lean = action === 'kick' ? kick * 0.17 * footSide : wave * (action === 'sway' ? 0.16 : 0.105);
-  const brush = upperBody(mesh, lean);
+  legs(brushFor(mesh), action === 'walk' ? wave : 0, palette.braid);
+  const brush = upperBody(mesh, wave * (action === 'sway' ? 0.16 : 0.105));
   jacket(brush, palette);
   shako(brush, palette, wave);
   const hands = { trombone, drum: snare, sousaphone }[instrument](brush,wave);

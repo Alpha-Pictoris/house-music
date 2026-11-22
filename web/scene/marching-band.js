@@ -84,30 +84,23 @@ class Musician {
     if (this.gone) return null;
     let action = 'idle', pose = 0;
     if (music !== null) {
-      const period = [11, 16, 13][this.index];
-      const kick = (music + period - [3, 7, 5][this.index]) % period;
       const indoors = floor.groundAt(this) > 0;
-      if (enabled && !reduced && indoors && kick >= 0 && kick < 1) {
-        action = 'kick';
-        pose = Math.min(11, Math.floor(kick * 12));
-      } else {
-        this.waiting = Math.max(0, this.waiting - dt);
-        if (enabled && !this.path.length && !this.waiting) this.#wander(floor, reserved);
-        if (!enabled && !this.path.length) {
-          const end = offstage(camera, this.gate);
-          if (gap(this, end) < 0.3) { this.gone = true; return null; }
-          this.turn(floor, camera, false);
-        }
-        if (this.path.length) {
-          const speed = indoors ? 0.90 + this.index * 0.13 : Math.max(2.3, 0.15 * camera.width / camera.scale);
-          this.#walk(dt, speed);
-          if (enabled && !this.path.length) this.waiting = 0.6 + this.index * 0.3;
-          action = 'walk';
-          pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * (reduced ? 4 : 12)) * (reduced ? 3 : 1);
-        } else if (enabled && !reduced) {
-          action = 'sway';
-          pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * 12);
-        }
+      this.waiting = Math.max(0, this.waiting - dt);
+      if (enabled && !this.path.length && !this.waiting) this.#wander(floor, reserved);
+      if (!enabled && !this.path.length) {
+        const end = offstage(camera, this.gate);
+        if (gap(this, end) < 0.3) { this.gone = true; return null; }
+        this.turn(floor, camera, false);
+      }
+      if (this.path.length) {
+        const speed = indoors ? 0.90 + this.index * 0.13 : Math.max(2.3, 0.15 * camera.width / camera.scale);
+        this.#walk(dt, speed);
+        if (enabled && !this.path.length) this.waiting = 0.6 + this.index * 0.3;
+        action = 'walk';
+        pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * (reduced ? 4 : 12)) * (reduced ? 3 : 1);
+      } else if (enabled && !reduced) {
+        action = 'sway';
+        pose = Math.floor(((music * 0.5 + this.index * 0.19) % 1) * 12);
       }
     }
     return { instrument: instruments[this.index], x: this.x, z: this.z, angle: this.angle,

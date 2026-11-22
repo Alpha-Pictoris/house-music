@@ -32,9 +32,9 @@ test("pause plants the feet and holds a queued departure until playback", () => 
   assert.deepEqual(leaving, []);
 });
 
-test("musicians visit other rooms, give individual kicks and keep clear of the furniture", () => {
+test("musicians sway through different rooms and keep clear of the furniture", () => {
   const band = new MarchingBand(true), floor = new BandFloor(nightGarden);
-  const rooms = new Map(), kicks = new Set();
+  const rooms = new Map(), strides = new Set();
   for (let i = 0; i < 600; i++) {
     const poses = frame(band,i/10);
     for (const p of poses) {
@@ -42,20 +42,21 @@ test("musicians visit other rooms, give individual kicks and keep clear of the f
       const room = nightGarden.rooms.find(r => p.x > r.x && p.x < r.x+r.width && p.z > r.z && p.z < r.z+r.depth);
       if (!rooms.has(p.instrument)) rooms.set(p.instrument, new Set());
       if (room) rooms.get(p.instrument).add(room.id);
-      if (p.action === "kick") kicks.add(p.instrument);
+      assert.ok(["walk", "sway", "idle"].includes(p.action));
+      if (p.action === "walk") strides.add(p.step);
     }
   }
-  assert.equal(kicks.size,3);
+  assert.ok(strides.size > 4);
   assert.ok([...rooms.values()].every(visited => visited.size >= 2));
 });
 
-test("turning back mid-exit keeps the same positions and reduced motion skips kicks", () => {
+test("turning back mid-exit keeps the same positions and reduced motion uses four walking poses", () => {
   const band = new MarchingBand(true), muted = { ...nightGarden, band: false };
   frame(band,0);
   let leaving;
   for (let i = 1; i <= 8; i++) leaving = frame(band,i/10,muted);
   assert.deepEqual(positions(frame(band,0.8)),positions(leaving));
-  for (let i = 9; i < 95; i++) assert.ok(frame(band,i/10,nightGarden,true).every(p => p.action !== "kick"));
+  for (let i = 9; i < 95; i++) assert.ok(frame(band,i/10,nightGarden,true).every(p => p.step % 3 === 0));
 });
 
 test("the route between furnished rooms crosses their shared doorway", () => {
