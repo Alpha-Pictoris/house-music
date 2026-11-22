@@ -78,19 +78,19 @@
         <symbol id="i-writing" viewBox="0 0 24 24"><path d="M4 20c4-4 7-5 12-12M6 16C7 8 11 4 21 3c-1 7-6 12-13 14m4-6 4-1m-1-3 3-.5M4 21h9"/></symbol>
         <symbol id="i-style" viewBox="0 0 24 24"><path d="m5 20 3-7L17 3l4 3-9 10zM8 13l4 3M3 21h12"/></symbol>
         <symbol id="t-hand" viewBox="0 0 48 48">
-          <path class="wash" d="m14 32-5-9q-2-5 2-5l5 5-4-13q0-4 3-3l6 12-2-15q2-3 4 0l3 14 1-12q2-3 4 0v14l3-8q3-3 4 1l-2 17-8 9-10-2z"/>
+          <path fill="var(--wash)" stroke="none" d="m14 32-5-9q-2-5 2-5l5 5-4-13q0-4 3-3l6 12-2-15q2-3 4 0l3 14 1-12q2-3 4 0v14l3-8q3-3 4 1l-2 17-8 9-10-2z"/>
           <path d="m14 32-5-9q-2-5 2-5l6 7-5-15q0-4 3-3l6 13-2-16q2-3 4 0l3 15 1-13q2-3 4 0v15l3-9q3-3 4 1l-2 17-8 9m-12-4 13 5-2 4-13-5zM18 26q3-4 8-3m-5 7 2 2 4-3"/>
         </symbol>
         <symbol id="t-build" viewBox="0 0 48 48">
-          <path class="wash" d="m5 25 12-15 14-4 12 16-12 4v13l-15 5-11-7z"/>
+          <path fill="var(--wash)" stroke="none" d="m5 25 12-15 14-4 12 16-12 4v13l-15 5-11-7z"/>
           <path d="m3 26 14-17 14-4 14 17-17 5-12-15-11 15m2-2v12l10 6 14-4V26m-14 3v14m-7-12 4 2v7m11-11 3-1v5l-3 1zm-5-16 12-4m-9 8 12-4m-9 8 12-4m-2-12V4l4-1 2 3v10M3 38l3-1"/>
         </symbol>
         <symbol id="t-furnish" viewBox="0 0 48 48">
-          <path class="wash" d="M9 25v-9q0-6 6-5 6-7 12-5 8 1 9 10v8l4-2q4 1 3 5l-2 7-24 8-12-6-1-9q0-6 5-2z"/>
+          <path fill="var(--wash)" stroke="none" d="M9 25v-9q0-6 6-5 6-7 12-5 8 1 9 10v8l4-2q4 1 3 5l-2 7-24 8-12-6-1-9q0-6 5-2z"/>
           <path d="M9 24v-8q0-6 6-5 6-7 12-5 7 0 9 10v6M9 26q1-6-3-5-4 1-2 7l1 7 12 6 24-8 2-9q1-5-4-4-3 0-4 5l-1 3-17 6-8-4zm1-1 20-7 5 3m-21 6 16-5M7 36v4l3 1 1-3m7 3v4l3-1 1-4m14-5v4l3-1 1-5M17 15l2 2m4-5 2 2m3-4 2 2"/>
         </symbol>
         <symbol id="t-music" viewBox="0 0 48 48">
-          <path class="wash" d="M5 33 17 27l21 3 5 6-14 9-24-6zm14-10C14 20 11 17 8 8q11 2 21-5c3 9-1 16-10 20z"/>
+          <path fill="var(--wash)" stroke="none" d="M5 33 17 27l21 3 5 6-14 9-24-6zm14-10C14 20 11 17 8 8q11 2 21-5c3 9-1 16-10 20z"/>
           <path d="m5 33 14-6 23 5-14 7zm0 0v6l23 6 14-8v-5m-14 7v6M8 8c6 3 14 0 21-5 1 8-1 14-7 18l-4 2C13 19 10 14 8 8zm2 2 11 8 6-12m-9 17 3 7q2 3 7 1l3-2m-15 5c4 2 10 3 13 1m-2-8 5-2 3 1m6-13q4 1 4-3V5l-4 1v7"/>
         </symbol>
       </defs>
@@ -98,7 +98,17 @@
     <main class="atelier" aria-label="House editor">
       <div id="stage" class="stage" data-empty="true">
         <canvas id="plot" class="plot" tabindex="0" aria-label="House plot. Draw a room, then place furniture." aria-describedby="plot-hint"></canvas>
-        <div id="writing-marks"></div>
+        <div id="writing-marks" hidden>
+          <div id="bookmarks"></div>
+          <svg id="writing-thread" aria-hidden="true" hidden><line/><circle r="2"/></svg>
+          <section id="plot-inscription" class="bookplate" aria-label="Bookcase inscription" aria-describedby="plot-verse" tabindex="-1" hidden>
+            <p id="plot-verse" aria-live="polite"></p>
+            <div class="paper-actions">
+              <button id="follow-writing" aria-haspopup="dialog">Arrange bookcase</button>
+              <button id="fold-writing">Fold note</button>
+            </div>
+          </section>
+        </div>
         <div id="empty-guide" class="empty-guide"><h2>Draw your first room</h2>
           <p>Drag across the plot or tap two corners.</p>
         </div>
@@ -167,10 +177,12 @@
           </details>
         </section>
         <nav class="toolbelt" aria-label="Plot tools">
-          <button class="tool select" data-tool="select"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-hand"/></svg></span><span>Select</span></button>
-          <button class="tool build" data-tray="build" aria-expanded="false" aria-controls="build-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-build"/></svg></span><span>Build</span></button>
-          <button class="tool furnish" data-tray="furnish" aria-expanded="false" aria-controls="furnish-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-furnish"/></svg></span><span>Furnish</span></button>
-          <button class="tool music" data-tray="music" aria-expanded="false" aria-controls="music-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-music"/></svg></span><span>Music</span></button>
+          <div class="tool-rail">
+            <button class="tool select" data-tool="select"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-hand"/></svg></span><span>Select</span></button>
+            <button class="tool build" data-tray="build" aria-expanded="false" aria-controls="build-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-build"/></svg></span><span>Build</span></button>
+            <button class="tool furnish" data-tray="furnish" aria-expanded="false" aria-controls="furnish-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-furnish"/></svg></span><span>Furnish</span></button>
+            <button class="tool music" data-tray="music" aria-expanded="false" aria-controls="music-tray"><span class="tool-art"><svg class="icon" aria-hidden="true"><use href="#t-music"/></svg></span><span>Music</span></button>
+          </div>
         </nav>
       </div>
     </main>
@@ -185,7 +197,7 @@
           </button></form>
         </div>
       </div>
-      <div id="inscription" class="inscription" hidden>
+      <div id="inscription" class="bookplate" hidden>
         <p id="inscription-text" role="status"></p><button id="see-water" hidden>Look at the floor</button>
       </div>
       <div class="object-stage">

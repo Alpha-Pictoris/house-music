@@ -2,6 +2,7 @@ import { furniture } from "../building/catalogue.js";
 import { InstrumentPanel } from "./instrument-panel.js";
 import { FurnitureSpots } from "../building/furniture-spots.js";
 import { HouseScene } from "../scene/house-scene.js";
+import { bookcaseInscription } from "./bookplate.js";
 import { byId } from "./elements.js";
 
 export class ObjectPanel {
@@ -147,9 +148,7 @@ export class ObjectPanel {
     const entry = this.glass.read(this.editor.house).writing.get(parent.id);
     byId("inscription").hidden = parent.kind !== "bookcase";
     if (parent.kind === "bookcase") {
-      const text = !entry ? "One of the spines is stamped with a looking glass."
-        : entry.pool ? "Beneath the boards, three golden fish are swimming."
-        : "Set a bottled moon at my left, a little book at my right. Between them, ring the water awake.";
+      const text = bookcaseInscription(entry);
       if (byId("inscription-text").textContent !== text) byId("inscription-text").textContent = text;
       byId("see-water").hidden = !entry?.pool;
     }

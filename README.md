@@ -26,7 +26,7 @@ With **Build → Draw room**, start inside a room and draw beyond a wall to add 
 
 Open **Furnish → Tables & shelves**. Double-click or double-tap a table or shelf, choose a spot, then add a bottle, book, bell or pocket orrery. Tap **Move** and another spot to swap two objects. Objects start silent. Choose an **Instrument** and the object plays a short accent over the band as the sweep passes. Moving or turning the furniture carries its objects with it.
 
-Look closely at the spines on the bookcase. Some rooms have writing that only shows up when you furnish them a certain way.
+Select a bookcase to read the mark on its spine. In some rooms the writing changes. You can fold the note and read it again from the plot.
 
 Tap the curved arrow to turn a piece a quarter turn before or after placing it. **Camera** holds **Pan**, **Orbit** and zoom. Two fingers drag or pinch the map in any tool. On a mouse, drag with the middle button to pan and scroll to zoom.
 

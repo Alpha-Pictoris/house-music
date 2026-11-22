@@ -85,6 +85,7 @@ class HouseMusic {
     this.editor.addEventListener("change", this.#onEdit);
     this.transport.setHouse(this.editor.house);
     this.objectPanel.close();
+    this.marks.reset();
     this.trays.close();
     this.controls.reset(this.editor);
     this.refresh();
@@ -188,7 +189,7 @@ class HouseMusic {
     this.records.show(house.mode);
     byId("band").setAttribute("aria-pressed", String(house.band !== false));
     this.trays.refresh();
-    this.marks.show(this.glass.read(house).discoveries, controls.tool);
+    this.marks.show(this.glass.read(house), controls.selectedPiece, controls.tool);
     this.furniturePanel.refresh(house);
     this.objectPanel.refresh();
     this.#playButton();
