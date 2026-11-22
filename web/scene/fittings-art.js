@@ -3,6 +3,9 @@ import {oval} from './domestic-art.js';
 import {InkMesh} from './ink-mesh.js';
 
 const attach = {
+  hourglass: [0, 1.91, 0.30, 0.46],
+  mothlight: [0.38, 0.34, 0.08, 0.45],
+  threshold: [-0.66, 1.28, 0.19, 0.52],
   shelf: [-0.92, 1.90, 0.27, 0.60],
   console: [0, 0.82, 0.36, 0.48],
   chair: [0, 1.36, -0.40, 0.62],

@@ -3,6 +3,12 @@ import { fittings } from "./fittings.js";
 export const tablesAndShelves = "Tables & shelves";
 
 export const furniture = {
+  hourglass: { label: "Rising hourglass", group: "Curiosities", width: 1.10, depth: 1.10, height: 2.05, fitting: "plain",
+    detail: "Sand climbs through the neck.", ink: "#efbd7d" },
+  mothlight: { label: "Moth lantern", group: "Curiosities", width: 1.55, depth: 1.40, height: 2.32, fitting: "plain",
+    detail: "Two moths circle a black candle.", ink: "#8debd6" },
+  threshold: { label: "Elsewhere door", group: "Curiosities", width: 1.65, depth: 0.80, height: 2.72, fitting: "plain",
+    detail: "A hallway recedes inside the frame.", ink: "#e5a1da" },
   sofa:     { label: "Velvet sofa",   group: "Living",   width: 2.5,  depth: 1.2,  height: 1.45, fitting: "thorn", phrase: "answer" },
   table:    { label: "Dining set",    group: "Living",   width: 2.1,  depth: 1.8,  height: 1.35, fitting: "glass", phrase: "arch" },
   bookcase: { label: "Bookcase",      group: "Living",   width: 1.65, depth: 0.65, height: 2.65, fitting: "wire", phrase: "fall" },

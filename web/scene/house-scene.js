@@ -1,6 +1,7 @@
 import {FloorPlan} from '../building/floor-plan.js';
 import {FurnitureSpots, quarterTurns} from '../building/furniture-spots.js';
 import {parlourModels} from './parlour-art.js';
+import {CurioArt, curioModels} from './curios.js';
 import {RoomShape} from '../building/room-shape.js';
 import {furniture} from '../building/catalogue.js';
 import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor, roomOutline} from './architecture.js';
@@ -21,7 +22,7 @@ const blue = '#8de9df';
 const coral = '#ff8b82';
 const lavender = '#c5abdb';
 const models = new Map();
-const houseModels = {...livingModels, ...roomModels, ...gardenModels, ...parlourModels};
+const houseModels = {...livingModels, ...roomModels, ...gardenModels, ...parlourModels, ...curioModels};
 const motionPreference = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 const quantizedLevel = level => Math.round(level * 100) / 100;
 
@@ -56,7 +57,7 @@ function pieceItems(piece, options = {}) {
       scale = [definition.width / dimensions.width, definition.height / dimensions.height, definition.depth / dimensions.depth];
     }
     mesh.model = true;
-    mesh.canvasFront = kind === 'window';
+    mesh.canvasFront = kind === 'window' || kind === 'threshold';
     models.set(kind, {mesh, scale});
   }
   const {mesh, scale} = models.get(kind);
@@ -68,6 +69,7 @@ function pieceItems(piece, options = {}) {
     ...options, scale, origin, turn: direction, level: level * 0.5, pose: 0, wobble: 1 / 0.43
   });
   const items = [body];
+  if (Object.hasOwn(curioModels, kind)) CurioArt.append(items, piece, origin, turn, options);
   if (fitting) {
     const [sx,y,sz] = fitting.local, [cos,sin] = direction, size = fitting.size;
     items.push(instance(fitting.mesh, { ...options,
@@ -217,7 +219,7 @@ export class HouseScene {
       const center = [definition.width / 2, definition.height * 0.55, definition.depth / 2];
       const elevation = definition.height < 0.15 ? 0.87 : 0.34;
       const camera = new IsometricCamera(width, height, 0.36, elevation, center);
-      camera.fit([definition.width * 1.21, definition.height * 1.15 + 0.28, definition.depth * 1.17], 1);
+      camera.fit([definition.width * 1.15, definition.height * 1.12 + 0.14, definition.depth * 1.12], 1);
       renderer.draw(target, camera, items, {drawing: 0.8, wobble: motion?.matches ? 0 : 0.62});
     };
     repaint();
@@ -308,7 +310,7 @@ export class HouseScene {
     let nearest = nearestDepth(instance(wallMesh), camera, x, y);
     let id = null;
     for (const piece of house.pieces) {
-      const body = pieceItems(piece, {level: this.lastLevels?.get(piece.id) ?? 0, pose: this.motion?.matches ? 0 : 1});
+      const body = pieceItems(piece, {level: this.lastLevels?.get(piece.id) ?? 0, pose: this.motion?.matches ? 0 : 1, sweepX: this.lastFrame?.sweepX});
       const depth = Math.max(...body.map(item => nearestDepth(item, camera, x, y)));
       if (depth <= nearest) continue;
       nearest = depth;
@@ -398,7 +400,7 @@ export class HouseScene {
     items.push(instance(rendered.wallMesh, {canvasLayer: 3.25, canvasInkOffset: 0.2}));
     items.push(instance(rendered.entries, {canvasLayer: 3.5, canvasInkOffset: 0.2}));
     for (const piece of house.pieces) {
-      items.push(...pieceItems(piece, {levels: this.lastLevels, level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
+      items.push(...pieceItems(piece, {levels: this.lastLevels, level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1, sweepX}));
     }
     for (const player of players) items.push(marcherItem(player));
 
