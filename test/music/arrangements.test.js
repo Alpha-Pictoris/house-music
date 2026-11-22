@@ -2,10 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import { arrangements, recordingFor, recordingNames } from "../../web/music/arrangements.js";
+import { responses } from "../../web/music/responses.js";
 
 test("every voice in the five arrangements has a named recording on disk", () => {
   const used = new Set();
   for (const mode of Object.keys(arrangements)) {
+    for (const part of responses[mode]) used.add(part.recording);
     for (const part of ["guitar", "bass", "celesta", "harp", "kick", "snare", "hat"]) {
       used.add(recordingFor(mode, part));
     }

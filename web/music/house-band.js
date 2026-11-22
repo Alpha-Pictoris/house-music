@@ -1,6 +1,8 @@
 import { fittings, minorScale } from "../building/fittings.js";
-import { arrangements } from "./arrangements.js";
+import { arrangements, recordingFor } from "./arrangements.js";
 import { scalePitch, notesFor } from "./phrases.js";
+import { responses } from "./responses.js";
+
 const balance = { guitar: 0.92, bass: 0.80, celesta: 0.60, harp: 0.62, kick: 1, snare: 0.90, hat: 0.72 };
 
 function lastPlayer(players, beat) {
@@ -9,16 +11,19 @@ function lastPlayer(players, beat) {
 
 export class HouseBand {
   constructor(mode) {
+    this.mode = mode;
     this.arrangement = arrangements[mode];
+    this.responses = responses[mode];
   }
 
   static snap(x, left, right) {
     return Math.max(left, Math.min(right - 0.5, Math.round(x * 2) / 2));
   }
 
-  perform(parts, start) {
+  perform(parts, start, turn = 0) {
     const { progression } = this.arrangement;
     const chord = progression[(start / 4) % progression.length];
+    const bar = start / 4 + turn;
     const mix = new Map();
     const lanes = new Map();
     for (const part of parts) {
@@ -26,19 +31,21 @@ export class HouseBand {
       lanes.get(part.fitting).push(part);
     }
     const drums = lanes.get("stud") ?? [];
-    this.#rhythm(mix, parts, drums.filter(part => !part.piece.phrase), lanes.get("ring") ?? [], chord);
+    this.#rhythm(mix, parts, drums.filter(part => !part.piece.phrase), lanes.get("ring") ?? [], chord, bar);
 
     for (const lane of lanes.values()) {
       const beats = [...new Set(lane.map(part => part.beat))];
       const space = new Map(beats.map((beat, i) => [beat, (beats[i + 1] ?? beats[0] + 4) - beat]));
       for (const part of lane) this.#playPart(mix, part, chord, space.get(part.beat));
     }
+    this.#answer(mix, parts, lanes, chord, bar);
     return this.#mixBar(mix, start);
   }
 
-  #rhythm(mix, parts, drummers, bassists, chord) {
+  #rhythm(mix, parts, drummers, bassists, chord, bar) {
     const { groove, scale } = this.arrangement;
-    for (const [sample, strokes] of Object.entries(groove.drums)) {
+    const drums = bar % 2 === 1 && groove.turnaround ? groove.turnaround : groove.drums;
+    for (const [sample, strokes] of Object.entries(drums)) {
       for (const [beat, velocity] of strokes) {
         const player = lastPlayer(drummers, beat);
         const finish = (player ?? lastPlayer(parts, beat)).finish;
@@ -55,6 +62,22 @@ export class HouseBand {
     }
   }
 
+  #answer(mix, parts, lanes, chord, bar) {
+    const attacks = new Set([...mix.values()].filter(n => n.pieceId && n.fitting !== "stud" && n.fitting !== "ring").map(n => n.beat));
+    for (const { fitting, recording, unless, bars } of this.responses) {
+      if (lanes.has(unless)) continue;
+      const sample = fittings[fitting].sample;
+      for (const [beat, degrees, gate, accent] of bars[bar % bars.length]) {
+        const finish = lastPlayer(parts, beat).finish;
+        const velocity = accent * (attacks.has(beat) ? 0.69 : 0.95);
+        for (const degree of Array.isArray(degrees) ? degrees : [degrees]) {
+          const semitones = scalePitch(chord + degree, this.arrangement.scale);
+          this.#add(mix, null, fitting, beat, { sample, recording, semitones, gate, finish }, velocity);
+        }
+      }
+    }
+  }
+
   #playPart(mix, part, chord, space) {
     for (const { offset, semitones, gate, sample, velocity } of this.#figure(part, chord)) {
       if (offset >= space) break;
@@ -68,11 +91,11 @@ export class HouseBand {
     const events = [...mix.values()];
     const layerCounts = new Map();
     for (const note of events) {
-      const key = note.sample + ":" + note.beat;
+      const key = note.recording + ":" + note.beat;
       layerCounts.set(key, (layerCounts.get(key) ?? 0) + 1);
     }
     for (const note of events) {
-      note.velocity /= Math.sqrt(layerCounts.get(note.sample + ":" + note.beat));
+      note.velocity /= Math.sqrt(layerCounts.get(note.recording + ":" + note.beat));
       note.beat += start;
     }
     return events;
@@ -93,11 +116,12 @@ export class HouseBand {
   }
 
   #add(mix, part, fitting, beat, note, velocity) {
-    const key = [beat, note.sample, note.sample === "bass" ? 0 : note.semitones].join("/");
+    const recording = note.recording ?? recordingFor(this.mode, note.sample);
+    const key = [beat, recording, note.sample === "bass" ? 0 : note.semitones].join("/");
     const level = velocity * balance[note.sample];
     const current = mix.get(key);
     if (!current) {
-      mix.set(key, { ...note, beat, fitting, pieceId: part?.piece.id ?? null, velocity: level });
+      mix.set(key, { ...note, recording, beat, fitting, pieceId: part?.piece.id ?? null, velocity: level });
       return;
     }
     current.velocity = Math.max(current.velocity, level);

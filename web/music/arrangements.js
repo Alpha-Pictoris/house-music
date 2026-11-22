@@ -34,7 +34,9 @@ export const recordingNames = {
   "synth-lead": "Square lead", "electric-piano": "Electric piano", "machine-kick": "Machine kick",
   clap: "Handclap", "pipe-organ": "Pipe organ", strings: "Bowed strings", "mute-guitar": "Muted guitar",
   "slap-bass": "Slap bass", nylon: "Nylon guitar", "round-bass": "Fretless bass", rim: "Side stick",
-  upstroke: "Upstroke guitar", horns: "Brass section", "reed-organ": "Reed organ"
+  upstroke: "Upstroke guitar", horns: "Brass section", "reed-organ": "Reed organ",
+  "fuzz-lead": "Lead guitar", "low-chug": "Low power chord", "gang-hit": "Group shout",
+  croon: "Wordless vocal", talkbox: "Talking synth", baritone: "Baritone sax"
 };
 
 export function recordingFor(mode, sample) {

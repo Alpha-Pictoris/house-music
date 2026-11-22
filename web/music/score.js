@@ -2,8 +2,11 @@ import { fittingOf } from "../building/catalogue.js";
 import { HouseBand } from "./house-band.js";
 import { notesFor } from "./phrases.js";
 
+const byBeat = (a, b) => a.beat - b.beat || (a.pieceId ?? "").localeCompare(b.pieceId ?? "");
+
 export class Score {
   #band;
+  #reply;
   #seats = new Map();
 
   static from(house) {
@@ -43,15 +46,20 @@ export class Score {
     if (bars.size) {
       this.left = Math.min(...bars.keys());
       this.beats = Math.max(...bars.keys()) + 4 - this.left;
+      if ((this.beats / 4) % 2) this.#reply = [];
       for (const [bar, parts] of bars) {
         parts.sort((a, b) => a.beat - b.beat || a.piece.id.localeCompare(b.piece.id));
         this.events.push(...this.#band.perform(parts, bar - this.left));
+        if (this.#reply) this.#reply.push(...this.#band.perform(parts, bar - this.left, 1));
       }
     }
-    this.events.sort((a, b) => a.beat - b.beat || (a.pieceId ?? "").localeCompare(b.pieceId ?? ""));
+    this.events.sort(byBeat);
+    this.#reply?.sort(byBeat);
   }
 
-  preview(piece) {
+  eventsFor(pass) { return pass % 2 && this.#reply ? this.#reply : this.events; }
+
+  preview(piece, pass = 0) {
     const fitting = fittingOf(piece);
     if (fitting === "plain") return [];
     const finish = this.house.rooms.find(room => room.id === piece.roomId)?.finish ?? "walnut";
@@ -63,7 +71,7 @@ export class Score {
     }
     const onset = this.#seats.get(piece.id) - this.left;
     const start = Math.floor(onset / 4) * 4;
-    return this.events.filter(note => note.beat >= start && note.beat < start + 4)
+    return this.eventsFor(pass).filter(note => note.beat >= start && note.beat < start + 4)
       .map(note => ({ ...note, offset: (note.beat - onset + 4) % 4 })).sort((a, b) => a.offset - b.offset);
   }
 }

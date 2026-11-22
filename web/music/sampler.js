@@ -58,7 +58,7 @@ export class Sampler {
   }
 
   start(event, when, mode, audition = false) {
-    const recording = recordingFor(mode, event.sample);
+    const recording = event.recording ?? recordingFor(mode, event.sample);
     const buffer = this.#buffers.get(recording);
     if (!buffer) return;
     const context = this.#context;
@@ -71,6 +71,17 @@ export class Sampler {
     const volume = 0.82 * (event.velocity ?? 1);
     level.gain.setValueAtTime(0, start);
     level.gain.linearRampToValueAtTime(volume, start + 0.003);
+    if (mode === "chrome" && ["filter-chord", "synth-bass", "talkbox"].includes(recording)) {
+      const seconds = 60 / arrangements[mode].bpm;
+      const from = event.beat ?? event.offset;
+      for (let beat = Math.ceil(from); beat < from + length / seconds; beat++) {
+        const dip = start + (beat - from) * seconds;
+        if (dip + 0.085 >= start + length - 0.025) break;
+        level.gain.setValueAtTime(volume, Math.max(start + 0.003, dip));
+        level.gain.linearRampToValueAtTime(volume * 0.38, Math.max(start + 0.004, dip + 0.006));
+        level.gain.linearRampToValueAtTime(volume, dip + 0.085);
+      }
+    }
     level.gain.setValueAtTime(volume, start + Math.max(0.004, length - 0.025));
     level.gain.linearRampToValueAtTime(0, start + length);
     let filter;

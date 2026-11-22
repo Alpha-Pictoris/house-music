@@ -13,6 +13,7 @@ export class Transport {
   #origin = 0;
   #queuedUntil = 0;
   #cursor = 0;
+  #pass = 0;
   #played = false;
   #pulses = [];
   playing = false;
@@ -31,7 +32,9 @@ export class Transport {
     const boundary = this.#boundary;
     this.#score = this.#next;
     const period = this.#score.beats * this.#seconds;
-    this.#origin = boundary + Math.floor((now - boundary) / period) * period;
+    const skipped = Math.floor((now - boundary) / period);
+    this.#pass += 1 + skipped;
+    this.#origin = boundary + skipped * period;
   }
 
   #beat(now) {
@@ -76,7 +79,7 @@ export class Transport {
   }
 
   preview(piece) {
-    return this.#score.preview(piece);
+    return this.#score.preview(piece, this.#pass);
   }
 
   play() {
@@ -103,10 +106,11 @@ export class Transport {
     this.pause();
     this.#played = false;
     this.#cursor = 0;
+    this.#pass = 0;
   }
 
-  #schedule(score, origin, from, until, now = from) {
-    for (const event of score.events) {
+  #schedule(score, origin, from, until, now, pass) {
+    for (const event of score.eventsFor(pass)) {
       const when = origin + event.beat * this.#seconds;
       if (when < from - near) continue;
       if (when >= until - near) break;
@@ -126,8 +130,8 @@ export class Transport {
     const earliest = this.#origin >= now - downbeatGrace ? this.#origin : now;
     const from = Math.max(this.#queuedUntil, earliest), until = now + lookahead;
     const boundary = this.#boundary;
-    this.#schedule(this.#score, this.#origin, from, Math.min(until, boundary), now);
-    if (until > boundary) this.#schedule(this.#next, boundary, Math.max(from, boundary), until);
+    this.#schedule(this.#score, this.#origin, from, Math.min(until, boundary), now, this.#pass);
+    if (until > boundary) this.#schedule(this.#next, boundary, Math.max(from, boundary), until, now, this.#pass + 1);
     this.#queuedUntil = until;
     this.#pulses = this.#pulses.filter(pulse => pulse.time + pulse.span + 0.1 >= now);
   }
@@ -144,7 +148,7 @@ export class Transport {
       }
     }
     return {
-      house: this.#score.house, events: this.#score.events, beat, beats: this.#score.beats,
+      house: this.#score.house, events: this.#score.eventsFor(this.#pass), beat, beats: this.#score.beats,
       sweepX: this.#played ? this.#score.left + beat : null, levels
     };
   }

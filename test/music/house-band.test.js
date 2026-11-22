@@ -19,7 +19,7 @@ test("one wardrobe gets a four-beat riff, bass and drums wherever it is placed",
   assert.equal(editor.house.pieces[0].x, 10.24);
   assert.ok(score.events.filter(n => n.pieceId === piece.id).length >= 3);
   assert.ok(score.events.some(n => n.pieceId === piece.id && n.beat === 2));
-  assert.deepEqual(new Set(score.events.map(n => n.sample)), new Set(["guitar", "bass", "kick", "hat", "snare"]));
+  assert.deepEqual(new Set(score.events.map(n => n.recording)), new Set(["filter-chord", "synth-bass", "machine-kick", "hat", "clap", "talkbox"]));
 });
 
 test("furnished bars follow the chords and leave a full empty bar quiet", () => {
@@ -103,4 +103,18 @@ test("returning to the house riff clears the manual phrase and survives a save",
   const copy = houseFromLink(houseLink(editor.house, "https://example.com/"));
   assert.ok(!Object.hasOwn(copy.pieces[0], "phrase"));
   assert.ok(Score.from(copy).events.filter(n => n.pieceId === sofa.id).length > 1);
+});
+
+test("a single hand-picked note still gets a different answer on the next pass", () => {
+  const editor = room(4);
+  const sofa = editor.place("sofa", { x: 0, z: 0 });
+  editor.setPhrase(sofa.id, "single");
+  for (const mode of Object.keys(arrangements)) {
+    editor.setMode(mode);
+    const score = Score.from(editor.house);
+    const take = pass => score.eventsFor(pass);
+    assert.deepEqual(take(0).filter(e => e.pieceId === sofa.id), take(1).filter(e => e.pieceId === sofa.id));
+    assert.notDeepEqual(take(0).filter(e => !e.pieceId), take(1).filter(e => !e.pieceId));
+    assert.equal(take(2), take(0));
+  }
 });
