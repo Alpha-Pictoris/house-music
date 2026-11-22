@@ -197,7 +197,7 @@
               <p class="acoustic-note" id="room-sound"></p>
             </div>
             <div id="piece-fields" class="detail-fields" hidden>
-              <button type="button" id="arrange-surface" class="surface-action" hidden>Arrange surface</button>
+              <button type="button" id="arrange-objects" class="object-action" hidden>Arrange objects</button>
               <div id="fittings" class="fittings" role="group" aria-label="Musical fitting"></div>
               <p class="acoustic-note" id="fitting-sound"></p>
               <div id="tuning-field" class="detail-fields">
@@ -273,28 +273,28 @@
         ><a href="./credits.html">Sound credits</a>
       </footer>
     </div>
-    <dialog id="surface-dialog" aria-labelledby="surface-title">
+    <dialog id="object-dialog" aria-labelledby="object-title">
       <div class="dialog-head">
-        <h2 id="surface-title">Arrange surface</h2>
-        <div class="surface-tools">
-          <button class="icon-button" id="surface-undo" aria-label="Undo edit"><svg class="icon" aria-hidden="true"><use href="#i-undo"></use></svg></button>
-          <button class="icon-button" id="surface-redo" aria-label="Redo edit"><svg class="icon" aria-hidden="true"><use href="#i-redo"></use></svg></button>
+        <h2 id="object-title">Arrange objects</h2>
+        <div class="object-dialog-tools">
+          <button class="icon-button" id="object-undo" aria-label="Undo edit"><svg class="icon" aria-hidden="true"><use href="#i-undo"></use></svg></button>
+          <button class="icon-button" id="object-redo" aria-label="Redo edit"><svg class="icon" aria-hidden="true"><use href="#i-redo"></use></svg></button>
           <form method="dialog"><button class="icon-button" aria-label="Back to house" title="Back to house">
           <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
           </button></form>
         </div>
       </div>
-      <div class="surface-stage">
-        <canvas id="surface-portrait" aria-hidden="true"></canvas>
-        <div id="surface-spots" role="group" aria-label="Surface spots"></div>
+      <div class="object-stage">
+        <canvas id="object-portrait" aria-hidden="true"></canvas>
+        <div id="object-spots" role="group" aria-label="Object positions"></div>
       </div>
-      <p id="surface-status" role="status"></p>
+      <p id="object-status" role="status"></p>
       <div id="object-tray" aria-label="Small objects" role="group"></div>
       <div id="object-fields" hidden>
-        <label class="field">Voice<select id="object-voice"></select></label>
-        <label class="field" id="object-tuning-field">Tuning<select id="object-tuning"></select></label>
+        <label class="field">Instrument<select id="object-instrument"></select></label>
+        <label class="field" id="object-tuning-field"><span id="object-tuning-label">Note</span><select id="object-tuning"></select></label>
         <label class="field">Spot<select id="object-position"></select></label>
-        <button type="button" class="surface-action" id="remove-object">Remove object</button>
+        <button type="button" class="object-action" id="remove-object">Remove object</button>
       </div>
     </dialog>
     <dialog id="library-dialog">
@@ -359,7 +359,7 @@
         <dd>
           Place furniture, layer rugs underneath it and plant the garden outside. Windows snap to outside
           walls. Double-tap or double-click a table or shelf to arrange small objects on it.
-          Choose a spot, add an object and give it a voice if you want it to play.
+          Choose a spot, then an object. Pick an instrument to hear it play when the sweep passes.
         </dd>
         <dt>Listen</dt>
         <dd>
@@ -371,7 +371,7 @@
         <dt>Keyboard</dt>
         <dd>
           Focus the plot. Arrow keys move by a quarter unit. Hold Shift for a full unit. Enter places a corner
-          or piece, or opens a selected surface. R rotates, Delete removes and Space plays.
+          or piece. With a table or shelf selected, Enter lets you arrange its objects. R rotates, Delete removes and Space plays.
         </dd>
       </dl>
     </dialog>

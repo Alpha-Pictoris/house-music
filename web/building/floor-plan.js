@@ -1,4 +1,4 @@
-import { furniture } from "./catalogue.js";
+import { furniture, isSmallObject } from "./catalogue.js";
 
 import { RoomShape, overlaps, round, tolerance as epsilon } from "./room-shape.js";
 
@@ -93,7 +93,7 @@ export class FloorPlan {
   static pieceError(house, piece) {
     const box = FloorPlan.footprint(piece);
     const item = furniture[piece.kind];
-    if (item.layer === "surface") return "Choose a surface for this object.";
+    if (isSmallObject(piece.kind)) return "Place this object on a table or shelf.";
     if (![box.x, box.z, box.x + box.width, box.z + box.depth].every(n => Number.isFinite(n) && Math.abs(n) <= 256)) {
       return "Choose a spot on the plot.";
     }

@@ -420,15 +420,15 @@ h2,
 }
 .furniture-card:hover,
 .furniture-card[aria-pressed="true"] {
-  border-color: var(--voice);
-  background: color-mix(in srgb, var(--voice) 7%, #211a25);
+  border-color: var(--fitting-colour);
+  background: color-mix(in srgb, var(--fitting-colour) 7%, #211a25);
 }
 .sample-art {
   height: 76px;
   position: relative;
   display: block;
   overflow: hidden;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--voice) 9%, #1a141e), #1b151f 84%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--fitting-colour) 9%, #1a141e), #1b151f 84%);
 }
 .sample-art canvas {
   width: 100%;
@@ -457,12 +457,12 @@ h2,
   width: 5px;
   height: 5px;
   display: inline-block;
-  background: var(--voice);
+  background: var(--fitting-colour);
   transform: rotate(45deg);
 }
 .furniture-card > .icon {
   width: 13px;
-  color: var(--voice);
+  color: var(--fitting-colour);
 }
 .inspector {
   border-top: 1px solid var(--line);
@@ -1014,7 +1014,7 @@ dialog dd {
   border-color: #697049;
 }
 .furniture-card .material-label {
-  color: var(--voice);
+  color: var(--fitting-colour);
 }
 .inspector {
   border: 0;
@@ -1042,14 +1042,14 @@ dialog dd {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: var(--voice);
+  color: var(--fitting-colour);
   border: 1px solid var(--line);
   border-radius: 3px;
   font-size: 10px;
 }
 .fittings button[aria-pressed="true"] {
-  border-color: var(--voice);
-  background: color-mix(in srgb, var(--voice) 12%, #201b26);
+  border-color: var(--fitting-colour);
+  background: color-mix(in srgb, var(--fitting-colour) 12%, #201b26);
 }
 .fittings .icon {
   width: 20px;
@@ -1137,12 +1137,12 @@ dialog dd {
   font: 16px var(--serif);
 }
 
-#surface-dialog {
+#object-dialog {
   width: min(480px, calc(100% - 24px));
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
 }
-.surface-stage {
+.object-stage {
   position: relative;
   margin-top: 12px;
   height: clamp(185px, 32dvh, 290px);
@@ -1151,8 +1151,8 @@ dialog dd {
   border-radius: 4px;
   background: radial-gradient(ellipse at 48% 59%, #392a3c 0%, #211923 53%, #17121b 85%);
 }
-#surface-portrait { width: 100%; height: 100%; display: block; }
-.surface-spot {
+#object-portrait { width: 100%; height: 100%; display: block; }
+.object-spot {
   position: absolute;
   width: 42px;
   height: 42px;
@@ -1162,7 +1162,7 @@ dialog dd {
   color: #e1d2e5;
   touch-action: manipulation;
 }
-.surface-spot span {
+.object-spot span {
   display: grid;
   place-items: center;
   width: 19px;
@@ -1173,22 +1173,22 @@ dialog dd {
   font-size: 15px;
   line-height: 1;
 }
-.surface-spot[aria-pressed="true"] span { color: var(--lime); border-color: var(--lime); box-shadow: 0 0 0 2px #242126; }
-.surface-spot[data-filled="true"] span { width: 10px; height: 10px; background: #bc9bcc; transform: translateY(9px); }
-.surface-spot[data-filled="true"][aria-pressed="true"] span { background: var(--lime); }
-#surface-status { margin: 10px 0; min-height: 1.3em; }
+.object-spot[aria-pressed="true"] span { color: var(--lime); border-color: var(--lime); box-shadow: 0 0 0 2px #242126; }
+.object-spot[data-filled="true"] span { width: 10px; height: 10px; background: #bc9bcc; transform: translateY(9px); }
+.object-spot[data-filled="true"][aria-pressed="true"] span { background: var(--lime); }
+#object-status { margin: 10px 0; min-height: 1.3em; }
 #object-tray { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
-#object-tray button, .surface-action {
+#object-tray button, .object-action {
   border: 1px solid var(--line);
   background: #221b27;
   border-radius: 4px;
   padding: 7px;
 }
-#object-tray button:hover, .surface-action:hover { border-color: var(--violet); }
+#object-tray button:hover, .object-action:hover { border-color: var(--violet); }
 #object-tray canvas { display: block; width: 100%; height: 47px; }
 #object-tray span { font-size: 12px; }
 #object-fields { display: grid; gap: 8px; }
 #object-fields .field { margin: 0; }
-#object-fields .surface-action { justify-self: start; }
+#object-fields .object-action { justify-self: start; }
 
-.surface-tools { display: flex; gap: 3px; align-items: center; }
+.object-dialog-tools { display: flex; gap: 3px; align-items: center; }

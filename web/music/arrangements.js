@@ -1,4 +1,4 @@
-import { minorScale } from "../building/fittings.js";
+import { fittings, minorScale, tunings } from "../building/fittings.js";
 import { cassette, chrome, floorboards, landing, moth } from "./grooves.js";
 
 const major = [0, 2, 4, 5, 7, 9, 11];
@@ -10,23 +10,23 @@ export const defaultMode = "chrome";
 export const arrangements = {
   chrome: {
     label: "Chrome Attic", bpm: 128, scale: mixolydian, progression: [0, 3, 5, 4], groove: chrome,
-    voices: { guitar: "clavinet", bass: "synth-bass", celesta: "talkbox", harp: "electric-piano", kick: "machine-kick", snare: "clap" }
+    recordings: { guitar: "clavinet", bass: "synth-bass", celesta: "talkbox", harp: "electric-piano", kick: "machine-kick", snare: "clap" }
   },
   moth: {
     label: "Moth Mass", bpm: 176, scale: harmonicMinor, progression: [0, 0, -3, 4], groove: moth,
-    voices: { celesta: "pipe-organ", harp: "strings" }
+    recordings: { celesta: "pipe-organ", harp: "strings" }
   },
   floorboards: {
     label: "Loose Floorboards", bpm: 108, scale: dorian, progression: [0, 0, -1, 3], groove: floorboards,
-    voices: { guitar: "mute-guitar", bass: "slap-bass", celesta: "gang-hit", harp: "celesta" }
+    recordings: { guitar: "mute-guitar", bass: "slap-bass", celesta: "gang-hit", harp: "celesta" }
   },
   cassette: {
     label: "Bent Cassette", bpm: 84, scale: minorScale, progression: [2, -1, 0, -2], groove: cassette,
-    voices: { guitar: "nylon", bass: "round-bass", celesta: "croon", snare: "rim" }
+    recordings: { guitar: "nylon", bass: "round-bass", celesta: "croon", snare: "rim" }
   },
   landing: {
     label: "Brass Landing", bpm: 160, scale: major, progression: [0, 3, 4, 0], groove: landing,
-    voices: { guitar: "upstroke", celesta: "horns", harp: "reed-organ" }
+    recordings: { guitar: "upstroke", celesta: "horns", harp: "reed-organ" }
   }
 };
 
@@ -42,5 +42,15 @@ export const recordingNames = {
 };
 
 export function recordingFor(mode, sample) {
-  return arrangements[mode].voices[sample] ?? sample;
+  return arrangements[mode].recordings[sample] ?? sample;
+}
+
+export function instrumentName(mode, fitting) {
+  return fitting.sample ? recordingNames[recordingFor(mode, fitting.sample)] : fitting.instrument;
+}
+
+export function tuningOptions(mode, fitting, relative) {
+  const options = tunings(fitting, relative);
+  if (!fittings[fitting].hits) return options;
+  return options.map(({ value }) => ({ value, label: recordingNames[recordingFor(mode, value)] }));
 }

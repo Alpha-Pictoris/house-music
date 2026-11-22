@@ -1,6 +1,6 @@
-import { fittingOf, furniture, newPiece, roomFinishes } from "./catalogue.js";
+import { fittingOf, furniture, isSmallObject, newPiece, roomFinishes } from "./catalogue.js";
 import { fittings, tunings } from "./fittings.js";
-import { Surfaces } from "./surfaces.js";
+import { FurnitureSpots } from "./furniture-spots.js";
 import { FloorPlan } from "./floor-plan.js";
 import { arrangements, defaultMode } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
@@ -105,8 +105,8 @@ export class HouseEditor extends EventTarget {
 
   placeOn(parentId, kind, slot) {
     const parent = this.#piece(parentId);
-    if (!Surfaces.objects.includes(kind)) throw Error("Choose a small object.");
-    Surfaces.check(parent, slot);
+    if (!isSmallObject(kind)) throw Error("Choose a small object.");
+    FurnitureSpots.check(parent, slot);
     const item = { id: this.#id("o"), kind, slot };
     this.#put({ ...parent, contents: [...(parent.contents ?? []), item] });
     return item;
@@ -114,14 +114,14 @@ export class HouseEditor extends EventTarget {
 
   moveOn(id, slot) {
     const parent = this.#parentOf(id);
-    if (!parent) throw Error("Choose an object on this surface.");
-    Surfaces.check(parent, slot, id);
+    if (!parent) throw Error("Choose an object from a table or shelf.");
+    FurnitureSpots.check(parent, slot, id);
     const item = this.#piece(id);
     return item.slot === slot ? item : this.#put({ ...item, slot });
   }
 
   preview(piece, point) {
-    if (furniture[piece.kind].layer === "surface") throw Error("Choose a surface for this object.");
+    if (isSmallObject(piece.kind)) throw Error("Place this object on a table or shelf.");
     const placed = { ...piece, x: Math.round(point.x * 1000) / 1000, z: Math.round(point.z * 1000) / 1000 };
     const item = furniture[piece.kind];
     placed.roomId = null;
@@ -131,9 +131,9 @@ export class HouseEditor extends EventTarget {
   }
 
   #put(piece) {
-    if (furniture[piece.kind].layer === "surface") {
+    if (isSmallObject(piece.kind)) {
       const parent = this.#parentOf(piece.id);
-      if (!parent) throw Error("Choose a surface for this object.");
+      if (!parent) throw Error("Place this object on a table or shelf.");
       this.#put({ ...parent, contents: parent.contents.map(item => item.id === piece.id ? piece : item) });
       return piece;
     }
@@ -159,7 +159,7 @@ export class HouseEditor extends EventTarget {
 
   rotate(id) {
     const piece = this.#piece(id);
-    if (furniture[piece.kind].layer === "surface") throw Error("Turn the furniture to turn its objects.");
+    if (isSmallObject(piece.kind)) throw Error("Turn the furniture to turn its objects.");
     if (furniture[piece.kind].layer === "wall") throw Error("Move the window to another wall to turn it.");
     return this.#put({ ...piece, turn: (piece.turn + 1) % 4 });
   }
@@ -178,13 +178,13 @@ export class HouseEditor extends EventTarget {
     const updated = { ...piece, fitting };
     delete updated.pitch;
     delete updated.hit;
-    if (furniture[piece.kind].layer === "surface") {
+    if (isSmallObject(piece.kind)) {
       if (fitting === "plain") delete updated.phrase;
       else updated.phrase ??= "single";
     }
-    const voice = fittings[fitting];
-    if (voice.hits) updated.hit = "kick";
-    if (voice.sample) updated.pitch = voice.root;
+    const instrument = fittings[fitting];
+    if (instrument.hits) updated.hit = "kick";
+    if (instrument.sample) updated.pitch = instrument.root;
     return this.#put(updated);
   }
 

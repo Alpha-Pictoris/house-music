@@ -1,8 +1,8 @@
-import { fittingOf, furniture, roomFinishes } from "../building/catalogue.js";
+import { fittingOf, furniture, isSmallObject, roomFinishes } from "../building/catalogue.js";
 import { fittings, tunings } from "../building/fittings.js";
 import { FloorPlan } from "../building/floor-plan.js";
 import { RoomShape, tolerance } from "../building/room-shape.js";
-import { Surfaces } from "../building/surfaces.js";
+import { FurnitureSpots } from "../building/furniture-spots.js";
 import { arrangements } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
 
@@ -16,7 +16,7 @@ function plainRecord(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
-function readVoice(item, piece) {
+function readFitting(item, piece) {
   const design = furniture[piece.kind];
   if (item.fitting !== undefined) {
     requireValid(!design.garden && typeof item.fitting === "string" && Object.hasOwn(fittings, item.fitting), "Choose an indoor fitting.");
@@ -100,21 +100,21 @@ export function readHouse(value) {
     const { kind, roomId, x, z, turn } = item;
     requireValid(typeof kind === "string" && Object.hasOwn(furniture, kind), "The house contains an unknown piece of furniture.");
     const design = furniture[kind];
-    requireValid(design.layer !== "surface", "Place small objects on furniture.");
+    requireValid(!isSmallObject(kind), "Place small objects on a table or shelf.");
     requireValid(design.garden ? roomId === null : roomIds.has(roomId), "Each indoor piece needs an existing room.");
     requireValid(Number.isFinite(x) && Number.isFinite(z) && Number.isInteger(turn) && turn >= 0 && turn < 4,
       "The house contains an invalid furniture position or turn.");
     const piece = { id, kind, roomId, x, z, turn };
-    readVoice(item, piece);
+    readFitting(item, piece);
     if (item.contents !== undefined) {
-      const slots = Surfaces.slots(kind);
-      requireValid(slots.length && Array.isArray(item.contents) && item.contents.length <= slots.length, "Choose a surface with enough spots.");
+      const slots = FurnitureSpots.slots(kind);
+      requireValid(slots.length && Array.isArray(item.contents) && item.contents.length <= slots.length, "The furniture needs a spot for each object.");
       for (const entry of item.contents) {
         const objectId = readId(entry);
-        requireValid(Surfaces.objects.includes(entry.kind) && entry.contents === undefined, "Choose a small object for the surface.");
-        Surfaces.check(piece, entry.slot);
+        requireValid(isSmallObject(entry.kind) && entry.contents === undefined, "Only small objects fit on tables and shelves.");
+        FurnitureSpots.check(piece, entry.slot);
         const object = { id: objectId, kind: entry.kind, slot: entry.slot };
-        readVoice(entry, object);
+        readFitting(entry, object);
         (piece.contents ??= []).push(object);
       }
     }

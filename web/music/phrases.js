@@ -16,18 +16,18 @@ export function scalePitch(degree, scale) {
 }
 
 export function notesFor(piece, transpose = 0, scale = minorScale) {
-  const voice = fittings[fittingOf(piece)];
-  if (!voice.sample && !voice.hits) return [];
+  const instrument = fittings[fittingOf(piece)];
+  if (!instrument.sample && !instrument.hits) return [];
   const { steps } = phrases[phraseOf(piece)];
-  const rootDegree = voice.hits ? 0 : minorScale.indexOf(piece.pitch - voice.root);
+  const rootDegree = instrument.hits ? 0 : minorScale.indexOf(piece.pitch - instrument.root);
   return steps.map(([offset, interval], i) => {
-    if (voice.hits) {
+    if (instrument.hits) {
       const sample = i === 0 ? piece.hit : drumAccents[(interval + i) % drumAccents.length];
       return { offset, sample, semitones: 0, gate: null };
     }
     const semitones = scalePitch(transpose + rootDegree + interval, scale);
     const next = steps[i + 1];
-    const gate = next ? Math.min(voice.gate, (next[0] - offset) * 0.9) : voice.gate;
-    return { offset, sample: voice.sample, semitones, gate };
+    const gate = next ? Math.min(instrument.gate, (next[0] - offset) * 0.9) : instrument.gate;
+    return { offset, sample: instrument.sample, semitones, gate };
   });
 }

@@ -1,5 +1,5 @@
 import { fittingOf, furniture, newPiece } from "../building/catalogue.js";
-import { Surfaces } from "../building/surfaces.js";
+import { FurnitureSpots } from "../building/furniture-spots.js";
 import { FloorPlan } from "../building/floor-plan.js";
 
 export class BuildControls extends EventTarget {
@@ -84,7 +84,7 @@ export class BuildControls extends EventTarget {
 
   arrange() {
     const piece = this.selectedPiece;
-    if (piece && Surfaces.slots(piece.kind).length) this.dispatchEvent(new CustomEvent("surface", { detail: piece.id }));
+    if (piece && FurnitureSpots.slots(piece.kind).length) this.dispatchEvent(new CustomEvent("arrange", { detail: piece.id }));
   }
 
   #run(action) {
@@ -201,8 +201,8 @@ export class BuildControls extends EventTarget {
       this.#audition(piece);
       const design = furniture[piece.kind];
       let hint = "";
-      if (!design.garden) hint = fittingOf(piece) === "plain" ? " Add a fitting to give it a voice." : " Move it along the sweep to change its timing.";
-      if (Surfaces.slots(piece.kind).length) hint = " Double-tap or double-click to arrange its surface.";
+      if (!design.garden) hint = fittingOf(piece) === "plain" ? " Open Fittings to choose an instrument." : " Move it along the sweep to change its timing.";
+      if (FurnitureSpots.slots(piece.kind).length) hint = " Double-tap or double-click to arrange objects.";
       this.notify(design.label + " placed." + hint);
     }
   }
@@ -235,13 +235,13 @@ export class BuildControls extends EventTarget {
         if (moved !== drag.piece) this.#audition(moved);
       }
       this.select(drag.piece.id);
-      if (!drag.moved && Surfaces.slots(drag.piece.kind).length) {
+      if (!drag.moved && FurnitureSpots.slots(drag.piece.kind).length) {
         const { timeStamp: time, clientX: x, clientY: y, pointerType: type } = event;
         if (drag.repeat) {
           this.#openOnClick = true;
         } else {
           this.#lastTap = { id: drag.piece.id, time, x, y, type };
-          this.notify("Double-tap or double-click to arrange this surface.");
+          this.notify("Double-tap or double-click to arrange objects.");
         }
       }
     } else if (this.tool === "select" && !drag.moved) {

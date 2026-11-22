@@ -1,5 +1,5 @@
-import { fittingOf, furniture } from "../building/catalogue.js";
-import { Surfaces } from "../building/surfaces.js";
+import { fittingOf, isSmallObject } from "../building/catalogue.js";
+import { FurnitureSpots } from "../building/furniture-spots.js";
 import { HouseBand } from "./house-band.js";
 import { notesFor } from "./phrases.js";
 
@@ -26,7 +26,7 @@ export class Score {
     this.#band = house.band === false ? null : new HouseBand(house.mode);
     const finishes = new Map(rooms.map(room => [room.id, room.finish ?? "walnut"]));
     const bars = new Map();
-    for (const piece of Surfaces.voices(pieces)) {
+    for (const piece of FurnitureSpots.placedPieces(pieces)) {
       const fitting = fittingOf(piece);
       if (fitting === "plain") continue;
       const finish = finishes.get(piece.roomId);
@@ -83,7 +83,7 @@ export class Score {
     }
     const onset = this.#seats.get(piece.id) - this.left;
     const start = Math.floor(onset / 4) * 4;
-    const solo = furniture[piece.kind].layer === "surface";
+    const solo = isSmallObject(piece.kind);
     return this.eventsFor(pass).filter(note => note.beat >= start && note.beat < start + 4
       && (!solo || note.pieceId === piece.id || note.together?.includes(piece.id)))
       .map(note => ({ ...note, offset: (note.beat - onset + 4) % 4 })).sort((a, b) => a.offset - b.offset);

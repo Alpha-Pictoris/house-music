@@ -1,11 +1,11 @@
-import { furniture } from "./catalogue.js";
+import { furniture, isSmallObject } from "./catalogue.js";
 import { FloorPlan } from "./floor-plan.js";
 
 const row = (y, z, spread, tier = "") => ["Left", "Centre", "Right"].map((name, i) => ({
   label: tier ? tier + " " + name.toLowerCase() : name, x: (i - 1) * spread, y, z
 }));
 
-const surfaces = {
+const spots = {
   table: row(1.045, 0.08, 0.50),
   bookcase: row(2.617, -0.03, 0.57),
   console: row(1.105, 0.02, 0.72),
@@ -14,11 +14,11 @@ const surfaces = {
 
 export const quarterTurns = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 
-export class Surfaces {
-  static slots(kind) { return surfaces[kind] ?? []; }
+export class FurnitureSpots {
+  static slots(kind) { return spots[kind] ?? []; }
 
   static check(parent, slot, exceptId) {
-    if (!Number.isInteger(slot) || !this.slots(parent.kind)[slot]) throw Error("Choose a spot on the surface.");
+    if (!Number.isInteger(slot) || !this.slots(parent.kind)[slot]) throw Error("Choose a spot on the table or shelf.");
     if (parent.contents?.some(item => item.slot === slot && item.id !== exceptId)) throw Error("Choose an empty spot.");
   }
 
@@ -29,12 +29,12 @@ export class Surfaces {
       y: point.y, z: box.z + box.depth / 2 - sin * point.x + cos * point.z };
   }
 
-  static *voices(pieces) {
+  static *placedPieces(pieces) {
     for (const parent of pieces) {
       yield parent;
       for (const item of parent.contents ?? []) yield { ...item, ...this.anchor(parent, item.slot), roomId: parent.roomId };
     }
   }
 
-  static objects = Object.keys(furniture).filter(kind => furniture[kind].layer === "surface");
+  static objects = Object.keys(furniture).filter(isSmallObject);
 }

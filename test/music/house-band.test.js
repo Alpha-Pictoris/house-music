@@ -120,28 +120,90 @@ test("a single hand-picked note still gets a different answer on the next pass",
   }
 });
 
-test("the band rests under a held note and leaves the room echo to the furniture", () => {
+test("the band plays its whole hook more softly under a furniture melody", () => {
   const editor = room(4);
+  editor.place("lamp", { x: 0, z: 4 });
   const table = editor.place("table", { x: 1.5, z: 0 });
   editor.setPhrase(table.id, "single");
+  editor.tune(table.id, 69);
   editor.styleRoom(table.roomId, { finish: "moonstone" });
   for (const mode of Object.keys(arrangements)) {
     editor.setMode(mode);
-    const { events } = Score.from(editor.house);
-    const held = events.find(n => n.pieceId === table.id);
-    const band = events.filter(n => n.pieceId === null);
-    const replies = band.filter(n => n.fitting !== "ring" && n.fitting !== "stud");
-    assert.equal(held.finish, "moonstone");
-    assert.ok(band.every(n => !n.finish));
-    assert.ok(replies.length > 0);
-    assert.ok(replies.every(n => n.beat + n.gate <= held.beat || n.beat >= held.beat + held.gate));
+    const withTable = Score.from(editor.house);
+    const kit = Score.from({ ...editor.house, pieces: editor.house.pieces.filter(p => p.id !== table.id) });
+    for (const pass of [0, 1]) {
+      const events = withTable.eventsFor(pass);
+      const held = events.find(n => n.pieceId === table.id);
+      assert.equal(held.finish, "moonstone");
+      const hook = kit.eventsFor(pass).filter(n => !n.pieceId && !["ring", "stud"].includes(n.fitting));
+      assert.ok(hook.length);
+      for (const note of hook) {
+        const reply = events.find(n => n.recording === note.recording && n.beat === note.beat && n.semitones === note.semitones);
+        assert.equal(reply?.gate, note.gate, mode);
+        assert.equal(reply.finish, undefined);
+        const overlaps = note.beat < held.beat + held.gate && held.beat < note.beat + note.gate;
+        if (overlaps) assert.ok(reply.velocity < note.velocity);
+        else assert.equal(reply.velocity, note.velocity);
+      }
+    }
   }
 });
 
-test("Night Garden trades one melody at a time over a disco kick or a half-time snare", () => {
+test("shelf objects play their notes over both bars of each arrangement", () => {
+  const editor = room(4);
+  editor.place("sofa", { x: 0, z: 0 });
+  const shelf = editor.place("shelf", { x: 0.5, z: 3 });
+  const bare = editor.house;
+  const instruments = ["thorn", "ring", "glass", "stud", "wire"];
+  const objects = instruments.map((fitting, slot) => {
+    const item = editor.placeOn(shelf.id, "bell", slot);
+    return editor.fitPiece(item.id, fitting);
+  });
+  editor.tune(objects[1].id, 45);
+  for (const mode of Object.keys(arrangements)) {
+    const band = Score.from({ ...bare, mode });
+    const furnished = Score.from({ ...editor.house, mode });
+    for (const pass of [0, 1]) {
+      const events = furnished.eventsFor(pass);
+      for (const note of band.eventsFor(pass)) {
+        const hit = events.find(n => n.beat === note.beat && n.recording === note.recording && n.semitones === note.semitones);
+        assert.deepEqual(hit && [hit.gate, hit.velocity, hit.finish], [note.gate, note.velocity, note.finish], mode);
+      }
+      for (const item of objects) {
+        const heard = furnished.preview(item, pass);
+        assert.equal(heard.length, 1);
+        assert.ok(heard[0].pieceId === item.id || heard[0].together?.includes(item.id));
+      }
+    }
+  }
+});
+
+test("a bell can double a drum hit or play a second bass pitch on the same beat", () => {
+  const editor = room(4);
+  editor.place("lamp", { x: 0, z: 0 });
+  const shelf = editor.place("shelf", { x: 0.5, z: 3 });
+  editor.styleRoom(shelf.roomId, { finish: "moonstone" });
+  const plain = Score.from(editor.house);
+  const drum = editor.fitPiece(editor.placeOn(shelf.id, "bell", 0).id, "stud");
+  const bass = editor.fitPiece(editor.placeOn(shelf.id, "bottle", 1).id, "ring");
+  editor.tune(bass.id, 45);
+  const score = Score.from(editor.house);
+  const kicks = score.events.filter(n => n.beat === 1 && n.sample === "kick");
+  assert.equal(kicks.length, 1);
+  assert.ok(kicks[0].together.includes(drum.id));
+  const lowNotes = score.events.filter(n => n.beat === 1.5 && n.sample === "bass");
+  const original = plain.events.find(n => n.beat === 1.5 && n.sample === "bass");
+  assert.ok(lowNotes.some(n => n.semitones === original.semitones && n.velocity === original.velocity));
+  const extra = lowNotes.find(n => n.pieceId === bass.id);
+  assert.equal(extra.semitones, 7);
+  assert.equal(extra.finish, "moonstone");
+  assert.ok(extra.gate <= 0.5 && extra.velocity < original.velocity);
+});
+
+test("Night Garden trades furniture melodies over a disco kick or a half-time snare", () => {
   for (const mode of ["chrome", "moth"]) {
     const score = Score.from({ ...nightGarden, mode });
-    const melody = score.events.filter(n => n.fitting !== "ring" && n.fitting !== "stud");
+    const melody = score.events.filter(n => n.pieceId && n.fitting !== "ring" && n.fitting !== "stud");
     for (const note of melody) {
       const sounding = melody.filter(n => n.beat <= note.beat && note.beat < n.beat + n.gate);
       assert.equal(new Set(sounding.map(n => n.recording)).size, 1);

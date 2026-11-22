@@ -1,8 +1,8 @@
 export const fittings = {
-  plain: { label: "Plain", voice: "Silent", colour: "#bfb0b9" },
+  plain: { label: "Plain", instrument: "Silent", colour: "#bfb0b9" },
   thorn: { label: "Thorn carving", colour: "#ff9382", sample: "guitar", root: 50, gate: 1 },
   ring: { label: "Iron rings", colour: "#84e5dc", sample: "bass", root: 38, gate: 0.55 },
-  stud: { label: "Brass studs", voice: "Drums", colour: "#d8eb90", hits: { kick: "Kick", snare: "Snare", hat: "Closed hat" } },
+  stud: { label: "Brass studs", instrument: "Drums", colour: "#d8eb90", hits: { kick: "Kick", snare: "Snare", hat: "Closed hat" } },
   glass: { label: "Cut glass", colour: "#d2adff", sample: "celesta", root: 62, gate: 0.85 },
   wire: { label: "Silver strings", colour: "#f6cb98", sample: "harp", root: 62, gate: 1.3 }
 };
@@ -12,11 +12,11 @@ const noteNames = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A",
 const degreeNames = ["Root", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Octave"];
 
 export function tunings(fitting, relative = false) {
-  const voice = fittings[fitting];
-  if (voice.hits) return Object.entries(voice.hits).map(([value, label]) => ({ value, label }));
-  if (!voice.sample) return [];
+  const instrument = fittings[fitting];
+  if (instrument.hits) return Object.entries(instrument.hits).map(([value, label]) => ({ value, label }));
+  if (!instrument.sample) return [];
   return minorScale.map((step, i) => {
-    const value = voice.root + step;
+    const value = instrument.root + step;
     return { value, label: relative ? degreeNames[i] : noteNames[value % 12] + (Math.floor(value / 12) - 1) };
   });
 }

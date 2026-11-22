@@ -3,7 +3,7 @@ import { furniture } from "./building/catalogue.js";
 import { arrangements } from "./music/arrangements.js";
 import { Sampler } from "./music/sampler.js";
 import { ScorePanel } from "./ui/score-panel.js";
-import { SurfacePanel } from "./ui/surface-panel.js";
+import { ObjectPanel } from "./ui/object-panel.js";
 import { FurniturePanel } from "./ui/furniture-panel.js";
 import { byId } from "./ui/elements.js";
 import { Transport } from "./music/transport.js";
@@ -39,7 +39,7 @@ class HouseMusic {
     this.panel = new ScorePanel();
     this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text));
     this.furniturePanel = new FurniturePanel(this.controls, piece => this.#audition(piece));
-    this.surfaces = new SurfacePanel(this.controls, piece => this.#audition(piece));
+    this.objectPanel = new ObjectPanel(this.controls, piece => this.#audition(piece));
     this.files = new HouseFiles(() => this.editor.house, house => this.open(house), text => this.notify(text));
     this.#wireControls();
     this.files.restore();
@@ -64,7 +64,7 @@ class HouseMusic {
     this.editor = house ? new HouseEditor(house) : new HouseEditor();
     this.editor.addEventListener("change", this.#onEdit);
     this.transport.setHouse(this.editor.house);
-    this.surfaces.close();
+    this.objectPanel.close();
     this.furniturePanel.show(false);
     this.controls.reset(this.editor);
     this.refresh();
@@ -190,7 +190,7 @@ class HouseMusic {
       button.disabled = button.dataset.tool === "door" && !house.rooms.length;
     });
     this.furniturePanel.refresh(house);
-    this.surfaces.refresh();
+    this.objectPanel.refresh();
     this.#playButton();
   }
 

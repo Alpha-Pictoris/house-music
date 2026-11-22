@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HouseEditor } from "../../web/building/house-editor.js";
-import { Surfaces } from "../../web/building/surfaces.js";
+import { FurnitureSpots } from "../../web/building/furniture-spots.js";
 import { readHouse, houseFromLink, houseLink } from "../../web/library/house-format.js";
 import { Score } from "../../web/music/score.js";
 
@@ -19,7 +19,7 @@ test("a shelf of objects stays silent until a fitting is chosen", () => {
   assert.deepEqual(Score.from(editor.house).events,[]);
   assert.throws(() => editor.moveOn(bell.id,5),/empty/);
   assert.throws(() => editor.placeOn(shelf.id,"clock",2),/small/);
-  assert.throws(() => editor.place("orrery",{x:5,z:2}),/surface/);
+  assert.throws(() => editor.place("orrery",{x:5,z:2}),/table or shelf/);
   editor.fitPiece(bell.id,"glass");
   assert.equal(Score.from(editor.house).events.filter(n => n.pieceId === bell.id).length,1);
   editor.fitPiece(bell.id,"plain");
@@ -44,7 +44,7 @@ test("the sweep plays the object's spot as its shelf moves and turns", () => {
   assert.deepEqual(houseFromLink(houseLink(editor.house,"https://example.com/")),editor.house);
 });
 
-test("copying a furnished surface gives its objects independent lives", () => {
+test("a copied shelf holds its own objects", () => {
   const {editor,shelf} = parlour();
   const book = editor.placeOn(shelf.id,"grimoire",3);
   const copy = editor.duplicate(shelf.id,{x:7,z:2});
@@ -69,5 +69,5 @@ test("shared houses reject duplicate object IDs and occupied or missing spots", 
     copy.pieces[0].contents.push(entry);
     assert.throws(() => readHouse(copy));
   }
-  assert.equal(Surfaces.slots("table").length,3);
+  assert.equal(FurnitureSpots.slots("table").length,3);
 });

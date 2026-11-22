@@ -1,5 +1,5 @@
 import {FloorPlan} from '../building/floor-plan.js';
-import {Surfaces, quarterTurns} from '../building/surfaces.js';
+import {FurnitureSpots, quarterTurns} from '../building/furniture-spots.js';
 import {parlourModels} from './parlour-art.js';
 import {RoomShape} from '../building/room-shape.js';
 import {furniture} from '../building/catalogue.js';
@@ -76,7 +76,7 @@ function pieceItems(piece, options = {}) {
     }));
   }
   for (const item of piece.contents ?? []) {
-    const {x,y,z} = Surfaces.anchor(piece,item.slot);
+    const {x,y,z} = FurnitureSpots.anchor(piece,item.slot);
     items.push(...pieceItems({...item, x, z, turn}, {...options, origin: [x,y,z], level: options.levels?.get(item.id) ?? 0}));
   }
   return items;
@@ -225,12 +225,12 @@ export class HouseScene {
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(repaint).observe(canvas);
   }
 
-  static surface(canvas, piece) {
+  static furniturePortrait(canvas, piece) {
     const {width,height} = canvas.getBoundingClientRect();
     if (!width || !height) return [];
     resize(canvas,width,height);
     const display = {...piece,x:0,z:0,turn:0}, design = furniture[piece.kind];
-    const slots = Surfaces.slots(piece.kind).map((_,i) => Surfaces.anchor(display,i));
+    const slots = FurnitureSpots.slots(piece.kind).map((_,i) => FurnitureSpots.anchor(display,i));
     const top = Math.max(design.height,...slots.map(p => p.y + 0.52));
     const center = [design.width/2,top/2,design.depth/2];
     const camera = new IsometricCamera(width,height,0.18,piece.kind === 'table' ? 0.68 : 0.22,center);

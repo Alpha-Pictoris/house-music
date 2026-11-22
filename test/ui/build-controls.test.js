@@ -26,7 +26,7 @@ test("modified canvas keys leave browser shortcuts and global undo available", (
   assert.equal(controls.selectedPiece.turn, 1);
 });
 
-test("two taps open the same surface once, after the second click", () => {
+test("a double tap opens the selected table once", () => {
   const editor = new HouseEditor();
   editor.drawRoom({ x: 0, z: 0 }, { x: 6, z: 4 });
   const table = editor.place("table", { x: 1, z: 1 });
@@ -37,7 +37,7 @@ test("two taps open the same surface once, after the second click", () => {
   const controls = new BuildControls(canvas, scene, editor, () => {});
   controls.use("select");
   const opened = [];
-  controls.addEventListener("surface", e => opened.push(e.detail));
+  controls.addEventListener("arrange", e => opened.push(e.detail));
   function touch(type, id, time) {
     const event = Object.assign(new Event(type), { pointerId: id, pointerType: "touch", button: 0, clientX: 4, clientY: 8 });
     Object.defineProperty(event, "timeStamp", { value: time });

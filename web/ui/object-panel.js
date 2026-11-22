@@ -1,22 +1,22 @@
 import { fittingOf, furniture } from "../building/catalogue.js";
-import { fittings, tunings } from "../building/fittings.js";
-import { Surfaces } from "../building/surfaces.js";
-import { recordingFor, recordingNames } from "../music/arrangements.js";
+import { fittings } from "../building/fittings.js";
+import { FurnitureSpots } from "../building/furniture-spots.js";
+import { instrumentName, tuningOptions } from "../music/arrangements.js";
 import { HouseScene } from "../scene/house-scene.js";
 import { byId } from "./elements.js";
 
-export class SurfacePanel {
+export class ObjectPanel {
   #parentId;
   #itemId;
   #slot = 0;
   #buttons = [];
-  #dialog = byId("surface-dialog");
-  #portrait = byId("surface-portrait");
+  #dialog = byId("object-dialog");
+  #portrait = byId("object-portrait");
 
   constructor(controls, audition) {
     this.controls = controls;
     this.audition = audition;
-    controls.addEventListener("surface", event => this.open(event.detail));
+    controls.addEventListener("arrange", event => this.open(event.detail));
     this.#dialog.addEventListener("close", () => { if (!this.#dialog.open) this.#parentId = null; });
     this.#dialog.addEventListener("click", event => {
       if (event.target !== this.#dialog) return;
@@ -24,7 +24,7 @@ export class SurfacePanel {
       if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) this.close();
     });
     new ResizeObserver(() => this.#draw()).observe(this.#portrait);
-    for (const kind of Surfaces.objects) {
+    for (const kind of FurnitureSpots.objects) {
       const button = document.createElement("button"), canvas = document.createElement("canvas"), label = document.createElement("span");
       canvas.setAttribute("aria-hidden", "true");
       label.textContent = furniture[kind].label;
@@ -33,7 +33,7 @@ export class SurfacePanel {
       byId("object-tray").append(button);
       HouseScene.thumbnail(canvas,kind);
     }
-    byId("object-voice").onchange = event => this.#edit(() => this.editor.fitPiece(this.item.id, event.target.value), true);
+    byId("object-instrument").onchange = event => this.#edit(() => this.editor.fitPiece(this.item.id, event.target.value), true);
     byId("object-tuning").onchange = event => {
       const value = event.target.value;
       this.#edit(() => this.editor.tune(this.item.id, fittings[fittingOf(this.item)].hits ? value : Number(value)), true);
@@ -47,8 +47,8 @@ export class SurfacePanel {
       });
     };
     byId("remove-object").onclick = () => this.#edit(() => this.editor.remove(this.item.id));
-    byId("surface-undo").onclick = () => this.editor.undo();
-    byId("surface-redo").onclick = () => this.editor.redo();
+    byId("object-undo").onclick = () => this.editor.undo();
+    byId("object-redo").onclick = () => this.editor.redo();
   }
 
   get editor() { return this.controls.editor; }
@@ -59,24 +59,24 @@ export class SurfacePanel {
     try {
       const item = edit();
       if (preview && item) this.audition({ ...item, roomId: this.parent.roomId });
-    } catch (error) { byId("surface-status").textContent = error.message; }
+    } catch (error) { byId("object-status").textContent = error.message; }
   }
 
   open(id) {
     this.#parentId = id;
-    if (!this.parent || !Surfaces.slots(this.parent.kind).length) return;
-    const empty = Surfaces.slots(this.parent.kind).findIndex((_, i) => !this.parent.contents?.some(item => item.slot === i));
+    if (!this.parent || !FurnitureSpots.slots(this.parent.kind).length) return;
+    const empty = FurnitureSpots.slots(this.parent.kind).findIndex((_, i) => !this.parent.contents?.some(item => item.slot === i));
     this.#slot = Math.max(0,empty);
     this.#itemId = null;
-    this.#buttons = Surfaces.slots(this.parent.kind).map((_,index) => {
+    this.#buttons = FurnitureSpots.slots(this.parent.kind).map((_,index) => {
       const button = document.createElement("button");
-      button.className = "surface-spot";
+      button.className = "object-spot";
       button.append(document.createElement("span"));
       button.onclick = () => { this.#itemId = null; this.#slot = index; this.refresh(); };
       return button;
     });
-    byId("surface-spots").replaceChildren(...this.#buttons);
-    byId("surface-title").textContent = furniture[this.parent.kind].label;
+    byId("object-spots").replaceChildren(...this.#buttons);
+    byId("object-title").textContent = furniture[this.parent.kind].label;
     this.#dialog.showModal();
     this.refresh();
   }
@@ -85,7 +85,7 @@ export class SurfacePanel {
 
   #draw() {
     if (!this.#dialog.open || !this.parent) return;
-    const points = HouseScene.surface(this.#portrait,this.parent);
+    const points = HouseScene.furniturePortrait(this.#portrait,this.parent);
     for (const [i,point] of points.entries()) {
       this.#buttons[i].style.left = point.x + "px";
       this.#buttons[i].style.top = point.y + "px";
@@ -99,7 +99,7 @@ export class SurfacePanel {
     const selected = parent.contents?.find(item => item.id === this.#itemId);
     if (selected) this.#slot = selected.slot;
     this.#itemId = this.item?.id;
-    const slots = Surfaces.slots(parent.kind);
+    const slots = FurnitureSpots.slots(parent.kind);
     for (const [i,button] of this.#buttons.entries()) {
       const item = parent.contents?.find(o => o.slot === i);
       const name = slots[i].label + " · " + (item ? furniture[item.kind].label : "Empty");
@@ -113,17 +113,17 @@ export class SurfacePanel {
     const item = this.item, mode = this.editor.house.mode, spot = slots[this.#slot].label;
     byId("object-tray").hidden = Boolean(item);
     byId("object-fields").hidden = !item;
-    byId("surface-undo").disabled = !this.editor.canUndo;
-    byId("surface-redo").disabled = !this.editor.canRedo;
-    byId("surface-status").textContent = item ? spot + " · " + furniture[item.kind].label : "Choose an object for the " + spot.toLowerCase() + " spot.";
+    byId("object-undo").disabled = !this.editor.canUndo;
+    byId("object-redo").disabled = !this.editor.canRedo;
+    byId("object-status").textContent = item ? spot + " · " + furniture[item.kind].label : "Choose an object for the " + spot.toLowerCase() + " spot.";
     if (!item) return;
-    const fitting = fittingOf(item), voice = byId("object-voice");
-    voice.replaceChildren(...Object.entries(fittings).map(([key, material]) => new Option(
-      material.sample ? recordingNames[recordingFor(mode,material.sample)] : material.voice, key)));
-    voice.value = fitting;
+    const fitting = fittingOf(item), instrument = byId("object-instrument");
+    instrument.replaceChildren(...Object.entries(fittings).map(([key, material]) => new Option(instrumentName(mode, material), key)));
+    instrument.value = fitting;
     byId("object-tuning-field").hidden = fitting === "plain";
+    byId("object-tuning-label").textContent = fittings[fitting].hits ? "Drum hit" : "Note";
     const tuning = byId("object-tuning");
-    tuning.replaceChildren(...tunings(fitting, this.editor.house.band !== false).map(t => new Option(t.label,t.value)));
+    tuning.replaceChildren(...tuningOptions(mode, fitting, this.editor.house.band !== false).map(t => new Option(t.label, t.value)));
     tuning.value = item.hit ?? item.pitch ?? "";
     const position = byId("object-position");
     position.replaceChildren(...slots.map((s,i) => {

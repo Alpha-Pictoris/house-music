@@ -4,7 +4,7 @@ import { readdirSync } from "node:fs";
 import { arrangements, recordingFor, recordingNames } from "../../web/music/arrangements.js";
 import { responses } from "../../web/music/responses.js";
 
-test("every voice in the five arrangements has a named recording on disk", () => {
+test("the five arrangements use named instrument recordings", () => {
   const used = new Set();
   for (const mode of Object.keys(arrangements)) {
     for (const part of responses[mode]) used.add(part.recording);
