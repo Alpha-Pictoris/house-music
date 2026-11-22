@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HouseEditor } from "../../web/building/house-editor.js";
+import { nightGarden } from "../../web/houses/night-garden.js";
 import { arrangements, recordingFor } from "../../web/music/arrangements.js";
 import { Score } from "../../web/music/score.js";
 import { houseFromLink, houseLink } from "../../web/library/house-format.js";
@@ -19,7 +20,7 @@ test("one wardrobe gets a four-beat riff, bass and drums wherever it is placed",
   assert.equal(editor.house.pieces[0].x, 10.24);
   assert.ok(score.events.filter(n => n.pieceId === piece.id).length >= 3);
   assert.ok(score.events.some(n => n.pieceId === piece.id && n.beat === 2));
-  assert.deepEqual(new Set(score.events.map(n => n.recording)), new Set(["filter-chord", "synth-bass", "machine-kick", "hat", "clap", "talkbox"]));
+  assert.deepEqual(new Set(score.events.map(n => n.recording)), new Set(["clavinet", "synth-bass", "machine-kick", "hat", "clap", "talkbox"]));
 });
 
 test("furnished bars follow the chords and leave a full empty bar quiet", () => {
@@ -116,5 +117,51 @@ test("a single hand-picked note still gets a different answer on the next pass",
     assert.deepEqual(take(0).filter(e => e.pieceId === sofa.id), take(1).filter(e => e.pieceId === sofa.id));
     assert.notDeepEqual(take(0).filter(e => !e.pieceId), take(1).filter(e => !e.pieceId));
     assert.equal(take(2), take(0));
+  }
+});
+
+test("the band rests under a held note and leaves the room echo to the furniture", () => {
+  const editor = room(4);
+  const table = editor.place("table", { x: 1.5, z: 0 });
+  editor.setPhrase(table.id, "single");
+  editor.styleRoom(table.roomId, { finish: "moonstone" });
+  for (const mode of Object.keys(arrangements)) {
+    editor.setMode(mode);
+    const { events } = Score.from(editor.house);
+    const held = events.find(n => n.pieceId === table.id);
+    const band = events.filter(n => n.pieceId === null);
+    const replies = band.filter(n => n.fitting !== "ring" && n.fitting !== "stud");
+    assert.equal(held.finish, "moonstone");
+    assert.ok(band.every(n => !n.finish));
+    assert.ok(replies.length > 0);
+    assert.ok(replies.every(n => n.beat + n.gate <= held.beat || n.beat >= held.beat + held.gate));
+  }
+});
+
+test("Night Garden trades one melody at a time over a disco kick or a half-time snare", () => {
+  for (const mode of ["chrome", "moth"]) {
+    const score = Score.from({ ...nightGarden, mode });
+    const melody = score.events.filter(n => n.fitting !== "ring" && n.fitting !== "stud");
+    for (const note of melody) {
+      const sounding = melody.filter(n => n.beat <= note.beat && note.beat < n.beat + n.gate);
+      assert.equal(new Set(sounding.map(n => n.recording)).size, 1);
+    }
+    const sample = mode === "chrome" ? "kick" : "snare";
+    const hits = score.events.filter(n => n.sample === sample).map(n => n.beat);
+    assert.deepEqual(hits, mode === "chrome" ? [0, 1, 2, 3, 4, 5, 6, 7] : [2, 6]);
+    const players = [...new Set(score.events.map(n => n.pieceId).filter(Boolean))];
+    assert.deepEqual(players.map(id => nightGarden.pieces.find(p => p.id === id).kind).sort(), ["bookcase", "lamp", "table"]);
+  }
+});
+
+test("an arrangement audition opens on the downbeat and includes the one-bar house's reply", () => {
+  const editor = room(4);
+  editor.place("sofa", { x: 1, z: 0 });
+  const score = Score.from(editor.house);
+  const opening = score.opening();
+  for (const pass of [0, 1]) {
+    const offsets = opening.filter(n => Math.floor(n.offset / 4) === pass).map(n => n.offset);
+    assert.deepEqual(offsets, score.eventsFor(pass).map(n => n.beat + 4 * pass));
+    assert.equal(offsets[0], 4 * pass);
   }
 });

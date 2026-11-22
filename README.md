@@ -5,10 +5,10 @@ Draw a house and play it as a track. Put thorn finials on a velvet sofa, hang a 
 ## Make a house
 
 1. Drag across the empty plot or tap two opposite corners to draw a room.
-2. Choose the velvet sofa in **Furnish** and tap the floor. In **Chrome Attic** its thorn carving plays a filter synth over bass and drums. Press **Play** to loop it.
+2. Choose the velvet sofa in **Furnish** and tap the floor. In **Chrome Attic** its thorn carving plays a clipped clavinet over bass and drums. Press **Play** to loop it.
 3. Place a dining set across the room. Its cut glass adds a lead line. Move it while paused to preview the rhythm, or change **Arrangement** to hear the same room with a different band.
 
-**House band** starts on. It fits the riffs to shared chords and rounds musical starts to the nearest half beat. The loop runs from the first musical bar to the last. Empty bars between them make space. Even a one-bar house gets a second musical answer on the next pass.
+**House band** starts on. It fits the riffs to shared chords and rounds musical starts to the nearest half beat. The loop runs from the first musical bar to the last. The band answers in the rests between furniture phrases and leaves empty bars silent. Even a one-bar house gets a second musical answer on the next pass.
 
 Press **Play** and the musicians head for different rooms, swaying as they walk. Every so often one plants a boot and kicks. **Pause** leaves them standing where you stopped them. Switch House band off for exact floor timing. They walk out during playback and walk back when invited.
 
@@ -16,8 +16,8 @@ Iron rings take the bass line. Brass studs take the drums. Use **Fittings** on a
 
 | Arrangement | Tempo | Sound |
 | --- | ---: | --- |
-| Chrome Attic | 128 BPM | A chopped talking synth and octave bass duck under a four-on-the-floor kick. |
-| Moth Mass | 176 BPM | Two distorted leads race in thirds. A pipe organ answers above double kicks. |
+| Chrome Attic | 128 BPM | A kick on every beat, octave bass on the offbeats and a repeated two-note talking synth hook. |
+| Moth Mass | 176 BPM | Low guitar and double kick gallop together. A pipe organ answers, followed by a held guitar harmony over a half-time snare. |
 | Loose Floorboards | 108 BPM | Slap bass, low guitar punches and clipped group shouts give way to a half-time backbeat. |
 | Bent Cassette | 84 BPM | A wordless voice slides into a three-note hook over nylon guitar, fretless bass and a late side stick. |
 | Brass Landing | 160 BPM | A harmonized brass call gets a low sax reply over clipped offbeat guitar and walking bass. |

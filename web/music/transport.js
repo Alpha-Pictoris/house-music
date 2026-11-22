@@ -79,7 +79,7 @@ export class Transport {
   }
 
   preview(piece) {
-    return this.#score.preview(piece, this.#pass);
+    return piece ? this.#score.preview(piece, this.#pass) : this.#score.opening();
   }
 
   play() {

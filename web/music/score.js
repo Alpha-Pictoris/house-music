@@ -59,6 +59,17 @@ export class Score {
 
   eventsFor(pass) { return pass % 2 && this.#reply ? this.#reply : this.events; }
 
+  opening() {
+    if (!this.events.length) return [];
+    const downbeat = Math.floor(this.events[0].beat / 4) * 4;
+    const notes = this.events.filter(note => note.beat < downbeat + 8)
+      .map(note => ({ ...note, offset: note.beat - downbeat }));
+    if (this.#reply && this.beats === 4) {
+      for (const note of this.#reply) notes.push({ ...note, offset: 4 + note.beat });
+    }
+    return notes;
+  }
+
   preview(piece, pass = 0) {
     const fitting = fittingOf(piece);
     if (fitting === "plain") return [];

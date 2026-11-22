@@ -1,5 +1,5 @@
 import { HouseEditor } from "./building/house-editor.js";
-import { fittingOf, furniture } from "./building/catalogue.js";
+import { furniture } from "./building/catalogue.js";
 import { arrangements } from "./music/arrangements.js";
 import { Sampler } from "./music/sampler.js";
 import { ScorePanel } from "./ui/score-panel.js";
@@ -49,11 +49,6 @@ class HouseMusic {
 
   #audition(piece) {
     if (this.transport.playing || this.#loading) return;
-    if (!piece) {
-      const selected = this.controls.selectedPiece;
-      piece = selected && fittingOf(selected) !== "plain" ? selected : this.editor.house.pieces.find(item => fittingOf(item) !== "plain");
-    }
-    if (!piece) return;
     const notes = this.transport.preview(piece);
     this.sampler.audition(notes, this.editor.house.mode).catch(error => this.notify(error.message));
   }

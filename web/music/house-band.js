@@ -3,10 +3,20 @@ import { arrangements, recordingFor } from "./arrangements.js";
 import { scalePitch, notesFor } from "./phrases.js";
 import { responses } from "./responses.js";
 
-const balance = { guitar: 0.92, bass: 0.80, celesta: 0.60, harp: 0.62, kick: 1, snare: 0.90, hat: 0.72 };
+const balance = { guitar: 0.88, bass: 0.80, celesta: 0.66, harp: 0.62, kick: 1, snare: 0.90, hat: 0.72,
+  talkbox: 0.94, "fuzz-lead": 0.80, "low-chug": 0.95, "gang-hit": 0.85, croon: 0.86 };
 
 function lastPlayer(players, beat) {
   return players.findLast(player => player.beat <= beat) ?? players.at(-1);
+}
+
+function restLength(melody, beat, gate) {
+  let length = gate;
+  for (const note of melody) {
+    if (note.beat <= beat && beat < note.beat + note.gate) return 0;
+    if (note.beat > beat) length = Math.min(length, note.beat - beat);
+  }
+  return length;
 }
 
 export class HouseBand {
@@ -31,49 +41,50 @@ export class HouseBand {
       lanes.get(part.fitting).push(part);
     }
     const drums = lanes.get("stud") ?? [];
-    this.#rhythm(mix, parts, drums.filter(part => !part.piece.phrase), lanes.get("ring") ?? [], chord, bar);
+    this.#rhythm(mix, drums.filter(part => !part.piece.phrase), lanes.get("ring") ?? [], chord, bar);
 
     for (const lane of lanes.values()) {
       const beats = [...new Set(lane.map(part => part.beat))];
       const space = new Map(beats.map((beat, i) => [beat, (beats[i + 1] ?? beats[0] + 4) - beat]));
-      for (const part of lane) this.#playPart(mix, part, chord, space.get(part.beat));
+      for (const part of lane) {
+        if (part.fitting !== "ring" || part.piece.phrase) this.#playPart(mix, part, chord, space.get(part.beat));
+      }
     }
-    this.#answer(mix, parts, lanes, chord, bar);
+    this.#answer(mix, lanes, chord, bar);
     return this.#mixBar(mix, start);
   }
 
-  #rhythm(mix, parts, drummers, bassists, chord, bar) {
+  #rhythm(mix, drummers, bassists, chord, bar) {
     const { groove, scale } = this.arrangement;
     const drums = bar % 2 === 1 && groove.turnaround ? groove.turnaround : groove.drums;
     for (const [sample, strokes] of Object.entries(drums)) {
       for (const [beat, velocity] of strokes) {
         const player = lastPlayer(drummers, beat);
-        const finish = (player ?? lastPlayer(parts, beat)).finish;
-        this.#add(mix, player, "stud", beat, { sample, semitones: 0, gate: null, finish }, velocity * (player ? 0.95 : 0.62));
+        this.#add(mix, player, "stud", beat, { sample, semitones: 0, gate: null, finish: player?.finish }, velocity * (player ? 0.95 : 0.79));
       }
     }
     for (const [beat, degree, gate, velocity] of groove.ring) {
       const player = lastPlayer(bassists, beat);
       if (player?.piece.phrase) continue;
       const root = player ? minorScale.indexOf(player.piece.pitch - fittings.ring.root) : 0;
-      const finish = (player ?? lastPlayer(parts, beat)).finish;
-      this.#add(mix, player, "ring", beat, { sample: "bass", semitones: scalePitch(chord + root + degree, scale), gate, finish },
-        velocity * (player ? 1 : 0.56));
+      this.#add(mix, player, "ring", beat, { sample: "bass", semitones: scalePitch(chord + root + degree, scale), gate, finish: player?.finish },
+        velocity * (player ? 1 : 0.76));
     }
   }
 
-  #answer(mix, parts, lanes, chord, bar) {
-    const attacks = new Set([...mix.values()].filter(n => n.pieceId && n.fitting !== "stud" && n.fitting !== "ring").map(n => n.beat));
+  #answer(mix, lanes, chord, bar) {
+    const melody = [...mix.values()].filter(note => note.fitting !== "stud" && note.fitting !== "ring");
     for (const { fitting, recording, unless, bars } of this.responses) {
       if (lanes.has(unless)) continue;
       const sample = fittings[fitting].sample;
-      for (const [beat, degrees, gate, accent] of bars[bar % bars.length]) {
-        const finish = lastPlayer(parts, beat).finish;
-        const velocity = accent * (attacks.has(beat) ? 0.69 : 0.95);
+      for (const [beat, degrees, length, velocity] of bars[bar % bars.length]) {
+        const gate = restLength(melody, beat, length);
+        if (gate < 0.12) continue;
         for (const degree of Array.isArray(degrees) ? degrees : [degrees]) {
           const semitones = scalePitch(chord + degree, this.arrangement.scale);
-          this.#add(mix, null, fitting, beat, { sample, recording, semitones, gate, finish }, velocity);
+          this.#add(mix, null, fitting, beat, { sample, recording, semitones, gate }, velocity);
         }
+        melody.push({ beat, gate });
       }
     }
   }
@@ -109,7 +120,6 @@ export class HouseBand {
     }
     if (voice.hits) return [{ offset: 0, semitones: 0, sample: piece.hit, gate: null, velocity: 1 }];
     const root = chord + minorScale.indexOf(piece.pitch - voice.root);
-    if (fitting === "ring") return [{ offset: 0, semitones: scalePitch(root, scale), sample: voice.sample, gate: 0.26, velocity: 0.80 }];
     return groove[fitting].map(([offset, degree, gate, velocity]) => ({
       offset, semitones: scalePitch(root + degree, scale), sample: voice.sample, gate, velocity
     }));
@@ -118,7 +128,7 @@ export class HouseBand {
   #add(mix, part, fitting, beat, note, velocity) {
     const recording = note.recording ?? recordingFor(this.mode, note.sample);
     const key = [beat, recording, note.sample === "bass" ? 0 : note.semitones].join("/");
-    const level = velocity * balance[note.sample];
+    const level = velocity * (balance[recording] ?? balance[note.sample]);
     const current = mix.get(key);
     if (!current) {
       mix.set(key, { ...note, recording, beat, fitting, pieceId: part?.piece.id ?? null, velocity: level });

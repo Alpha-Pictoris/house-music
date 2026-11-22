@@ -1,6 +1,6 @@
 export const nightGarden = {
   title: "Night Garden",
-  mode: "moth",
+  mode: "chrome",
   rooms: [
     {
       id: "r1",
@@ -66,8 +66,7 @@ export const nightGarden = {
       x: 0.5,
       z: 0.48,
       turn: 0,
-      phrase: "answer",
-      pitch: 53,
+      fitting: "plain",
     },
     {
       id: "p9",
@@ -77,8 +76,7 @@ export const nightGarden = {
       z: 1.72,
       turn: 1,
       fitting: "ring",
-      phrase: "rise",
-      pitch: 41,
+      pitch: 38,
     },
     {
       id: "p10",
@@ -96,7 +94,7 @@ export const nightGarden = {
       x: 0.5,
       z: -3.6,
       turn: 0,
-      pitch: 62,
+      fitting: "plain",
     },
     {
       id: "p12",
@@ -130,8 +128,8 @@ export const nightGarden = {
       x: 5.5,
       z: 2.04,
       turn: 0,
-      phrase: "arch",
-      pitch: 67,
+      phrase: "single",
+      pitch: 62,
     },
     {
       id: "p16",
@@ -140,8 +138,7 @@ export const nightGarden = {
       x: 6.5,
       z: 0.2,
       turn: 0,
-      phrase: "answer",
-      hit: "snare",
+      fitting: "plain",
     },
     {
       id: "p17",

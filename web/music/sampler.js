@@ -71,7 +71,7 @@ export class Sampler {
     const volume = 0.82 * (event.velocity ?? 1);
     level.gain.setValueAtTime(0, start);
     level.gain.linearRampToValueAtTime(volume, start + 0.003);
-    if (mode === "chrome" && ["filter-chord", "synth-bass", "talkbox"].includes(recording)) {
+    if (mode === "chrome" && ["clavinet", "synth-bass", "talkbox"].includes(recording)) {
       const seconds = 60 / arrangements[mode].bpm;
       const from = event.beat ?? event.offset;
       for (let beat = Math.ceil(from); beat < from + length / seconds; beat++) {
@@ -85,22 +85,24 @@ export class Sampler {
     level.gain.setValueAtTime(volume, start + Math.max(0.004, length - 0.025));
     level.gain.linearRampToValueAtTime(0, start + length);
     let filter;
-    if (recording === "filter-chord") {
+    if (recording === "clavinet") {
       filter = context.createBiquadFilter();
-      filter.Q.value = 1.8;
+      filter.Q.value = 1.25;
       const accent = (event.beat ?? event.offset) % 4;
-      filter.frequency.setValueAtTime(520, start);
-      filter.frequency.exponentialRampToValueAtTime(1700 + 440 * accent, start + Math.min(length * 0.4, 0.075));
-      filter.frequency.exponentialRampToValueAtTime(680, start + length);
+      filter.frequency.setValueAtTime(1200, start);
+      filter.frequency.exponentialRampToValueAtTime(2600 + 350 * accent, start + Math.min(length * 0.4, 0.035));
+      filter.frequency.exponentialRampToValueAtTime(900, start + length);
       source.connect(filter).connect(level);
     } else source.connect(level);
     level.connect(event.finish === "moss" ? this.#carpet : this.#output);
     if (event.finish === "moonstone") {
       if (!this.#echo) {
-        const delay = context.createDelay(), reflection = context.createGain();
-        delay.delayTime.value = 0.135;
-        reflection.gain.value = 0.22;
-        delay.connect(reflection).connect(this.#output);
+        const delay = context.createDelay(), reflection = context.createGain(), walls = context.createBiquadFilter();
+        delay.delayTime.value = 0.11;
+        reflection.gain.value = 0.14;
+        walls.type = "highpass";
+        walls.frequency.value = 540;
+        delay.connect(walls).connect(reflection).connect(this.#output);
         this.#echo = delay;
       }
       level.connect(this.#echo);
