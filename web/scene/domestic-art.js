@@ -89,10 +89,11 @@ function table(brush) {
 
 function stampedSpine({line, segment}, x, y) {
   const at = (u, v) => [x+u,y+v,0.217];
-  const silver = '#c6e1db';
-  line(oval(x,y+0.225,0.217,0.059,0.109,'xy',20),silver,0.8,true);
-  line([at(-0.022,0.250),at(0.021,0.250),at(0.021,0.195),at(-0.022,0.195)],silver,0.58);
-  segment(at(0.021,0.223),at(-0.013,0.223),silver,0.58);
+  const mint = '#a0e6d3';
+  line(oval(x,y+0.225,0.217,0.059,0.109,'xy',20),mint,0.8,true);
+  line([at(-0.045,0.225),at(-0.021,0.244),at(0,0.248),at(0.021,0.244),at(0.045,0.225),
+    at(0.021,0.206),at(0,0.202),at(-0.021,0.206)],mint,0.72,true);
+  line(oval(x,y+0.225,0.217,0.010,0.018,'xy',12),mint,0.64,true);
   for (const side of [-1,1]) {
     line([at(side*0.060,0.213),at(side*0.078,0.213),at(side*0.078,0.078),at(side*0.098,0.069)],gold,0.76);
   }

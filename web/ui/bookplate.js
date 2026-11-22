@@ -1,10 +1,14 @@
-const spine = "A silver oval stands on the floorboards, tall as the bookcase. Inside, the titles read backwards.";
-const verse = "The shelf hums from left to right. Moonlight under cork, a single chime, the rustle of pages.";
-const water = "Beneath the boards, three golden fish are swimming.";
+import { byId } from "./elements.js";
 
 export function bookcaseInscription(discovery) {
-  if (!discovery) return spine;
-  return discovery.pool ? water : verse;
+  if (!discovery) return "spine-inscription";
+  return discovery.pool ? "water-inscription" : "shelf-inscription";
+}
+
+export function showInscription(element, inscription) {
+  if (element.dataset.inscription === inscription) return;
+  element.replaceChildren(byId(inscription).content.cloneNode(true));
+  element.dataset.inscription = inscription;
 }
 
 const clamp = (n, low, high) => Math.max(low, Math.min(n, high));

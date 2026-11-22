@@ -1,6 +1,6 @@
 import { furniture } from "../building/catalogue.js";
 import { FloorPlan } from "../building/floor-plan.js";
-import { bookcaseInscription, placeBookplate } from "./bookplate.js";
+import { bookcaseInscription, placeBookplate, showInscription } from "./bookplate.js";
 import { byId } from "./elements.js";
 
 export class WritingMarks {
@@ -58,7 +58,7 @@ export class WritingMarks {
     this.#active = mark;
     mark.button.setAttribute("aria-expanded", "true");
     this.#plate.hidden = false;
-    byId("plot-verse").textContent = mark.text;
+    showInscription(byId("plot-verse"), mark.inscription);
     byId("follow-writing").hidden = !mark.hasVerse;
     if (this.#camera && mark.screen) this.#position(this.#camera, mark);
     this.#camera = null;
@@ -96,9 +96,9 @@ export class WritingMarks {
       mark.footprint = box;
       mark.point = [box.x + box.width / 2, furniture[shelf.kind].height + 0.24, box.z + box.depth / 2];
       mark.hasVerse = writing.has(id);
-      const text = bookcaseInscription(writing.get(id));
-      if (this.#active === mark && mark.text !== text) this.#fold();
-      mark.text = text;
+      const inscription = bookcaseInscription(writing.get(id));
+      if (this.#active === mark && mark.inscription !== inscription) this.#fold();
+      mark.inscription = inscription;
     }
     this.#root.hidden = !shelves.size || !["select", "pan", "orbit"].includes(tool);
     this.#camera = null;
@@ -118,8 +118,8 @@ export class WritingMarks {
       }
       mark.button.style.left = Math.max(30, Math.min(camera.width - 30, x)) + "px";
       mark.button.style.top = Math.max(34, y) + "px";
-      if (this.#seen.get(mark.shelf.id) !== mark.text) {
-        this.#seen.set(mark.shelf.id, mark.text);
+      if (this.#seen.get(mark.shelf.id) !== mark.inscription) {
+        this.#seen.set(mark.shelf.id, mark.inscription);
         if (!unread || mark.hasVerse) unread = mark;
       }
     }

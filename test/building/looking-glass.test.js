@@ -12,12 +12,12 @@ function parlour() {
   return { editor, shelf, read: () => glass.read(editor.house) };
 }
 
-test("the bedroom looking glass reveals writing only in the bookcase's room", () => {
+test("the bedroom mirror reveals writing only in the bookcase's room", () => {
   const { editor, shelf, read } = parlour();
-  const kind = Object.keys(furniture).find(key => furniture[key].group === "Bedroom" && furniture[key].label === "Looking glass");
-  assert.ok(kind);
+  assert.equal(furniture.mirror.label, "Mirror");
+  assert.equal(furniture.mirror.group, "Bedroom");
   editor.drawRoom({ x: 8, z: 0 }, { x: 14, z: 6 });
-  const mirror = editor.place(kind, { x: 9, z: 1 });
+  const mirror = editor.place("mirror", { x: 9, z: 1 });
   assert.equal(read().writing.size, 0);
   editor.move(mirror.id, { x: 5, z: 1 });
   assert.equal(read().writing.get(shelf.id).pool, null);

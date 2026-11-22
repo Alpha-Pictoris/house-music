@@ -219,6 +219,9 @@
   border-image: url("./bookplate.svg") 17 fill / 16px stretch;
 }
 .bookplate p { color: inherit; font: italic 17px/1.32 var(--serif); text-wrap: pretty; }
+.book-reply { display: flex; justify-content: center; align-items: center; gap: 7px; margin-top: 5px; color: #284b4d; }
+.book-reply svg { width: 26px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.2; }
+.book-reply i { transform: scaleX(-1); }
 .bookplate button {
   color: #4e3c42; font: 600 12px/1.2 var(--sans); min-height: 33px; padding: 4px 7px;
   text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #977d72;

@@ -1,7 +1,8 @@
 const TAU = Math.PI * 2;
+const mix = (a, b, t) => a + (b - a) * t;
 
 function pointsOn(count, fn) { return Array.from({length:count},(_,i)=>fn(i/count*TAU)); }
-function oval(x,y,z,rx,ry,count=72) { return pointsOn(count,t=>[x+rx*Math.cos(t),y+ry*Math.sin(t),z]); }
+function oval(x,y,z,rx,ry) { return pointsOn(72,t=>[x+rx*Math.cos(t),y+ry*Math.sin(t),z]); }
 function panel(x0,y0,x1,y1,z) { return [[x0,y0,z],[x1,y0,z],[x1,y1,z],[x0,y1,z]]; }
 function arch(x,bottom,z,width,height,shoulder=0.72) {
   const half=width/2, low=height*shoulder;
@@ -78,35 +79,33 @@ function drawWardrobe(brush) {
   for(let x=-0.84;x<0.9;x+=0.13) segment([x,3.01,0.57],[x+0.043,3.07,0.57],mid,0.69);
 }
 
-function drawMirror({box, face, lathe, line, segment, shape}) {
-  const wood = "#463543", brass = "#d6ad83", silver = "#bee5dd";
-  box(-0.93,0.28,-0.055,0.93,0.38,0.055,wood,brass,0.85);
-  for (const x of [-0.93, 0.93]) {
-    lathe(x,0,[[0.025,0.22],[0.11,0.21],[0.18,0.12],[0.32,0.075],[0.40,0.11],
-      [0.48,0.065],[1.84,0.065],[1.95,0.10],[2.04,0.06],[2.12,0.023]],wood,brass,0.9,12);
-    segment([x,1.90,0],[x*0.84,1.90,0],brass,2.1);
-    shape(oval(x,1.90,0.092,0.066,0.066,14),"#83665d",brass,0.8);
+function drawMirror(brush) {
+  const {lathe, line, segment, shape} = brush;
+  const aqua="#73e4d6", dim="#467f92", pale="#b7f9dc", silver="#b899c2", faceZ=0.07;
+  for(const x of [-0.93,0.93]){
+    lathe(x,-0.03,[[0.04,0.23],[0.13,0.23],[0.20,0.14],[0.34,0.07],[1.85,0.052],[2.02,0.11],[2.11,0.045]],"#182229",dim,0.83,16);
+    segment([x,1.89,0.0],[x*0.82,1.89,0.0],pale,1.14);
   }
-  const pane = (u, v, z) => [0.83*u, 1.96+1.39*v, z-0.055*v];
-  const rim = (size, z) => pointsOn(56, t => pane(size*Math.cos(t),size*Math.sin(t),z));
-  const back = rim(1,-0.07), front = rim(1,0.07);
-  for (let i=0; i<front.length; i++) {
-    const j = (i+1) % front.length;
-    face([back[i],back[j],front[j],front[i]],"#64515c");
+  line([[-0.93,0.44,0],[0,0.23,0],[0.93,0.44,0]],silver,1.04);
+  const cy=1.94;
+  shape(oval(0,cy,-0.10,0.82,1.41),"#171e29",dim,1.19);
+  shape(oval(0,cy,faceZ,0.82,1.41),"#173039",aqua,1.65);
+  for(const [rx,ry,ink] of [[0.76,1.33,pale],[0.70,1.24,dim]]) line(oval(0,cy,faceZ+0.015,rx,ry),ink,1.0,true);
+  for(let i=0;i<34;i++){
+    const t=i*TAU/34;
+    segment([0.755*Math.cos(t),cy+1.32*Math.sin(t),0.11],[0.798*Math.cos(t),cy+1.38*Math.sin(t),0.11],dim,0.73);
   }
-  for (const side of [-1, 1]) {
-    shape(side > 0 ? front : back,wood,brass,1.25);
-    shape(rim(0.93,side*0.076),side > 0 ? "#51737d" : "#435d6c",silver,1.15);
-    const edge = (offset, end) => {
-      const along = end * Math.sqrt(1-offset*offset);
-      return pane(0.93*(0.8*offset+0.6*along),0.93*(0.8*along-0.6*offset),side*0.082);
-    };
-    for (const [lo,hi,colour] of [[-0.80,-0.53,"#73969e"],[-0.48,-0.42,"#c4dcd8"],[0.20,0.51,"#93b8bd"]]) {
-      face([edge(lo,-1),edge(hi,-1),edge(hi,1),edge(lo,1)],colour);
-    }
-    line(rim(0.98,side*0.078),"#927976",0.7,true);
+  for(const side of [-1,1]){
+    line(Array.from({length:38},(_,i)=>{
+      const t=i/37;
+      return [mix(-0.43,0.43,t),cy+0.11+side*0.15*Math.sin(t*Math.PI),0.115];
+    }),aqua,0.92);
   }
-  shape(diamond(0,3.46,-0.055,0.09,0.14),wood,brass,1);
+  line(oval(0,cy+0.11,0.12,0.083,0.12),pale,1.25,true);
+  for(const [x,y,length] of [[-0.47,2.12,0.37],[-0.46,1.94,0.20],[0.23,1.37,0.26],[0.28,1.29,0.14]]){
+    segment([x,y,0.105],[x+length*0.60,y+length,0.105],dim,0.82);
+  }
+  line(diamond(0,3.50,0.0,0.10,0.15),silver,1.04,true);
 }
 
 function drawLamp(brush) {
