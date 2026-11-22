@@ -17,7 +17,7 @@ test("a shelf of objects stays silent until a fitting is chosen", () => {
   const bell = editor.placeOn(shelf.id,"bell",0);
   editor.placeOn(shelf.id,"bottle",5);
   assert.deepEqual(Score.from(editor.house).events,[]);
-  assert.throws(() => editor.moveOn(bell.id,5),/empty/);
+  assert.throws(() => editor.placeOn(shelf.id,"grimoire",5),/empty/);
   assert.throws(() => editor.placeOn(shelf.id,"clock",2),/small/);
   assert.throws(() => editor.place("orrery",{x:5,z:2}),/table or shelf/);
   editor.fitPiece(bell.id,"glass");
@@ -70,4 +70,15 @@ test("shared houses reject duplicate object IDs and occupied or missing spots", 
     assert.throws(() => readHouse(copy));
   }
   assert.equal(FurnitureSpots.slots("table").length,3);
+});
+
+test("moving onto an occupied spot trades places in one edit", () => {
+  const { editor, shelf } = parlour();
+  const bell = editor.placeOn(shelf.id, "bell", 0);
+  editor.placeOn(shelf.id, "bottle", 1);
+  const slots = () => editor.house.pieces[0].contents.map(item => item.slot);
+  editor.moveOn(bell.id, 1);
+  assert.deepEqual(slots(), [1, 0]);
+  editor.undo();
+  assert.deepEqual(slots(), [0, 1]);
 });

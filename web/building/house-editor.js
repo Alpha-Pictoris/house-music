@@ -115,9 +115,16 @@ export class HouseEditor extends EventTarget {
   moveOn(id, slot) {
     const parent = this.#parentOf(id);
     if (!parent) throw Error("Choose an object from a table or shelf.");
-    FurnitureSpots.check(parent, slot, id);
+    FurnitureSpots.checkSlot(parent.kind, slot);
     const item = this.#piece(id);
-    return item.slot === slot ? item : this.#put({ ...item, slot });
+    if (item.slot === slot) return item;
+    const moved = { ...item, slot };
+    const contents = parent.contents.map(other => {
+      if (other.id === id) return moved;
+      return other.slot === slot ? { ...other, slot: item.slot } : other;
+    });
+    this.#put({ ...parent, contents });
+    return moved;
   }
 
   preview(piece, point) {

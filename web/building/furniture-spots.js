@@ -17,9 +17,13 @@ export const quarterTurns = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 export class FurnitureSpots {
   static slots(kind) { return spots[kind] ?? []; }
 
-  static check(parent, slot, exceptId) {
-    if (!Number.isInteger(slot) || !this.slots(parent.kind)[slot]) throw Error("Choose a spot on the table or shelf.");
-    if (parent.contents?.some(item => item.slot === slot && item.id !== exceptId)) throw Error("Choose an empty spot.");
+  static checkSlot(kind, slot) {
+    if (!Number.isInteger(slot) || !this.slots(kind)[slot]) throw Error("Choose a spot on the table or shelf.");
+  }
+
+  static check(parent, slot) {
+    this.checkSlot(parent.kind, slot);
+    if (parent.contents?.some(item => item.slot === slot)) throw Error("Choose an empty spot.");
   }
 
   static anchor(parent, slot) {
