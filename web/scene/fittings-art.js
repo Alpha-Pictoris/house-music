@@ -3,6 +3,14 @@ import {oval} from './domestic-art.js';
 import {InkMesh} from './ink-mesh.js';
 
 const attach = {
+  shelf: [-0.92, 1.90, 0.27, 0.60],
+  console: [0, 0.82, 0.36, 0.48],
+  chair: [0, 1.36, -0.40, 0.62],
+  clock: [0, 1.31, 0.26, 0.52],
+  bottle: [0.04, 0.13, 0.15, 0.24],
+  grimoire: [0.02, 0.14, -0.05, 0.23],
+  bell: [0, 0.09, 0.11, 0.24],
+  orrery: [-0.035, 0.05, 0.08, 0.22],
   wardrobe: [0, 2.99, 0.43, 1],
   mirror: [0, 2.50, 0.16, 0.92],
   lamp: [0, 1.76, 0.42, 0.9],

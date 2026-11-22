@@ -3,6 +3,7 @@ import { fittings, tunings } from "../building/fittings.js";
 import { phrases } from "../music/phrases.js";
 import { recordingFor, recordingNames } from "../music/arrangements.js";
 import { HouseScene } from "../scene/house-scene.js";
+import { Surfaces } from "../building/surfaces.js";
 import { byId } from "./elements.js";
 
 export class FurniturePanel {
@@ -21,6 +22,7 @@ export class FurniturePanel {
     this.#buildFittings();
     byId("browse-tab").onclick = () => this.show(false);
     byId("detail-tab").onclick = () => this.show(true);
+    byId("arrange-surface").onclick = () => controls.arrange();
     byId("rotate").onclick = () => controls.rotate();
     byId("rotate-preview").onclick = () => controls.rotate();
     byId("duplicate").onclick = () => { controls.duplicate(); this.show(false); this.#focusPlot(); };
@@ -54,7 +56,8 @@ export class FurniturePanel {
   }
 
   #buildCatalogue() {
-    const groups = new Set(Object.values(furniture).map(item => item.group));
+    const catalogue = Object.entries(furniture).filter(([, item]) => item.layer !== "surface");
+    const groups = new Set(catalogue.map(([, item]) => item.group));
     for (const group of groups) {
       const button = document.createElement("button");
       button.textContent = group;
@@ -62,13 +65,14 @@ export class FurniturePanel {
       button.onclick = () => this.#openGroup(group);
       byId("furniture-groups").append(button);
     }
-    for (const [kind, item] of Object.entries(furniture)) {
+    for (const [kind, item] of catalogue) {
       const fitting = fittings[item.fitting];
       const card = byId("furniture-card").content.firstElementChild.cloneNode(true);
       card.dataset.kind = kind;
       card.style.setProperty("--voice", fitting.colour);
       card.querySelector("strong").textContent = item.label;
-      card.querySelector(".material-label").textContent = item.garden ? "Outdoors" : fitting.label;
+      const spots = Surfaces.slots(kind).length;
+      card.querySelector(".material-label").textContent = spots ? "Surface · " + spots + " spots" : item.garden ? "Outdoors" : fitting.label;
       card.onclick = () => {
         this.audition(newPiece(kind));
         this.controls.choose(kind);
@@ -84,7 +88,7 @@ export class FurniturePanel {
     this.#group = group;
     for (const button of byId("furniture-groups").children) button.setAttribute("aria-pressed", String(button.dataset.group === group));
     for (const [kind, card] of this.#cards) {
-      card.hidden = furniture[kind].group !== group;
+      card.hidden = group === "Surfaces" ? !Surfaces.slots(kind).length : furniture[kind].group !== group;
       const canvas = card.querySelector("canvas");
       if (!card.hidden && !canvas.dataset.renderer) HouseScene.thumbnail(canvas, kind);
     }
@@ -162,6 +166,7 @@ export class FurniturePanel {
       byId("room-sound").textContent = roomFinishes[finish].sound;
     }
     byId("piece-fields").hidden = !indoor;
+    byId("arrange-surface").hidden = !piece || !Surfaces.slots(piece.kind).length;
     if (indoor) {
       const id = fittingOf(piece), fitting = fittings[id];
       const relative = house.band !== false;

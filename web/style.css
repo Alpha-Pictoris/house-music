@@ -1136,3 +1136,59 @@ dialog dd {
   color: var(--violet);
   font: 16px var(--serif);
 }
+
+#surface-dialog {
+  width: min(480px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+.surface-stage {
+  position: relative;
+  margin-top: 12px;
+  height: clamp(185px, 32dvh, 290px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 48% 59%, #392a3c 0%, #211923 53%, #17121b 85%);
+}
+#surface-portrait { width: 100%; height: 100%; display: block; }
+.surface-spot {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  transform: translate(-50%, -45%);
+  display: grid;
+  place-items: center;
+  color: #e1d2e5;
+  touch-action: manipulation;
+}
+.surface-spot span {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid #b49bae;
+  border-radius: 50%;
+  background: #2c2336ee;
+  font-size: 15px;
+  line-height: 1;
+}
+.surface-spot[aria-pressed="true"] span { color: var(--lime); border-color: var(--lime); box-shadow: 0 0 0 2px #242126; }
+.surface-spot[data-filled="true"] span { width: 10px; height: 10px; background: #bc9bcc; transform: translateY(9px); }
+.surface-spot[data-filled="true"][aria-pressed="true"] span { background: var(--lime); }
+#surface-status { margin: 10px 0; min-height: 1.3em; }
+#object-tray { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+#object-tray button, .surface-action {
+  border: 1px solid var(--line);
+  background: #221b27;
+  border-radius: 4px;
+  padding: 7px;
+}
+#object-tray button:hover, .surface-action:hover { border-color: var(--violet); }
+#object-tray canvas { display: block; width: 100%; height: 47px; }
+#object-tray span { font-size: 12px; }
+#object-fields { display: grid; gap: 8px; }
+#object-fields .field { margin: 0; }
+#object-fields .surface-action { justify-self: start; }
+
+.surface-tools { display: flex; gap: 3px; align-items: center; }

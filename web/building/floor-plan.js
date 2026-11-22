@@ -93,6 +93,7 @@ export class FloorPlan {
   static pieceError(house, piece) {
     const box = FloorPlan.footprint(piece);
     const item = furniture[piece.kind];
+    if (item.layer === "surface") return "Choose a surface for this object.";
     if (![box.x, box.z, box.x + box.width, box.z + box.depth].every(n => Number.isFinite(n) && Math.abs(n) <= 256)) {
       return "Choose a spot on the plot.";
     }

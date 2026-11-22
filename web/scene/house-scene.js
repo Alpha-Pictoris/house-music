@@ -1,4 +1,6 @@
 import {FloorPlan} from '../building/floor-plan.js';
+import {Surfaces, quarterTurns} from '../building/surfaces.js';
+import {parlourModels} from './parlour-art.js';
 import {RoomShape} from '../building/room-shape.js';
 import {furniture} from '../building/catalogue.js';
 import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor, roomOutline} from './architecture.js';
@@ -19,8 +21,7 @@ const blue = '#8de9df';
 const coral = '#ff8b82';
 const lavender = '#c5abdb';
 const models = new Map();
-const houseModels = {...livingModels, ...roomModels, ...gardenModels};
-const quarterTurns = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+const houseModels = {...livingModels, ...roomModels, ...gardenModels, ...parlourModels};
 const motionPreference = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)');
 const quantizedLevel = level => Math.round(level * 100) / 100;
 
@@ -59,21 +60,26 @@ function pieceItems(piece, options = {}) {
     models.set(kind, {mesh, scale});
   }
   const {mesh, scale} = models.get(kind);
-  const origin = [x + width / 2, definition.garden ? -0.061 : 0, z + depth / 2];
+  const origin = options.origin ?? [x + width / 2, definition.garden ? -0.061 : 0, z + depth / 2];
   const direction = quarterTurns[turn];
   const fitting = ornament(kind, piece.fitting ?? definition.fitting);
   const level = fitting ? (options.level ?? 0) : 0;
   const body = instance(mesh, {
     ...options, scale, origin, turn: direction, level: level * 0.5, pose: 0, wobble: 1 / 0.43
   });
-  if (!fitting) return [body];
-  const [sx, y, sz] = fitting.local, [cos, sin] = direction;
-  const ornamentOrigin = [origin[0] + cos * sx + sin * sz, y, origin[2] - sin * sx + cos * sz];
-  const size = fitting.size;
-  return [body, instance(fitting.mesh, {
-    ...options, origin: ornamentOrigin, turn: direction, scale: [size, size, size], voice: fitting.voice, level,
-    pose: options.pose ?? 1
-  })];
+  const items = [body];
+  if (fitting) {
+    const [sx,y,sz] = fitting.local, [cos,sin] = direction, size = fitting.size;
+    items.push(instance(fitting.mesh, { ...options,
+      origin: [origin[0] + cos*sx + sin*sz, origin[1] + y, origin[2] - sin*sx + cos*sz],
+      turn: direction, scale: [size,size,size], voice: fitting.voice, level, pose: options.pose ?? 1
+    }));
+  }
+  for (const item of piece.contents ?? []) {
+    const {x,y,z} = Surfaces.anchor(piece,item.slot);
+    items.push(...pieceItems({...item, x, z, turn}, {...options, origin: [x,y,z], level: options.levels?.get(item.id) ?? 0}));
+  }
+  return items;
 }
 
 class IsometricCamera {
@@ -143,7 +149,7 @@ function resize(canvas, width, height) {
 
 function samePlacement(a, b, type) {
   if (!a || a.x !== b.x || a.z !== b.z) return false;
-  if (type === 'pieces') return a.kind === b.kind && a.turn === b.turn && a.fitting === b.fitting;
+  if (type === 'pieces') return a.kind === b.kind && a.turn === b.turn && a.fitting === b.fitting && a.contents === b.contents;
   if (type === 'rooms') return a.width === b.width && a.depth === b.depth && a.finish === b.finish && a.sections === b.sections;
   return true;
 }
@@ -217,6 +223,20 @@ export class HouseScene {
     repaint();
     motion?.addEventListener('change', repaint);
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(repaint).observe(canvas);
+  }
+
+  static surface(canvas, piece) {
+    const {width,height} = canvas.getBoundingClientRect();
+    if (!width || !height) return [];
+    resize(canvas,width,height);
+    const display = {...piece,x:0,z:0,turn:0}, design = furniture[piece.kind];
+    const slots = Surfaces.slots(piece.kind).map((_,i) => Surfaces.anchor(display,i));
+    const top = Math.max(design.height,...slots.map(p => p.y + 0.52));
+    const center = [design.width/2,top/2,design.depth/2];
+    const camera = new IsometricCamera(width,height,0.18,piece.kind === 'table' ? 0.68 : 0.22,center);
+    camera.fit([design.width + 0.56, top + 0.22, design.depth + 0.32], 1);
+    new CanvasInkRenderer(canvas.getContext('2d')).draw(canvas,camera,pieceItems(display),{ drawing:0.8,wobble:0 });
+    return slots.map(p => camera.project([p.x,p.y,p.z]));
   }
 
   updateCamera(rect = this.canvas.getBoundingClientRect()) {
@@ -378,7 +398,7 @@ export class HouseScene {
     items.push(instance(rendered.wallMesh, {canvasLayer: 3.25, canvasInkOffset: 0.2}));
     items.push(instance(rendered.entries, {canvasLayer: 3.5, canvasInkOffset: 0.2}));
     for (const piece of house.pieces) {
-      items.push(...pieceItems(piece, {level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
+      items.push(...pieceItems(piece, {levels: this.lastLevels, level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1}));
     }
     for (const player of players) items.push(marcherItem(player));
 

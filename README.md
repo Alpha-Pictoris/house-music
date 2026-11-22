@@ -24,6 +24,8 @@ Iron rings take the bass line. Brass studs take the drums. Use **Fittings** on a
 
 With **Build room**, start inside a room and draw beyond a wall to add an alcove or another wing. Start on the outside wall to build a separate room and use **Door** to join them. Open **Style room** to name a room and change its finish. Walnut sounds warm and dry, moonstone adds a short echo, and moss carpet softens the notes.
 
+Open **Furnish → Surfaces** for tables and shelves. Double-click or double-tap a placed surface to see it up close. Choose a spot and put down a bottle, book, bell or pocket orrery. Objects start silent. Give one a **Voice** to play a note as the sweep crosses it. Moving or rotating the furniture carries its objects with it.
+
 Houses save to **Library** on this device. **Share** gives you a playable link or a house file. Change a friend's arrangement and choose **Save a copy** to keep your remix.
 
 ### Keyboard

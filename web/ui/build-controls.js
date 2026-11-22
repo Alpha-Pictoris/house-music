@@ -1,4 +1,5 @@
 import { fittingOf, furniture, newPiece } from "../building/catalogue.js";
+import { Surfaces } from "../building/surfaces.js";
 import { FloorPlan } from "../building/floor-plan.js";
 
 export class BuildControls extends EventTarget {
@@ -10,6 +11,8 @@ export class BuildControls extends EventTarget {
   #gesture = null;
   #copy = null;
   #turn = 0;
+  #lastTap = null;
+  #openOnClick = false;
 
   constructor(canvas, scene, editor, notify) {
     super();
@@ -20,6 +23,11 @@ export class BuildControls extends EventTarget {
     canvas.addEventListener("pointerdown", event => this.#down(event));
     canvas.addEventListener("pointermove", event => this.#move(event));
     canvas.addEventListener("pointerup", event => this.#up(event));
+    canvas.addEventListener("click", () => {
+      if (!this.#openOnClick) return;
+      this.#openOnClick = false;
+      this.arrange();
+    });
     canvas.addEventListener("pointercancel", () => this.cancel());
     canvas.addEventListener("lostpointercapture", () => { if (this.#gesture) this.cancel(); });
     canvas.addEventListener("pointerleave", () => { if (!this.#gesture && !this.#anchor) this.preview = null; });
@@ -43,7 +51,8 @@ export class BuildControls extends EventTarget {
   }
 
   cancel() {
-    this.#gesture = this.#anchor = this.preview = null;
+    this.#lastTap = this.#gesture = this.#anchor = this.preview = null;
+    this.#openOnClick = false;
     this.#changed();
   }
 
@@ -72,6 +81,11 @@ export class BuildControls extends EventTarget {
   }
 
   get selectedPiece() { return this.editor.house.pieces.find(piece => piece.id === this.selection); }
+
+  arrange() {
+    const piece = this.selectedPiece;
+    if (piece && Surfaces.slots(piece.kind).length) this.dispatchEvent(new CustomEvent("surface", { detail: piece.id }));
+  }
 
   #run(action) {
     try { return action(); }
@@ -133,7 +147,10 @@ export class BuildControls extends EventTarget {
     this.pointer = point;
     const id = this.tool === "select" ? this.scene.pick(event.clientX, event.clientY, this.editor.house) : null;
     const piece = this.editor.house.pieces.find(item => item.id === id);
-    this.#gesture = { id: event.pointerId, start: point, x: event.clientX, y: event.clientY,
+    const last = this.#lastTap;
+    const repeat = last && last.id === id && last.type === event.pointerType && event.timeStamp - last.time <= 460
+      && Math.hypot(event.clientX - last.x, event.clientY - last.y) < 22;
+    this.#gesture = { id: event.pointerId, start: point, x: event.clientX, y: event.clientY, repeat,
       lastX: event.clientX, lastY: event.clientY, piece, moved: false };
     this.canvas.setPointerCapture(event.pointerId);
   }
@@ -185,6 +202,7 @@ export class BuildControls extends EventTarget {
       const design = furniture[piece.kind];
       let hint = "";
       if (!design.garden) hint = fittingOf(piece) === "plain" ? " Add a fitting to give it a voice." : " Move it along the sweep to change its timing.";
+      if (Surfaces.slots(piece.kind).length) hint = " Double-tap or double-click to arrange its surface.";
       this.notify(design.label + " placed." + hint);
     }
   }
@@ -217,6 +235,15 @@ export class BuildControls extends EventTarget {
         if (moved !== drag.piece) this.#audition(moved);
       }
       this.select(drag.piece.id);
+      if (!drag.moved && Surfaces.slots(drag.piece.kind).length) {
+        const { timeStamp: time, clientX: x, clientY: y, pointerType: type } = event;
+        if (drag.repeat) {
+          this.#openOnClick = true;
+        } else {
+          this.#lastTap = { id: drag.piece.id, time, x, y, type };
+          this.notify("Double-tap or double-click to arrange this surface.");
+        }
+      }
     } else if (this.tool === "select" && !drag.moved) {
       const house = this.editor.house;
       const door = house.doors.find(d => Math.hypot(d.x - point.x, d.z - point.z) < 0.4);
@@ -248,6 +275,7 @@ export class BuildControls extends EventTarget {
         else this.#firstCorner(this.pointer);
       } else if (this.tool === "place") this.#placeAt(this.pointer);
       else if (this.tool === "door") this.#doorAt(this.pointer);
+      else if (this.tool === "select") this.arrange();
     } else if (event.key === "Escape") this.use(this.editor.house.rooms.length ? "select" : "room");
     else if (event.key.toLowerCase() === "r") this.rotate();
     else if (event.key === "Delete" || event.key === "Backspace") { event.preventDefault(); this.remove(); }

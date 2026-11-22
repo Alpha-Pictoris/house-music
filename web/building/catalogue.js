@@ -5,6 +5,10 @@ export const furniture = {
   table:    { label: "Dining set",    group: "Living",   width: 2.1,  depth: 1.8,  height: 1.35, fitting: "glass", phrase: "arch" },
   bookcase: { label: "Bookcase",      group: "Living",   width: 1.65, depth: 0.65, height: 2.65, fitting: "wire", phrase: "fall" },
   lamp:     { label: "Lamp",          group: "Living",   width: 1,    depth: 1,    height: 2.3,  fitting: "stud" },
+  chair:    { label: "Wingback chair", group: "Living", width: 1.12, depth: 1.04, height: 1.68, fitting: "plain" },
+  console:  { label: "Crescent console", group: "Surfaces", width: 2.25, depth: 0.82, height: 1.17, fitting: "plain" },
+  shelf:    { label: "Curio shelf", group: "Surfaces", width: 2, depth: 0.7, height: 2.25, fitting: "plain" },
+  clock:    { label: "Longcase clock", group: "Decor", width: 0.84, depth: 0.66, height: 2.5, fitting: "plain" },
   bed:      { label: "Bed",           group: "Bedroom",  width: 2.05, depth: 2.9,  height: 1.7,  fitting: "wire", phrase: "rise" },
   wardrobe: { label: "Wardrobe",      group: "Bedroom",  width: 1.85, depth: 1,    height: 3.1,  fitting: "thorn" },
   mirror:   { label: "Mirror",        group: "Bedroom",  width: 1.45, depth: 0.65, height: 2.7,  fitting: "ring" },
@@ -15,6 +19,10 @@ export const furniture = {
   fern:     { label: "Potted fern",   group: "Decor",    width: 1,    depth: 1,    height: 1.4,  fitting: "plain" },
   tree:     { label: "Crooked tree",  group: "Garden",   width: 2,    depth: 2,    height: 3.25, fitting: "plain", garden: true },
   path:     { label: "Flagstone",     group: "Garden",   width: 1,    depth: 1,    height: 0.08, fitting: "plain", garden: true, layer: "floor" },
+  bottle:   { label: "Moon bottle", layer: "surface", width: 0.32, depth: 0.32, height: 0.50, fitting: "plain", phrase: "single" },
+  grimoire: { label: "Little grimoire", layer: "surface", width: 0.40, depth: 0.31, height: 0.15, fitting: "plain", phrase: "single" },
+  bell:     { label: "Handbell", layer: "surface", width: 0.32, depth: 0.32, height: 0.47, fitting: "plain", phrase: "single" },
+  orrery:   { label: "Pocket orrery", layer: "surface", width: 0.42, depth: 0.38, height: 0.49, fitting: "plain", phrase: "single" },
   fountain: { label: "Fountain",      group: "Garden",   width: 1.65, depth: 1.65, height: 1.5,  fitting: "plain", garden: true }
 };
 

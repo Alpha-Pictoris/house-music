@@ -3,6 +3,7 @@ import { furniture } from "./building/catalogue.js";
 import { arrangements } from "./music/arrangements.js";
 import { Sampler } from "./music/sampler.js";
 import { ScorePanel } from "./ui/score-panel.js";
+import { SurfacePanel } from "./ui/surface-panel.js";
 import { FurniturePanel } from "./ui/furniture-panel.js";
 import { byId } from "./ui/elements.js";
 import { Transport } from "./music/transport.js";
@@ -38,6 +39,7 @@ class HouseMusic {
     this.panel = new ScorePanel();
     this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text));
     this.furniturePanel = new FurniturePanel(this.controls, piece => this.#audition(piece));
+    this.surfaces = new SurfacePanel(this.controls, piece => this.#audition(piece));
     this.files = new HouseFiles(() => this.editor.house, house => this.open(house), text => this.notify(text));
     this.#wireControls();
     this.files.restore();
@@ -62,6 +64,7 @@ class HouseMusic {
     this.editor = house ? new HouseEditor(house) : new HouseEditor();
     this.editor.addEventListener("change", this.#onEdit);
     this.transport.setHouse(this.editor.house);
+    this.surfaces.close();
     this.furniturePanel.show(false);
     this.controls.reset(this.editor);
     this.refresh();
@@ -173,7 +176,10 @@ class HouseMusic {
     byId("stage").dataset.empty = String(empty);
     this.canvas.dataset.tool = controls.tool;
     if (document.activeElement !== byId("house-title")) byId("house-title").value = house.title;
-    byId("counts").textContent = plural(house.rooms.length, "room") + " · " + plural(house.pieces.length, "piece");
+    const counts = [plural(house.rooms.length, "room"), plural(house.pieces.length, "piece")];
+    const objects = house.pieces.reduce((sum, piece) => sum + (piece.contents?.length ?? 0), 0);
+    if (objects) counts.push(plural(objects, "object"));
+    byId("counts").textContent = counts.join(" · ");
     byId("undo").disabled = !this.editor.canUndo;
     byId("redo").disabled = !this.editor.canRedo;
     byId("mode").value = house.mode;
@@ -184,6 +190,7 @@ class HouseMusic {
       button.disabled = button.dataset.tool === "door" && !house.rooms.length;
     });
     this.furniturePanel.refresh(house);
+    this.surfaces.refresh();
     this.#playButton();
   }
 

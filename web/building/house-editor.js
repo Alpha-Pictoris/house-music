@@ -1,5 +1,6 @@
 import { fittingOf, furniture, newPiece, roomFinishes } from "./catalogue.js";
 import { fittings, tunings } from "./fittings.js";
+import { Surfaces } from "./surfaces.js";
 import { FloorPlan } from "./floor-plan.js";
 import { arrangements, defaultMode } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
@@ -33,7 +34,7 @@ export class HouseEditor extends EventTarget {
 
   #id(prefix) {
     const { rooms, doors, pieces } = this.house;
-    const used = new Set([...rooms, ...doors, ...pieces].map(item => item.id));
+    const used = new Set([...rooms, ...doors, ...pieces, ...pieces.flatMap(piece => piece.contents ?? [])].map(item => item.id));
     let id;
     do { id = prefix + ++this.#sequence; } while (used.has(id));
     return id;
@@ -93,12 +94,34 @@ export class HouseEditor extends EventTarget {
   }
 
   #piece(id) {
-    const piece = this.house.pieces.find(item => item.id === id);
+    const piece = this.house.pieces.find(item => item.id === id) ?? this.#parentOf(id)?.contents.find(item => item.id === id);
     if (!piece) throw Error("Select a piece of furniture.");
     return piece;
   }
 
+  #parentOf(id) {
+    return this.house.pieces.find(parent => parent.contents?.some(item => item.id === id));
+  }
+
+  placeOn(parentId, kind, slot) {
+    const parent = this.#piece(parentId);
+    if (!Surfaces.objects.includes(kind)) throw Error("Choose a small object.");
+    Surfaces.check(parent, slot);
+    const item = { id: this.#id("o"), kind, slot };
+    this.#put({ ...parent, contents: [...(parent.contents ?? []), item] });
+    return item;
+  }
+
+  moveOn(id, slot) {
+    const parent = this.#parentOf(id);
+    if (!parent) throw Error("Choose an object on this surface.");
+    Surfaces.check(parent, slot, id);
+    const item = this.#piece(id);
+    return item.slot === slot ? item : this.#put({ ...item, slot });
+  }
+
   preview(piece, point) {
+    if (furniture[piece.kind].layer === "surface") throw Error("Choose a surface for this object.");
     const placed = { ...piece, x: Math.round(point.x * 1000) / 1000, z: Math.round(point.z * 1000) / 1000 };
     const item = furniture[piece.kind];
     placed.roomId = null;
@@ -108,6 +131,12 @@ export class HouseEditor extends EventTarget {
   }
 
   #put(piece) {
+    if (furniture[piece.kind].layer === "surface") {
+      const parent = this.#parentOf(piece.id);
+      if (!parent) throw Error("Choose a surface for this object.");
+      this.#put({ ...parent, contents: parent.contents.map(item => item.id === piece.id ? piece : item) });
+      return piece;
+    }
     requireValid(FloorPlan.pieceError(this.house, piece));
     const pieces = this.house.pieces;
     const index = pieces.findIndex(item => item.id === piece.id);
@@ -130,6 +159,7 @@ export class HouseEditor extends EventTarget {
 
   rotate(id) {
     const piece = this.#piece(id);
+    if (furniture[piece.kind].layer === "surface") throw Error("Turn the furniture to turn its objects.");
     if (furniture[piece.kind].layer === "wall") throw Error("Move the window to another wall to turn it.");
     return this.#put({ ...piece, turn: (piece.turn + 1) % 4 });
   }
@@ -148,6 +178,10 @@ export class HouseEditor extends EventTarget {
     const updated = { ...piece, fitting };
     delete updated.pitch;
     delete updated.hit;
+    if (furniture[piece.kind].layer === "surface") {
+      if (fitting === "plain") delete updated.phrase;
+      else updated.phrase ??= "single";
+    }
     const voice = fittings[fitting];
     if (voice.hits) updated.hit = "kick";
     if (voice.sample) updated.pitch = voice.root;
@@ -170,7 +204,9 @@ export class HouseEditor extends EventTarget {
 
   duplicate(id, point, turn = this.#piece(id).turn) {
     if (!Number.isInteger(turn) || turn < 0 || turn > 3) throw Error("Choose a quarter turn.");
-    return this.#put(this.preview({ ...this.#piece(id), turn, id: this.#id("p") }, point));
+    const copy = { ...this.#piece(id), turn, id: this.#id("p") };
+    if (copy.contents) copy.contents = copy.contents.map(item => ({ ...item, id: this.#id("o") }));
+    return this.#put(this.preview(copy, point));
   }
 
   addDoor(point) {
@@ -183,6 +219,13 @@ export class HouseEditor extends EventTarget {
   }
 
   remove(id) {
+    const parent = this.#parentOf(id);
+    if (parent) {
+      const copy = { ...parent, contents: parent.contents.filter(item => item.id !== id) };
+      if (!copy.contents.length) delete copy.contents;
+      this.#put(copy);
+      return;
+    }
     const { rooms, doors, pieces } = this.house;
     if (![...rooms, ...doors, ...pieces].some(item => item.id === id)) return;
     this.#commit({
