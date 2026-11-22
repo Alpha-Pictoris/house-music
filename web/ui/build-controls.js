@@ -23,6 +23,7 @@ export class BuildControls extends EventTarget {
     this.editor = editor;
     this.notify = notify;
     this.#touchCamera = new TouchCamera(scene);
+    canvas.addEventListener("touchmove", event => event.preventDefault(), { passive: false });
     canvas.addEventListener("pointerdown", event => this.#down(event));
     canvas.addEventListener("pointermove", event => this.#move(event));
     canvas.addEventListener("pointerup", event => this.#up(event));
@@ -85,7 +86,8 @@ export class BuildControls extends EventTarget {
   }
 
   select(id) {
-    this.selection = id || null;
+    const { rooms, doors, pieces } = this.editor.house;
+    this.selection = id && [rooms, doors, pieces].some(items => items.some(item => item.id === id)) ? id : null;
     this.use("select");
   }
 
@@ -174,9 +176,22 @@ export class BuildControls extends EventTarget {
     const last = this.#lastTap;
     const repeat = last && last.id === id && last.type === event.pointerType && event.timeStamp - last.time <= 460
       && Math.hypot(event.clientX - last.x, event.clientY - last.y) < 22;
-    this.#gesture = { id: event.pointerId, start: point, x: event.clientX, y: event.clientY, repeat,
-      lastX: event.clientX, lastY: event.clientY, piece, pan, moved: false };
+    this.#capture(event, point, { repeat, piece, pan });
+  }
+
+  #capture(event, point, gesture) {
+    this.#gesture = { id: event.pointerId, start: point, x: event.clientX, y: event.clientY,
+      lastX: event.clientX, lastY: event.clientY, moved: false, ...gesture };
     this.canvas.setPointerCapture(event.pointerId);
+  }
+
+  carry(kind, event) {
+    this.choose(kind);
+    if (!this.kind) return;
+    this.#touchCamera.start(event);
+    this.pointer = this.scene.groundAt(event.clientX, event.clientY);
+    this.#hover(this.pointer);
+    this.#capture(event, this.pointer, { fromTray: true, moved: true });
   }
 
   #move(event) {
@@ -250,6 +265,10 @@ export class BuildControls extends EventTarget {
     this.pointer = point;
     this.#gesture = null;
     if (this.canvas.hasPointerCapture(event.pointerId)) this.canvas.releasePointerCapture(event.pointerId);
+    if (drag.fromTray && this.canvas.ownerDocument.elementFromPoint(event.clientX, event.clientY) !== this.canvas) {
+      this.select(null);
+      return;
+    }
     if (drag.pan) { this.#hover(point); return; }
     if (this.tool === "room") {
       if (this.#anchor || drag.moved) this.#finishRoom(this.#anchor ?? drag.start, point);
@@ -300,6 +319,14 @@ export class BuildControls extends EventTarget {
         this.#hover(this.pointer);
         if (this.tool === "room" && !this.#anchor) this.preview = { type: "room", ...this.pointer, width: 0.15, depth: 0.15, valid: true };
       }
+    } else if (event.key === "[" || event.key === "]") {
+      event.preventDefault();
+      const { rooms, doors, pieces } = this.editor.house;
+      const items = [...rooms, ...doors, ...pieces];
+      if (!items.length) return;
+      const current = items.findIndex(item => item.id === this.selection);
+      const index = event.key === "]" ? current + 1 : (current < 0 ? 0 : current) - 1;
+      this.select(items[(index + items.length) % items.length].id);
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (this.tool === "room") {

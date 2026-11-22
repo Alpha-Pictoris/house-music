@@ -87,3 +87,29 @@ test("a double tap opens the selected table once", () => {
   canvas.dispatchEvent(new Event("click"));
   assert.deepEqual(opened,[table.id]);
 });
+
+test("dragging a portrait drops furniture only on the plot", () => {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: 0, z: 0 }, { x: 6, z: 4 });
+  const canvas = Object.assign(new EventTarget(), { setPointerCapture() {}, hasPointerCapture: () => false });
+  canvas.ownerDocument = { elementFromPoint: x => x === 2 ? canvas : null };
+  const scene = { groundAt: (x, z) => ({ x, z }) };
+  const controls = new BuildControls(canvas, scene, editor, () => {});
+  const finger = { pointerId: 1, pointerType: "touch", clientX: 2, clientY: 1 };
+  for (const clientX of [3, 2]) {
+    controls.carry("chair", finger);
+    canvas.dispatchEvent(Object.assign(new Event("pointerup"), finger, { clientX }));
+  }
+  assert.deepEqual(editor.house.pieces.map(p => [p.kind, p.x, p.z]), [["chair", 2, 1]]);
+});
+
+test("bracket keys cycle through the house in either direction", () => {
+  const editor = new HouseEditor();
+  const room = editor.drawRoom({ x: 0, z: 0 }, { x: 5, z: 5 });
+  const lamp = editor.place("lamp", { x: 2, z: 2 });
+  const canvas = new EventTarget(), controls = new BuildControls(canvas, {}, editor, () => {});
+  for (const [key, id] of [["[", lamp.id], ["]", room.id], ["]", lamp.id]]) {
+    canvas.dispatchEvent(Object.assign(new Event("keydown"), { key }));
+    assert.equal(controls.selection, id);
+  }
+});

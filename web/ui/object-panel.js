@@ -1,7 +1,6 @@
-import { fittingOf, furniture } from "../building/catalogue.js";
-import { fittings } from "../building/fittings.js";
+import { furniture } from "../building/catalogue.js";
+import { InstrumentPanel } from "./instrument-panel.js";
 import { FurnitureSpots } from "../building/furniture-spots.js";
-import { instrumentName, tuningOptions } from "../music/arrangements.js";
 import { HouseScene } from "../scene/house-scene.js";
 import { byId } from "./elements.js";
 
@@ -10,10 +9,12 @@ export class ObjectPanel {
   #itemId;
   #slot = 0;
   #buttons = [];
+  #moving = false;
   #dialog = byId("object-dialog");
   #portrait = byId("object-portrait");
 
-  constructor(controls, audition) {
+  constructor(controls, audition, glass) {
+    this.glass = glass;
     this.controls = controls;
     this.audition = audition;
     controls.addEventListener("arrange", event => this.open(event.detail));
@@ -33,20 +34,28 @@ export class ObjectPanel {
       byId("object-tray").append(button);
       HouseScene.thumbnail(canvas,kind);
     }
-    byId("object-instrument").onchange = event => this.#edit(() => this.editor.fitPiece(this.item.id, event.target.value), true);
-    byId("object-tuning").onchange = event => {
-      const value = event.target.value;
-      this.#edit(() => this.editor.tune(this.item.id, fittings[fittingOf(this.item)].hits ? value : Number(value)), true);
+    this.sound = new InstrumentPanel(byId("object-sound"), (method, id, value) => {
+      this.#edit(() => this.editor[method](id, value), true);
+    });
+    byId("object-sound-button").onclick = () => {
+      byId("object-sound").hidden = !byId("object-sound").hidden;
+      this.#moving = false;
+      this.refresh();
     };
-    byId("object-position").onchange = event => {
-      const slot = Number(event.target.value);
-      this.#edit(() => {
-        const item = this.editor.moveOn(this.item.id,slot);
-        this.#slot = item.slot;
-        this.refresh();
-      });
+    byId("move-object").onclick = () => {
+      this.#moving = !this.#moving;
+      byId("object-sound").hidden = true;
+      this.refresh();
     };
     byId("remove-object").onclick = () => this.#edit(() => this.editor.remove(this.item.id));
+    byId("see-water").onclick = () => {
+      const entry = this.glass.read(this.editor.house).writing.get(this.#parentId);
+      if (!entry?.pool) return;
+      this.close();
+      controls.select(null);
+      controls.scene.fit({ rooms: [entry.room], pieces: [] });
+      controls.canvas.focus({ preventScroll: true });
+    };
     byId("object-undo").onclick = () => this.editor.undo();
     byId("object-redo").onclick = () => this.editor.redo();
   }
@@ -68,11 +77,20 @@ export class ObjectPanel {
     const empty = FurnitureSpots.slots(this.parent.kind).findIndex((_, i) => !this.parent.contents?.some(item => item.slot === i));
     this.#slot = Math.max(0,empty);
     this.#itemId = null;
+    this.#moving = false;
+    byId("object-sound").hidden = true;
     this.#buttons = FurnitureSpots.slots(this.parent.kind).map((_,index) => {
       const button = document.createElement("button");
       button.className = "object-spot";
       button.append(document.createElement("span"));
-      button.onclick = () => { this.#itemId = null; this.#slot = index; this.refresh(); };
+      button.onclick = () => {
+        if (this.#moving && this.item) this.#edit(() => this.editor.moveOn(this.item.id, index));
+        this.#moving = false;
+        this.#itemId = null;
+        this.#slot = index;
+        byId("object-sound").hidden = true;
+        this.refresh();
+      };
       return button;
     });
     byId("object-spots").replaceChildren(...this.#buttons);
@@ -85,7 +103,8 @@ export class ObjectPanel {
 
   #draw() {
     if (!this.#dialog.open || !this.parent) return;
-    const points = HouseScene.furniturePortrait(this.#portrait,this.parent);
+    const writing = this.glass.read(this.editor.house).writing.has(this.#parentId);
+    const points = HouseScene.furniturePortrait(this.#portrait, this.parent, writing);
     for (const [i,point] of points.entries()) {
       this.#buttons[i].style.left = point.x + "px";
       this.#buttons[i].style.top = point.y + "px";
@@ -98,6 +117,10 @@ export class ObjectPanel {
     if (!parent) { this.close(); return; }
     const selected = parent.contents?.find(item => item.id === this.#itemId);
     if (selected) this.#slot = selected.slot;
+    if (this.#itemId && !selected) {
+      this.#moving = false;
+      byId("object-sound").hidden = true;
+    }
     this.#itemId = this.item?.id;
     const slots = FurnitureSpots.slots(parent.kind);
     for (const [i,button] of this.#buttons.entries()) {
@@ -110,27 +133,25 @@ export class ObjectPanel {
       button.firstChild.textContent = item ? "" : "+";
     }
     this.#draw();
-    const item = this.item, mode = this.editor.house.mode, spot = slots[this.#slot].label;
+    const item = this.item, spot = slots[this.#slot].label;
     byId("object-tray").hidden = Boolean(item);
     byId("object-fields").hidden = !item;
     byId("object-undo").disabled = !this.editor.canUndo;
     byId("object-redo").disabled = !this.editor.canRedo;
-    byId("object-status").textContent = item ? spot + " · " + furniture[item.kind].label : "Choose an object for the " + spot.toLowerCase() + " spot.";
-    if (!item) return;
-    const fitting = fittingOf(item), instrument = byId("object-instrument");
-    instrument.replaceChildren(...Object.entries(fittings).map(([key, material]) => new Option(instrumentName(mode, material), key)));
-    instrument.value = fitting;
-    byId("object-tuning-field").hidden = fitting === "plain";
-    byId("object-tuning-label").textContent = fittings[fitting].hits ? "Drum hit" : "Note";
-    const tuning = byId("object-tuning");
-    tuning.replaceChildren(...tuningOptions(mode, fitting, this.editor.house.band !== false).map(t => new Option(t.label, t.value)));
-    tuning.value = item.hit ?? item.pitch ?? "";
-    const position = byId("object-position");
-    position.replaceChildren(...slots.map((s,i) => {
-      const option = new Option(s.label,i);
-      option.disabled = parent.contents.some(other => other.slot === i && other.id !== item.id);
-      return option;
-    }));
-    position.value = this.#slot;
+    byId("move-object").setAttribute("aria-pressed", String(this.#moving));
+    byId("object-sound-button").setAttribute("aria-expanded", String(!byId("object-sound").hidden));
+    byId("object-spots").classList.toggle("moving", this.#moving);
+    byId("object-status").textContent = this.#moving ? "Tap a spot to move or swap."
+      : item ? spot + " · " + furniture[item.kind].label : "Choose an object for the " + spot.toLowerCase() + " spot.";
+    if (item) this.sound.show(item, this.editor.house);
+    const entry = this.glass.read(this.editor.house).writing.get(parent.id);
+    byId("inscription").hidden = parent.kind !== "bookcase";
+    if (parent.kind === "bookcase") {
+      const text = !entry ? "One of the spines is stamped with a looking glass."
+        : entry.pool ? "Beneath the boards, three golden fish are swimming."
+        : "Set a bottled moon at my left, a little book at my right. Between them, ring the water awake.";
+      if (byId("inscription-text").textContent !== text) byId("inscription-text").textContent = text;
+      byId("see-water").hidden = !entry?.pool;
+    }
   }
 }

@@ -7,10 +7,12 @@ export class ScorePanel {
   #events;
   #beat;
   #head = byId("score-head");
+  #score = this.#head.closest("details");
+  #tray = this.#head.closest(".tray");
   #readout = byId("beat-readout");
 
   draw(view) {
-    if (!this.#head.closest("details").open) return;
+    if (this.#tray.hidden || !this.#score.open) return;
     if (this.#events !== view.events) {
       const markers = view.events.map(event => {
         const marker = document.createElement("i");

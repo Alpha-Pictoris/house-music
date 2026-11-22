@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { arrangements } from "../web/music/arrangements.js";
+import { recordSleeves } from "../web/ui/record-sleeves.js";
 
 const source = fileURLToPath(new URL("../web", import.meta.url));
 
@@ -16,14 +16,10 @@ async function readTree(directory, prefix = "") {
   return files;
 }
 
-const escape = text => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
-
 function page(bytes, directory) {
-  const options = Object.entries(arrangements).map(([id, { label }]) =>
-    '<option value="' + escape(id) + '">' + escape(label) + '</option>').join("");
   return bytes.toString("utf8")
     .replaceAll(/(src|href)="\.\/([^"]+\.(?:js|css|svg))"/g, '$1="./' + directory + '/$2"')
-    .replace('<select id="mode"></select>', '<select id="mode">' + options + '</select>');
+    .replace(/(<div [^>]*id="records"[^>]*>)<\/div>/, (_, start) => start + recordSleeves() + "</div>");
 }
 
 export async function buildSite(output) {

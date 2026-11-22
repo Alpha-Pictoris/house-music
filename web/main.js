@@ -1,6 +1,9 @@
 import { HouseEditor } from "./building/house-editor.js";
 import { furniture } from "./building/catalogue.js";
-import { arrangements } from "./music/arrangements.js";
+import { LookingGlass } from "./building/looking-glass.js";
+import { ToolTrays } from "./ui/tool-trays.js";
+import { WritingMarks } from "./ui/writing-marks.js";
+import { RecordCrate } from "./ui/record-sleeves.js";
 import { Sampler } from "./music/sampler.js";
 import { ScorePanel } from "./ui/score-panel.js";
 import { ObjectPanel } from "./ui/object-panel.js";
@@ -11,10 +14,9 @@ import { HouseScene } from "./scene/house-scene.js";
 import { BuildControls } from "./ui/build-controls.js";
 import { HouseFiles } from "./ui/house-files.js";
 
-const plural = (count, noun) => count + " " + noun + (count === 1 ? "" : "s");
 const hints = {
   room: "Draw two corners. Start inside a room to extend it.",
-  select: "Drag furniture to move it. Drag empty ground to turn the house.",
+  select: "",
   door: "Choose a wall to open a doorway.",
   pan: "Drag to move the map. Use the arrow keys to pan.",
   orbit: "Drag to turn the plot.",
@@ -24,6 +26,7 @@ const hints = {
 class HouseMusic {
   #playRequest = 0;
   #loading = false;
+  #hintTimer;
   #onEdit = () => {
     const house = this.editor.house;
     this.transport.setHouse(house);
@@ -39,8 +42,18 @@ class HouseMusic {
     this.transport = new Transport(() => this.sampler.now, this.sampler);
     this.panel = new ScorePanel();
     this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text));
-    this.furniturePanel = new FurniturePanel(this.controls, piece => this.#audition(piece));
-    this.objectPanel = new ObjectPanel(this.controls, piece => this.#audition(piece));
+    this.glass = new LookingGlass();
+    this.trays = new ToolTrays(this.controls);
+    this.furniturePanel = new FurniturePanel(this.controls, this.trays, piece => this.#audition(piece));
+    this.objectPanel = new ObjectPanel(this.controls, piece => this.#audition(piece), this.glass);
+    this.marks = new WritingMarks(id => {
+      this.controls.select(id);
+      this.controls.arrange();
+    });
+    this.records = new RecordCrate(byId("records"), mode => {
+      this.editor.setMode(mode);
+      this.#audition();
+    });
     this.files = new HouseFiles(() => this.editor.house, house => this.open(house), text => this.notify(text));
     this.#wireControls();
     this.files.restore();
@@ -48,7 +61,13 @@ class HouseMusic {
     requestAnimationFrame(ms => this.#frame(ms));
   }
 
-  notify(text) { byId("plot-hint").textContent = text; }
+  notify(text) {
+    clearTimeout(this.#hintTimer);
+    const hint = byId("plot-hint");
+    hint.textContent = text;
+    hint.classList.toggle("visible", Boolean(text));
+    if (text) this.#hintTimer = setTimeout(() => hint.classList.remove("visible"), 6000);
+  }
 
   #audition(piece) {
     if (this.transport.playing || this.#loading) return;
@@ -66,7 +85,7 @@ class HouseMusic {
     this.editor.addEventListener("change", this.#onEdit);
     this.transport.setHouse(this.editor.house);
     this.objectPanel.close();
-    this.furniturePanel.show(false);
+    this.trays.close();
     this.controls.reset(this.editor);
     this.refresh();
   }
@@ -80,16 +99,10 @@ class HouseMusic {
         const where = item.garden ? " in the garden." : item.layer === "wall" ? " on an outside wall." : " inside a room.";
         this.notify("Place the " + item.label.toLowerCase() + where);
       }
-      else this.notify(hints[controls.tool]);
+      else this.notify(controls.tool === "room" && !this.editor.house.rooms.length ? "" : hints[controls.tool]);
     });
     controls.addEventListener("play", () => this.togglePlay());
     controls.addEventListener("audition", event => this.#audition(event.detail));
-    document.querySelectorAll("[data-tool]").forEach(button => {
-      button.onclick = () => {
-        controls.use(button.dataset.tool);
-        this.canvas.focus({ preventScroll: true });
-      };
-    });
     byId("undo").onclick = () => this.history("undo");
     byId("redo").onclick = () => this.history("redo");
     byId("zoom-in").onclick = () => this.scene.zoom(1.2);
@@ -100,14 +113,6 @@ class HouseMusic {
       event.target.value = this.editor.house.title;
     };
     byId("house-title").onkeydown = event => { if (event.key === "Enter") event.target.blur(); };
-    const menu = byId("mode");
-    if (!menu.options.length) {
-      for (const [mode, { label }] of Object.entries(arrangements)) menu.add(new Option(label, mode));
-    }
-    menu.onchange = event => {
-      this.editor.setMode(event.target.value);
-      this.#audition();
-    };
     byId("band").onclick = () => {
       this.sampler.cancelAudition();
       const enabled = this.editor.house.band === false;
@@ -177,19 +182,13 @@ class HouseMusic {
     byId("stage").dataset.empty = String(empty);
     this.canvas.dataset.tool = controls.tool;
     if (document.activeElement !== byId("house-title")) byId("house-title").value = house.title;
-    const counts = [plural(house.rooms.length, "room"), plural(house.pieces.length, "piece")];
-    const objects = house.pieces.reduce((sum, piece) => sum + (piece.contents?.length ?? 0), 0);
-    if (objects) counts.push(plural(objects, "object"));
-    byId("counts").textContent = counts.join(" · ");
+    byId("current-house").textContent = house.title;
     byId("undo").disabled = !this.editor.canUndo;
     byId("redo").disabled = !this.editor.canRedo;
-    byId("mode").value = house.mode;
+    this.records.show(house.mode);
     byId("band").setAttribute("aria-pressed", String(house.band !== false));
-    byId("bpm").textContent = arrangements[house.mode].bpm;
-    document.querySelectorAll("button[data-tool]").forEach(button => {
-      button.setAttribute("aria-pressed", String(button.dataset.tool === controls.tool));
-      button.disabled = button.dataset.tool === "door" && !house.rooms.length;
-    });
+    this.trays.refresh();
+    this.marks.show(this.glass.read(house).discoveries, controls.tool);
     this.furniturePanel.refresh(house);
     this.objectPanel.refresh();
     this.#playButton();
@@ -200,8 +199,10 @@ class HouseMusic {
       const view = this.transport.view(), house = this.editor.house;
       byId("empty-guide").hidden = Boolean(house.rooms.length || house.pieces.length || this.controls.preview);
       this.scene.draw({ house: view.house, draftHouse: house, selection: this.controls.selection,
-        preview: this.controls.preview, sweepX: view.sweepX, levels: view.levels,
+        preview: this.controls.preview, grid: ["room", "door", "place"].includes(this.controls.tool),
+        discoveries: this.glass.read(house).discoveries, sweepX: view.sweepX, levels: view.levels,
         beat: this.transport.playing ? view.beat : null, time: ms / 1000 });
+      this.marks.project(this.scene.camera);
       this.panel.draw(view);
     }
     requestAnimationFrame(time => this.#frame(time));

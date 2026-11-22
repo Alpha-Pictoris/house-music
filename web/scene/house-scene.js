@@ -10,6 +10,7 @@ import {drawDomestic, livingModels} from './domestic-art.js';
 import {roomModels} from './rooms-art.js';
 import {gardenModels} from './garden-art.js';
 import {landscape} from './landscape.js';
+import {MoonPool} from './moon-pool.js';
 import {MarchingBand} from './marching-band.js';
 import {marcherItem} from './marcher-art.js';
 import {ornament} from './fittings-art.js';
@@ -66,6 +67,7 @@ function pieceItems(piece, options = {}) {
   const fitting = ornament(kind, piece.fitting ?? definition.fitting);
   const level = fitting ? (options.level ?? 0) : 0;
   const body = instance(mesh, {
+    ...(definition.layer === 'floor' && !definition.garden ? {canvasLayer: 3.01, canvasInkOffset: 0.02} : {}),
     ...options, scale, origin, turn: direction, level: level * 0.5, pose: 0, wobble: 1 / 0.43
   });
   const items = [body];
@@ -188,6 +190,7 @@ export class HouseScene {
   floorCache = new Map();
   markCache = new Map();
   parade = new MarchingBand();
+  moonPool = new MoonPool();
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -228,7 +231,7 @@ export class HouseScene {
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(repaint).observe(canvas);
   }
 
-  static furniturePortrait(canvas, piece) {
+  static furniturePortrait(canvas, piece, writing = false) {
     const {width,height} = canvas.getBoundingClientRect();
     if (!width || !height) return [];
     resize(canvas,width,height);
@@ -238,7 +241,9 @@ export class HouseScene {
     const center = [design.width/2,top/2,design.depth/2];
     const camera = new IsometricCamera(width,height,0.18,piece.kind === 'table' ? 0.68 : 0.22,center);
     camera.fit([design.width + 0.56, top + 0.22, design.depth + 0.32], 1);
-    new CanvasInkRenderer(canvas.getContext('2d')).draw(canvas,camera,pieceItems(display),{ drawing:0.8,wobble:0 });
+    const items = pieceItems(display);
+    if (writing) items.push(MoonPool.writing(display));
+    new CanvasInkRenderer(canvas.getContext('2d')).draw(canvas,camera,items,{ drawing:0.8,wobble:0 });
     return slots.map(p => camera.project([p.x,p.y,p.z]));
   }
 
@@ -383,8 +388,8 @@ export class HouseScene {
     return instance(this.markCache.get(key), {origin: [x, 0, z], opacity});
   }
 
-  draw({house = emptyHouse, draftHouse = house, selection = null, preview = null, sweepX = null, levels, beat = null, time = 0} = {}) {
-    this.lastRequest = {house, draftHouse, selection, preview, sweepX, levels, beat, time};
+  draw({house = emptyHouse, draftHouse = house, selection = null, preview = null, grid = true, discoveries = [], sweepX = null, levels, beat = null, time = 0} = {}) {
+    this.lastRequest = {house, draftHouse, selection, preview, grid, discoveries, sweepX, levels, beat, time};
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const camera = this.updateCamera(rect);
@@ -395,18 +400,19 @@ export class HouseScene {
     const placement = previewKey(preview);
     const previous = this.lastFrame;
     if (!changedSize && previous?.camera === camera && previous.house === house && previous.draftHouse === draftHouse &&
-        previous.selection === selection && previous.placement === placement && previous.sweepX === sweepX &&
+        previous.selection === selection && previous.grid === grid && previous.placement === placement && previous.sweepX === sweepX &&
         previous.players === players && previous.drawing === drawing && previous.reducedMotion === reducedMotion && sameLevels(levels, this.lastLevels)) return;
-    this.lastFrame = {camera, house, draftHouse, selection, placement, sweepX, drawing, reducedMotion, players};
+    this.lastFrame = {camera, house, draftHouse, selection, grid, placement, sweepX, drawing, reducedMotion, players};
     this.lastLevels = new Map();
     if (levels) for (const [id, level] of levels) this.lastLevels.set(id, quantizedLevel(level));
-    this.ground.inkOpacity = house.rooms.length ? 0.34 : 1;
+    this.ground.inkOpacity = grid ? (house.rooms.length ? 0.45 : 0.85) : 0.06;
     this.ground.origin = [Math.round(this.center[0] / 5) * 5, 0, Math.round(this.center[2] / 5) * 5];
     const items = [this.ground, this.origin];
     if (!draftHouse.rooms.length && !draftHouse.pieces.length) items.push(this.compass);
     const rendered = this.architecture(house);
     items.push(instance(rendered.grounds, {canvasLayer: 1.5, canvasFlat: true, catchesSweep: false}));
     for (const floor of rendered.floors) items.push(instance(floor, {canvasLayer: 2}));
+    for (const discovery of discoveries) items.push(...this.moonPool.draw(discovery, reducedMotion ? 0 : time));
     items.push(instance(rendered.wallMesh, {canvasLayer: 3.25, canvasInkOffset: 0.2}));
     items.push(instance(rendered.entries, {canvasLayer: 3.5, canvasInkOffset: 0.2}));
     for (const piece of house.pieces) {
