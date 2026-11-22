@@ -10,7 +10,7 @@ Draw a house and play it as a track. Put thorn finials on a velvet sofa, hang a 
 
 **House band** starts on. It fits the riffs to shared chords and rounds musical starts to the nearest half beat. The loop runs from the first musical bar to the last. The band answers in the rests between furniture phrases and leaves empty bars silent. Even a one-bar house gets a second musical answer on the next pass.
 
-Press **Play** and the musicians head for different rooms, swaying as they walk. Every so often one plants a boot and kicks. **Pause** leaves them standing where you stopped them. Switch House band off for exact floor timing. They walk out during playback and walk back when invited.
+Press **Play** and the musicians head for different rooms, swaying as they walk. **Pause** leaves them standing where you stopped them. Switch House band off for exact floor timing. They walk out during playback and walk back when invited.
 
 Iron rings take the bass line. Brass studs take the drums. Use **Fittings** on any indoor piece to change its voice, pick a phrase, or leave it plain. A unit along the sweep is one beat. Building edits join on the next pass.
 
@@ -22,7 +22,7 @@ Iron rings take the bass line. Brass studs take the drums. Use **Fittings** on a
 | Bent Cassette | 84 BPM | A wordless voice slides into a three-note hook over nylon guitar, fretless bass and a late side stick. |
 | Brass Landing | 160 BPM | A harmonized brass call gets a low sax reply over clipped offbeat guitar and walking bass. |
 
-Extend the house along a wall and use **Door** to join the rooms. Lay a rug under the dining set, fit a window, or plant a tree in the garden. Open **Style room** to name a room and change its finish. Walnut sounds warm and dry, moonstone adds a short echo, and moss carpet softens the notes.
+With **Build room**, start inside a room and draw beyond a wall to add an alcove or another wing. Start on the outside wall to build a separate room and use **Door** to join them. Open **Style room** to name a room and change its finish. Walnut sounds warm and dry, moonstone adds a short echo, and moss carpet softens the notes.
 
 Houses save to **Library** on this device. **Share** gives you a playable link or a house file. Change a friend's arrangement and choose **Save a copy** to keep your remix.
 

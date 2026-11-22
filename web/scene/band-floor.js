@@ -1,6 +1,8 @@
 import { furniture } from '../building/catalogue.js';
 import { FloorPlan } from '../building/floor-plan.js';
 
+import { RoomShape } from '../building/room-shape.js';
+
 const clearance = 0.18;
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const inside = (p, b) => p.x > b.left && p.x < b.right && p.z > b.back && p.z < b.front;
@@ -32,12 +34,10 @@ export class BandFloor {
 
   constructor(house) {
     this.rooms = house.rooms;
-    const byId = new Map(house.rooms.map(room => [room.id, room]));
     const hasEntrance = house.doors.some(door => door.rooms.length === 1);
-    this.#obstacles = FloorPlan.walls(house).flatMap(({ axis, at, start, end, rooms }) => {
-      const room = byId.get(rooms[0]);
+    this.#obstacles = FloorPlan.walls(house).flatMap(({ axis, at, start, end, rooms, back }) => {
       // A house without a front door can be entered over the low lip of its cutaway.
-      if (!hasEntrance && rooms.length === 1 && Math.abs(at - (axis === 'x' ? room.z : room.x)) > 0.001) return [];
+      if (!hasEntrance && rooms.length === 1 && !back) return [];
       return [axis === 'x' ? blocker(start, at, end - start, 0) : blocker(at, start, 0, end - start)];
     });
     const solid = house.pieces.filter(piece => !furniture[piece.kind].layer).map(piece => FloorPlan.footprint(piece));
@@ -52,8 +52,8 @@ export class BandFloor {
     ];
     this.spots = this.rooms.map(room => {
       const spots = [];
-      for (const z of [0.33, 0.68, 0.5, 0.84, 0.16]) for (const x of [0.32, 0.71, 0.5, 0.85, 0.15]) {
-        const p = { x: room.x + x * room.width, z: room.z + z * room.depth };
+      for (const part of RoomShape.parts(room)) for (const z of [0.33, 0.68, 0.5, 0.84, 0.16]) for (const x of [0.32, 0.71, 0.5, 0.85, 0.15]) {
+        const p = { x: part.x + x * part.width, z: part.z + z * part.depth };
         if (this.free(p)) spots.push(p);
       }
       return spots;
@@ -127,6 +127,6 @@ export class BandFloor {
   }
 
   groundAt(point) {
-    return this.rooms.some(r => point.x >= r.x && point.x <= r.x + r.width && point.z >= r.z && point.z <= r.z + r.depth) ? 0.015 : -0.067;
+    return this.rooms.some(r => RoomShape.at(r, point)) ? 0.015 : -0.067;
   }
 }

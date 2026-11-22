@@ -1,4 +1,5 @@
 import {FloorPlan} from '../building/floor-plan.js';
+import {RoomShape} from '../building/room-shape.js';
 import {InkMesh} from './ink-mesh.js';
 
 const noise = (x, z, salt = 0) => {
@@ -103,7 +104,8 @@ function lawn(mesh, group, rooms) {
 
 export function landscape(rooms, garden) {
   const mesh = new InkMesh(0.25);
-  const segments = [...rooms,...garden.map(piece => FloorPlan.footprint(piece))];
-  for (const group of connectedGroups(segments)) lawn(mesh,group,rooms);
+  const floor = rooms.flatMap(room => RoomShape.parts(room));
+  const segments = [...floor,...garden.map(piece => FloorPlan.footprint(piece))];
+  for (const group of connectedGroups(segments)) lawn(mesh,group,floor);
   return mesh;
 }

@@ -64,13 +64,15 @@ export class HouseEditor extends EventTarget {
   }
 
   drawRoom(start, end) {
-    const room = { id: this.#id("r"), ...FloorPlan.roomBetween(this.house, start, end) };
-    requireValid(FloorPlan.roomError(this.house, room));
-    const rooms = [...this.house.rooms, room];
+    const draft = FloorPlan.planRoom(this.house, start, end);
+    requireValid(draft.error);
+    const room = draft.room.id ? draft.room : { ...draft.room, id: this.#id("r") };
+    const rooms = draft.room.id ? this.house.rooms.map(r => r.id === room.id ? room : r) : [...this.house.rooms, room];
     const expanded = { ...this.house, rooms };
-    const doors = this.house.doors.map(door => {
-      const owners = FloorPlan.doorAt(expanded, door).rooms;
-      return owners.length === door.rooms.length ? door : { ...door, rooms: owners };
+    const doors = this.house.doors.flatMap(door => {
+      const wall = FloorPlan.doorAt(expanded, door, 0.00001);
+      if (!wall) return [];
+      return wall.rooms.length === door.rooms.length ? [door] : [{ ...door, rooms: wall.rooms }];
     });
     this.#commit({ rooms, doors });
     return room;

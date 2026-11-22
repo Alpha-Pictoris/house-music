@@ -12,7 +12,7 @@ import { HouseFiles } from "./ui/house-files.js";
 
 const plural = (count, noun) => count + " " + noun + (count === 1 ? "" : "s");
 const hints = {
-  room: "Choose the corners of your room.",
+  room: "Draw two corners. Start inside a room to extend it.",
   select: "Drag furniture to move it. Drag empty ground to turn the house.",
   door: "Choose a wall to open a doorway.",
   orbit: "Drag to turn the plot.",

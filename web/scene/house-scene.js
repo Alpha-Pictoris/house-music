@@ -1,6 +1,7 @@
 import {FloorPlan} from '../building/floor-plan.js';
+import {RoomShape} from '../building/room-shape.js';
 import {furniture} from '../building/catalogue.js';
-import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor} from './architecture.js';
+import {doorMark, exteriorEntries, footprintMark, originMark, plot, walls, roomFloor, roomOutline} from './architecture.js';
 import {drawModel} from './furniture-art.js';
 import {drawDomestic, livingModels} from './domestic-art.js';
 import {roomModels} from './rooms-art.js';
@@ -28,7 +29,7 @@ function previewKey(preview) {
   const placement = preview.piece ?? preview;
   return [
     preview.type, preview.valid, placement.x, placement.z,
-    placement.width, placement.depth, placement.kind, placement.turn, placement.axis, placement.finish, placement.fitting
+    placement.width, placement.depth, placement.kind, placement.turn, placement.axis, placement.finish, placement.fitting, JSON.stringify(placement.sections)
   ].join('|');
 }
 
@@ -143,7 +144,7 @@ function resize(canvas, width, height) {
 function samePlacement(a, b, type) {
   if (!a || a.x !== b.x || a.z !== b.z) return false;
   if (type === 'pieces') return a.kind === b.kind && a.turn === b.turn && a.fitting === b.fitting;
-  if (type === 'rooms') return a.width === b.width && a.depth === b.depth && a.finish === b.finish;
+  if (type === 'rooms') return a.width === b.width && a.depth === b.depth && a.finish === b.finish && a.sections === b.sections;
   return true;
 }
 
@@ -310,7 +311,7 @@ export class HouseScene {
       return shared;
     }
     const floors = house.rooms.map(room => {
-      const key = JSON.stringify([room.x, room.z, room.width, room.depth, room.finish]);
+      const key = JSON.stringify([room.x, room.z, room.width, room.depth, room.finish, room.sections]);
       if (!this.floorCache.has(key)) {
         if (this.floorCache.size >= 48) this.floorCache.delete(this.floorCache.keys().next().value);
         this.floorCache.set(key, roomFloor(room));
@@ -333,6 +334,16 @@ export class HouseScene {
       this.markCache.set(key, footprintMark(width, depth, colour, fill, onset));
     }
     return instance(this.markCache.get(key), {origin: [x, 0, z], opacity: fill ? 0.29 : 1});
+  }
+
+  roomMark(room, colour, fill = false) {
+    if (!room.sections) return this.mark(room.x, room.z, room.width, room.depth, colour, fill);
+    const key = JSON.stringify([room.sections, colour, fill]);
+    if (!this.markCache.has(key)) {
+      if (this.markCache.size >= 24) this.markCache.delete(this.markCache.keys().next().value);
+      this.markCache.set(key, roomOutline(room, colour, fill));
+    }
+    return instance(this.markCache.get(key), {opacity: fill ? 0.35 : 1});
   }
 
   doorway(x, z, axis, colour, opacity = 1) {
@@ -377,12 +388,12 @@ export class HouseScene {
     if (draftHouse !== house) {
       draftHouse.rooms.forEach(room => {
         if (!samePlacement(activeRooms.get(room.id), room, 'rooms')) {
-          items.push(this.mark(room.x, room.z, room.width, room.depth, lavender, true));
+          items.push(this.roomMark(room, lavender, true));
         }
       });
       const draftRooms = new Map(draftHouse.rooms.map(room => [room.id, room]));
       for (const room of house.rooms) {
-        if (!draftRooms.has(room.id)) items.push(this.mark(room.x, room.z, room.width, room.depth, coral));
+        if (!draftRooms.has(room.id)) items.push(this.roomMark(room, coral));
       }
       for (const piece of draftHouse.pieces) {
         if (!samePlacement(activePieces.get(piece.id), piece, 'pieces')) {
@@ -396,28 +407,25 @@ export class HouseScene {
           items.push(this.mark(area.x, area.z, area.width, area.depth, coral));
         }
       }
-      const doorAxis = (door, rooms) => {
-        const room = rooms.get(door.rooms[0]);
-        return room && (Math.abs(door.x - room.x) < 0.001 || Math.abs(door.x - room.x - room.width) < 0.001) ? 'z' : 'x';
-      };
       for (const door of draftHouse.doors) {
         if (!samePlacement(activeDoors.get(door.id), door, 'doors')) {
-          items.push(this.doorway(door.x, door.z, doorAxis(door, draftRooms), lavender, 0.86));
+          items.push(this.doorway(door.x, door.z, FloorPlan.doorAt(draftHouse, door)?.axis, lavender, 0.86));
         }
       }
       const draftDoors = new Set(draftHouse.doors.map(door => door.id));
       for (const door of house.doors) {
-        if (!draftDoors.has(door.id)) items.push(this.doorway(door.x, door.z, doorAxis(door, activeRooms), coral, 0.86));
+        if (!draftDoors.has(door.id)) items.push(this.doorway(door.x, door.z, FloorPlan.doorAt(house, door)?.axis, coral, 0.86));
       }
     }
 
     const selectedRoom = draftHouse.rooms.find(room => room.id === selection);
     const selectedPiece = draftHouse.pieces.find(piece => piece.id === selection);
-    const selectedArea = selectedRoom ?? (selectedPiece && FloorPlan.footprint(selectedPiece));
+    if (selectedRoom) items.push(this.roomMark(selectedRoom, yellow));
+    const selectedArea = selectedPiece && FloorPlan.footprint(selectedPiece);
     if (selectedArea) items.push(this.mark(selectedArea.x, selectedArea.z, selectedArea.width, selectedArea.depth, yellow, false, Boolean(selectedPiece)));
     if (preview) {
       const colour = preview.valid ? blue : coral;
-      if (preview.type === 'room') items.push(this.mark(preview.x, preview.z, preview.width, preview.depth, colour, true));
+      if (preview.type === 'room') items.push(this.roomMark(preview, colour, true));
       if (preview.type === 'piece') {
         const area = FloorPlan.footprint(preview.piece);
         items.push(this.mark(area.x, area.z, area.width, area.depth, colour));
@@ -427,7 +435,7 @@ export class HouseScene {
     }
 
     if (sweepX !== null) {
-      const intervals = house.rooms.filter(room => room.x <= sweepX && sweepX <= room.x + room.width)
+      const intervals = house.rooms.flatMap(room => RoomShape.parts(room)).filter(room => room.x <= sweepX && sweepX <= room.x + room.width)
         .map(room => [room.z, room.z + room.depth]).sort(([a], [b]) => a - b);
       const spans = [];
       for (const interval of intervals) {

@@ -1,6 +1,7 @@
 import { fittingOf, furniture, roomFinishes } from "../building/catalogue.js";
 import { fittings, tunings } from "../building/fittings.js";
 import { FloorPlan } from "../building/floor-plan.js";
+import { RoomShape, tolerance } from "../building/room-shape.js";
 import { arrangements } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
 
@@ -41,6 +42,15 @@ export function readHouse(value) {
     const id = readId(item);
     const { x, z, width, depth } = item;
     const room = { id, x, z, width, depth };
+    if (item.sections !== undefined) {
+      requireValid(Array.isArray(item.sections) && item.sections.length && item.sections.every(RoomShape.validBox),
+        "Choose valid floor sections for this room.");
+      requireValid(RoomShape.connected(item.sections), "Join the sections of each room along an edge.");
+      const shape = RoomShape.union(item.sections);
+      requireValid([x, z, width, depth].every(Number.isFinite) && ["x", "z", "width", "depth"].every(k => Math.abs(shape[k] - room[k]) < tolerance),
+        "The room dimensions must match its floor.");
+      Object.assign(room, shape);
+    }
     if (item.name !== undefined) {
       requireValid(typeof item.name === "string" && item.name.length <= 40, "Use a room name of up to 40 characters.");
       room.name = item.name;

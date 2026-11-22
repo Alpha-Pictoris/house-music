@@ -99,8 +99,8 @@ export class BuildControls extends EventTarget {
   }
 
   #roomPreview(start, end) {
-    const room = FloorPlan.roomBetween(this.editor.house, start, end);
-    this.preview = { type: "room", ...room, valid: !FloorPlan.roomError(this.editor.house, room) };
+    const { room, error } = FloorPlan.planRoom(this.editor.house, start, end);
+    this.preview = { type: "room", ...room, valid: !error };
   }
 
   #piecePreview(piece, point) {
@@ -158,11 +158,12 @@ export class BuildControls extends EventTarget {
 
   #finishRoom(start, end) {
     this.#anchor = this.preview = null;
+    const count = this.editor.house.rooms.length;
     const room = this.#run(() => this.editor.drawRoom(start, end));
     if (room) {
       this.select(room.id);
       this.scene.fit(this.editor.house);
-      this.notify("Room drawn. Choose furniture to place inside.");
+      this.notify(count === this.editor.house.rooms.length ? "Room extended." : "Room drawn. Choose furniture to place inside.");
     }
   }
 

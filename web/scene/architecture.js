@@ -1,4 +1,5 @@
 import {FloorPlan} from '../building/floor-plan.js';
+import {RoomShape} from '../building/room-shape.js';
 import {InkMesh} from './ink-mesh.js';
 
 const plotHalf = 40;
@@ -46,10 +47,11 @@ function tiles(mesh, x, z, width, depth) {
   }
 }
 
-function wovenFloor(mesh, x, z, width, depth) {
+function wovenFloor(mesh, x, z, width, depth, border) {
   const color = finishes.moss;
   mesh.face(rectangle(x,z,width,depth), color.floor);
-  for (const n of [0.12,0.24]) mesh.line(rectangle(x+n,z+n,width-n*2,depth-n*2,0.002), color.floorInk, 0.92, true);
+  if (border) for (const n of [0.12,0.24]) mesh.line(rectangle(x+n,z+n,width-n*2,depth-n*2,0.002), color.floorInk, 0.92, true);
+  if (depth < 0.38 || width < 0.48) return;
   const rows = Math.max(1,Math.floor((depth-0.38)/0.58)), columns = Math.max(1,Math.floor((width-0.38)/0.67));
   for (let j=0;j<rows;j++) for (let i=0;i<columns;i++) {
     const cx = x+(i+0.5)*width/columns, cz = z+(j+0.5)*depth/rows;
@@ -84,18 +86,29 @@ function floorboards(mesh, x, z, width, depth) {
 }
 
 export function roomFloor(room) {
-  const {x,z,width,depth,finish} = room;
   const mesh = new InkMesh();
-  const style = finishes[finish] ?? finishes.walnut;
-  if (finish === 'moonstone') tiles(mesh,x,z,width,depth);
-  else if (finish === 'moss') wovenFloor(mesh,x,z,width,depth);
-  else floorboards(mesh,x,z,width,depth);
-  const edge = rectangle(x, z, width, depth);
-  for (let i = 0; i < edge.length; i++) {
-    const a = edge[i], b = edge[(i + 1) % edge.length];
-    mesh.face([a, b, [b[0], -0.064, b[2]], [a[0], -0.064, a[2]]], style.base);
+  const style = finishes[room.finish] ?? finishes.walnut;
+  for (const {x,z,width,depth} of RoomShape.parts(room)) {
+    if (room.finish === 'moonstone') tiles(mesh,x,z,width,depth);
+    else if (room.finish === 'moss') wovenFloor(mesh,x,z,width,depth,!room.sections);
+    else floorboards(mesh,x,z,width,depth);
   }
-  mesh.line(edge, style.floorInk, 1.16, true);
+  for (const wall of RoomShape.walls([room])) {
+    const [a,b] = wallEnds(wall,0);
+    mesh.face([a,b,[b[0],-0.064,b[2]],[a[0],-0.064,a[2]]],style.base);
+    mesh.segment(a,b,style.floorInk,1.16);
+  }
+  return mesh;
+}
+
+function wallEnds({axis,at,start,end}, height) {
+  return [start,end].map(along => axis === 'x' ? [along,height,at] : [at,height,along]);
+}
+
+export function roomOutline(room, colour, fill) {
+  const mesh = new InkMesh();
+  if (fill) for (const r of RoomShape.parts(room)) mesh.face(rectangle(r.x,r.z,r.width,r.depth,0.034),colour);
+  for (const wall of RoomShape.walls([room])) mesh.segment(...wallEnds(wall,0.035),colour,1.6);
   return mesh;
 }
 
@@ -149,11 +162,10 @@ function windowCuts(window, room, axis, at) {
 export function walls(house, windows = []) {
   const mesh = new InkMesh();
   const byId = new Map(house.rooms.map(room => [room.id,room]));
-  for (const {axis,at,start,end,rooms} of FloorPlan.walls(house)) {
+  for (const {axis,at,start,end,rooms,back} of FloorPlan.walls(house)) {
     const room = byId.get(rooms[0]);
     if (!room) continue;
     const shared = rooms.length > 1;
-    const back = Math.abs((axis === 'x' ? room.z : room.x)-at)<0.001;
     const sign = back ? 1 : -1;
     const windowsHere = shared ? [] : windows.map(window => windowCuts(window,room,axis,at))
       .filter(cut => cut && cut[0] >= start-0.002 && cut[1] <= end+0.002).sort(([a],[b]) => a-b);
@@ -218,8 +230,9 @@ export function exteriorEntries(house) {
     const room = rooms.get(door.rooms[0]);
     if (!room) continue;
     const {x,z} = door;
-    const horizontal = Math.min(Math.abs(z-room.z), Math.abs(z-room.z-room.depth)) < 0.003;
-    const back = horizontal ? Math.abs(z-room.z)<0.003 : Math.abs(x-room.x)<0.003;
+    const wall = FloorPlan.doorAt(house, door, 0.00001);
+    if (!wall) continue;
+    const horizontal = wall.axis === "x", back = wall.back;
     const outward = back ? -1 : 1;
     const point = (u,y,v) => horizontal ? [x+u,y,z+outward*v] : [x+outward*v,y,z+u];
     const slab = (width, near, far, top, bottom, finish) => {
