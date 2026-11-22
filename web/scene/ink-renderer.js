@@ -1,9 +1,10 @@
-import {channels, dot, transformPoint} from './ink-mesh.js';
+import {translucentItems} from './ink-mesh.js';
 
 const projection = `
 uniform vec3 uRight,uUp,uEye,uCenter,uOrigin,uObjectScale,uTint;
 uniform vec2 uTurn,uSize;
 uniform float uScale,uLevel,uPose,uVoice,uTintAmount,uOpacity,uDrawing,uSweep,uWobble,uInkLift;
+const float depthRange = 256.0;
 attribute vec3 aPoint,aColour;
 varying mediump vec3 vColour;
 vec3 world(vec3 p) {
@@ -15,7 +16,7 @@ vec3 world(vec3 p) {
 }
 vec3 project(vec3 p) {
   p -= uCenter;
-  return vec3(vec2(dot(p,uRight),dot(p,uUp))*2.0*uScale/uSize,-dot(p,uEye)/256.0);
+  return vec3(vec2(dot(p,uRight),dot(p,uUp))*2.0*uScale/uSize,-dot(p,uEye)/depthRange);
 }
 `;
 
@@ -53,7 +54,7 @@ void main() {
   vec2 wobble = 0.64*vec2(sin(a+uDrawing),sin(b-1.3*uDrawing))
               + 0.36*vec2(sin(2.6*b-0.8*uDrawing),sin(2.3*a+1.7*uDrawing));
   wobble *= uWobble*(uVoice < 0.5 ? 0.43 : 1.0);
-  gl_Position = vec4(at.xy+2.0*(wobble+normal*vAcross)/uSize,at.z-uInkLift,1.0);
+  gl_Position = vec4(at.xy+2.0*(wobble+normal*vAcross)/uSize,at.z-uInkLift/depthRange,1.0);
   vColour = mix(aColour,uTint,uTintAmount)*(1.0+0.35*uLevel);
 }`;
 
@@ -125,7 +126,7 @@ class InkProgram {
     gl.uniform1f(u.TintAmount, item.tintAmount);
     gl.uniform1f(u.Opacity, opacity);
     gl.uniform1f(u.Wobble, this.frame.wobble * item.wobble);
-    gl.uniform1f(u.InkLift, item.inkLift ?? 0.00008);
+    gl.uniform1f(u.InkLift, item.inkLift);
     gl.uniform1f(u.Sweep, item.catchesSweep ? (this.frame.sweepX ?? 30000) : 30000);
     gl.drawArrays(gl.TRIANGLES, 0, count / this.stride);
   }
@@ -177,67 +178,12 @@ export class WebInkRenderer {
     }
     gl.enable(gl.BLEND);
     gl.depthMask(false);
-    const ghosts = items.filter(item => item.opacity < 1).sort((a, b) => dot(a.origin, camera.eye) - dot(b.origin, camera.eye));
-    for (const item of ghosts) this.surface.draw(this.buffers.get(item.mesh)[0], item.mesh.surfaces.length, item);
+    for (const item of translucentItems(items, camera.eye)) this.surface.draw(this.buffers.get(item.mesh)[0], item.mesh.surfaces.length, item);
     this.surface.end();
     this.ink.begin(camera, frame);
     for (const item of items) {
       this.ink.draw(this.buffers.get(item.mesh)[1], item.mesh.strokes.length, item, item.opacity * (item.inkOpacity ?? 1));
     }
     this.ink.end();
-  }
-}
-
-export class CanvasInkRenderer {
-  constructor(ctx) {
-    this.ctx = ctx;
-  }
-
-  draw(canvas, camera, items, frame) {
-    const {ctx} = this;
-    ctx.setTransform(canvas.width / camera.width, 0, 0, canvas.height / camera.height, 0, 0);
-    ctx.clearRect(0, 0, camera.width, camera.height);
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    const commands = items.flatMap(item => item.mesh.commands.map((command, index) => {
-      const points = command.points.map(point => transformPoint(point, item));
-      const depth = item.canvasFlat ? index : item.mesh.canvasFront
-        ? dot(item.origin, camera.eye) + 0.56 + (index / item.mesh.commands.length) * 0.06
-        : points.reduce((sum, point) => sum + dot(point, camera.eye), 0) / points.length;
-      const layer = item.canvasLayer === undefined ? 4 : item.canvasLayer + (command.width ? (item.canvasInkOffset ?? 1) : 0);
-      return {points, depth: depth + (!item.mesh.canvasFront && command.width ? 0.02 : 0), layer, command, item};
-    })).sort((a, b) => a.layer - b.layer || a.depth - b.depth);
-    for (const {points, command, item} of commands) {
-      ctx.beginPath();
-      points.forEach((point, i) => {
-        const screen = camera.project(point);
-        if (command.width) {
-          const a = dot(point, [5.7, 7.1, 4.9]);
-          const b = dot(point, [-7.6, 4.2, 6.3]);
-          const d = frame.drawing;
-          const wobble = (item.voice ? 1 : 0.43) * frame.wobble * item.wobble;
-          screen.x += wobble * (0.64 * Math.sin(a + d) + 0.36 * Math.sin(2.6 * b - 0.8 * d));
-          screen.y -= wobble * (0.64 * Math.sin(b - 1.3 * d) + 0.36 * Math.sin(2.3 * a + 1.7 * d));
-        }
-        if (i) ctx.lineTo(screen.x, screen.y);
-        else ctx.moveTo(screen.x, screen.y);
-      });
-      const brightness = command.width ? 1 + 0.35 * item.level : 1;
-      let colour = command.colour;
-      if (item.tintAmount || brightness !== 1) {
-        const rgb = channels(colour).map((n, i) => (n * (1 - item.tintAmount) + item.tint[i] * item.tintAmount) * brightness);
-        colour = `rgb(${rgb.map(n => Math.min(255, Math.round(255 * n))).join(',')})`;
-      }
-      ctx.globalAlpha = item.opacity * (command.width ? (item.inkOpacity ?? 1) : 1);
-      if (command.width) {
-        ctx.lineWidth = command.width * (1 + item.level * 0.17);
-        ctx.strokeStyle = colour;
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = colour;
-        ctx.fill();
-      }
-    }
-    ctx.globalAlpha = 1;
   }
 }

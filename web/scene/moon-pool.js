@@ -88,14 +88,14 @@ export class MoonPool {
     const { x, z, radius } = pool;
     if (radius <= 0) return items;
     const size = radius * 0.95;
-    const water = instance(this.#water, { origin: [x, 0.075, z], scale: [size, 1, size], canvasLayer: 3.05, canvasInkOffset: 0, canvasFlat: true });
+    const water = instance(this.#water, { origin: [x, 0.075, z], scale: [size, 1, size] });
     items.push(water);
     for (const [offset, orbit, length] of [[0, 0.43, 0.78], [2.7, 0.32, 0.62], [4.1, 0.53, 0.44]]) {
       const a = time * 0.33 + offset;
       const dx = -Math.sin(a), dz = 0.67 * Math.cos(a), norm = Math.hypot(dx, dz);
       items.push(instance(this.#fish, {
         origin: [x + size * orbit * Math.cos(a), 0.089, z + size * orbit * 0.67 * Math.sin(a)],
-        scale: [size * length, 1, size * length], turn: [dx / norm, -dz / norm], canvasLayer: 3.1, canvasInkOffset: 0
+        scale: [size * length, 1, size * length], turn: [dx / norm, -dz / norm]
       }));
     }
     return items;

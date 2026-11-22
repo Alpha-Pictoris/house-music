@@ -106,7 +106,6 @@ export class CurioArt {
         const mesh = new InkMesh();
         details[name](brushFor(mesh));
         mesh.model = true;
-        mesh.canvasFront = name === "passage";
         meshes.set(name,mesh);
       }
       items.push(instance(meshes.get(name), { ...options, scale,

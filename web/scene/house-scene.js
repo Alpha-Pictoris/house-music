@@ -15,7 +15,8 @@ import {MarchingBand} from './marching-band.js';
 import {marcherItem} from './marcher-art.js';
 import {ornament} from './fittings-art.js';
 import {InkMesh, channels, clamp, dot, instance, transformPoint} from './ink-mesh.js';
-import {CanvasInkRenderer, WebInkRenderer} from './ink-renderer.js';
+import {WebInkRenderer} from './ink-renderer.js';
+import {CanvasInkRenderer} from './canvas-ink-renderer.js';
 
 const emptyHouse = {rooms: [], doors: [], pieces: []};
 const yellow = '#dff394';
@@ -58,7 +59,6 @@ function pieceItems(piece, options = {}) {
       scale = [definition.width / dimensions.width, definition.height / dimensions.height, definition.depth / dimensions.depth];
     }
     mesh.model = true;
-    mesh.canvasFront = kind === 'window' || kind === 'threshold';
     models.set(kind, {mesh, scale});
   }
   const {mesh, scale} = models.get(kind);
@@ -67,7 +67,6 @@ function pieceItems(piece, options = {}) {
   const fitting = ornament(kind, piece.fitting ?? definition.fitting);
   const level = fitting ? (options.level ?? 0) : 0;
   const body = instance(mesh, {
-    ...(definition.layer === 'floor' && !definition.garden ? {canvasLayer: 3.01, canvasInkOffset: 0.02} : {}),
     ...options, scale, origin, turn: direction, level: level * 0.5, pose: 0, wobble: 1 / 0.43
   });
   const items = [body];
@@ -100,10 +99,10 @@ class IsometricCamera {
   }
 
   project(point) {
-    const relative = point.map((n, i) => n - this.center[i]);
+    const x = point[0] - this.center[0], y = point[1] - this.center[1], z = point[2] - this.center[2];
     return {
-      x: this.width / 2 + dot(relative, this.right) * this.scale,
-      y: this.height / 2 - dot(relative, this.up) * this.scale
+      x: this.width / 2 + (x * this.right[0] + z * this.right[2]) * this.scale,
+      y: this.height / 2 - (x * this.up[0] + y * this.up[1] + z * this.up[2]) * this.scale
     };
   }
 
@@ -197,9 +196,9 @@ export class HouseScene {
     const {renderer, target} = rendererFor(canvas);
     this.renderer = renderer;
     this.target = target;
-    this.ground = instance(plot(), {catchesSweep: false, canvasLayer: 0, inkLift: 0.000001});
-    this.origin = instance(originMark(), {canvasLayer: 0});
-    this.compass = instance(compassRose(), {canvasLayer: 0.5, wobble: 0.45, catchesSweep: false});
+    this.ground = instance(plot(), {catchesSweep: false, inkLift: 0.00025});
+    this.origin = instance(originMark());
+    this.compass = instance(compassRose(), {wobble: 0.45, catchesSweep: false});
     const mesh = new InkMesh();
     mesh.segment([0, -0.05, -1], [0, -0.05, 1], yellow, 1.3);
     this.sweep = mesh;
@@ -410,11 +409,11 @@ export class HouseScene {
     const items = [this.ground, this.origin];
     if (!draftHouse.rooms.length && !draftHouse.pieces.length) items.push(this.compass);
     const rendered = this.architecture(house);
-    items.push(instance(rendered.grounds, {canvasLayer: 1.5, canvasFlat: true, catchesSweep: false}));
-    for (const floor of rendered.floors) items.push(instance(floor, {canvasLayer: 2}));
+    items.push(instance(rendered.grounds, {catchesSweep: false}));
+    for (const floor of rendered.floors) items.push(instance(floor));
     for (const discovery of discoveries) items.push(...this.moonPool.draw(discovery, reducedMotion ? 0 : time));
-    items.push(instance(rendered.wallMesh, {canvasLayer: 3.25, canvasInkOffset: 0.2}));
-    items.push(instance(rendered.entries, {canvasLayer: 3.5, canvasInkOffset: 0.2}));
+    items.push(instance(rendered.wallMesh));
+    items.push(instance(rendered.entries));
     for (const piece of house.pieces) {
       items.push(...pieceItems(piece, {levels: this.lastLevels, level: this.lastLevels.get(piece.id) ?? 0, pose: reducedMotion ? 0 : 1, sweepX}));
     }

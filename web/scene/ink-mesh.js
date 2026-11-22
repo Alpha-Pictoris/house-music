@@ -51,6 +51,10 @@ export function channels(hex) {
   return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
 }
 
+export function translucentItems(items, eye) {
+  return items.filter(item => item.opacity > 0 && item.opacity < 1).sort((a, b) => dot(a.origin, eye) - dot(b.origin, eye));
+}
+
 export function transformPoint([x, y, z], item) {
   const [width, height, depth] = item.scale;
   const [tx, ty, tz] = item.origin;
@@ -72,5 +76,5 @@ function smooth(value) {
 
 export const instance = (mesh, options = {}) => ({
   mesh, scale: [1, 1, 1], origin: [0, 0, 0], turn: [1, 0],
-  level: 0, pose: 1, voice: 0, opacity: 1, wobble: 1, catchesSweep: true, tint: [0, 0, 0], tintAmount: 0, ...options
+  level: 0, pose: 1, voice: 0, opacity: 1, inkLift: 0.02, wobble: 1, catchesSweep: true, tint: [0, 0, 0], tintAmount: 0, ...options
 });
