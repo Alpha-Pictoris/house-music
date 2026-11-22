@@ -64,9 +64,16 @@ export class FurniturePanel {
   #dragFromCatalogue() {
     const portraits = byId("furniture-cards");
     let press;
+    let carrying = false;
+    // A native fling can consume the next tap after a drop.
+    portraits.addEventListener("touchmove", event => {
+      if (carrying && event.cancelable) event.preventDefault();
+    }, { passive: false });
     portraits.onpointerdown = event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      carrying = false;
       const card = event.target.closest("button[data-kind]");
-      if (!card || !event.isPrimary || event.button !== 0) return;
+      if (!card) return;
       press = { card, id: event.pointerId, x: event.clientX, y: event.clientY };
       card.setPointerCapture(event.pointerId);
     };
@@ -74,6 +81,7 @@ export class FurniturePanel {
       if (event.pointerId !== press?.id) return;
       const rise = press.y - event.clientY;
       if (rise < 9 || rise < Math.abs(event.clientX - press.x) * 0.65) return;
+      carrying = true;
       this.controls.carry(press.card.dataset.kind, event);
       press = null;
       this.trays.close();
