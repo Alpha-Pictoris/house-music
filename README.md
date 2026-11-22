@@ -1,5 +1,8 @@
 # House Music
 
+> [!NOTE]
+> **Spoilers.** The design notes and walkthroughs in [docs/puzzles](docs/puzzles/) reveal the house’s secrets. Save them for after you play if you’d like to discover them yourself.
+
 Draw a house and play it as a track. Put thorn finials on a velvet sofa, hang a stained-glass window, and watch the sweep play the room. Three masked musicians find their way between the furniture.
 
 ## Make a house

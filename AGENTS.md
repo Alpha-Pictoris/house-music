@@ -6,7 +6,7 @@ Use short, concrete language in code, documentation and controls. Use the names 
 
 Build occult clues around details a player can see or hear. Give them enough evidence to choose their next move. If a clue sends players looking for the wrong object, revise the clue around the furnishing they recognise. Discuss new discoveries before building them.
 
-Keep contributor instructions here. Keep plans, prompts, handoffs and puzzle walkthroughs in the private planning folder. Game text describes the world and its controls. Comments explain a decision that names and tests cannot convey. Delete obsolete code and comments outright.
+Keep contributor instructions here. Publish design plans and puzzle explanations in [docs/puzzles](docs/puzzles/). Keep prompts, task checklists, review notes and handoffs in the private planning folder. Game text describes the world and its controls. Comments explain a decision that names and tests cannot convey. Delete obsolete code and comments outright.
 
 ## Code organisation
 
