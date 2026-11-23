@@ -1,6 +1,8 @@
 name: Deploy archive
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [trunk]
 
 permissions: {}
 
