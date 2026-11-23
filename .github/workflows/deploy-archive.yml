@@ -1,0 +1,91 @@
+name: Deploy archive
+
+on: workflow_dispatch
+
+permissions: {}
+
+concurrency: archive-production
+
+jobs:
+  build:
+    if: github.repository == 'Alpha-Pictoris/house-music' && github.ref == 'refs/heads/trunk'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      artifact: ${{ steps.package.outputs.artifact-id }}
+    steps:
+      - name: Check branch protection
+        if: ${{ !github.ref_protected }}
+        run: |
+          echo "::error::Protect trunk before releasing the archive."
+          exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm test
+      - name: Build archive
+        env:
+          HOUSE_MUSIC_URL: https://alpha-pictoris.github.io/house-music/
+        run: npm run build:archive
+      - id: package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: archive-${{ github.run_attempt }}
+          path: dist-archive/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    environment:
+      name: archive-production
+      deployment: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: /.github/archive-upload/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install uploader
+        working-directory: .github/archive-upload
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/archive-site
+      - name: Upload archive
+        working-directory: ${{ runner.temp }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ secrets.CLOUDFLARE_PAGES_PROJECT }}
+          WRANGLER_SEND_METRICS: 'false'
+          WRANGLER_WRITE_LOGS: 'false'
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Missing upload token}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Missing account ID}"
+          : "${CLOUDFLARE_PAGES_PROJECT:?Missing project name}"
+          unset GITHUB_STEP_SUMMARY GITHUB_OUTPUT GITHUB_ENV GITHUB_PATH
+          uploader="$GITHUB_WORKSPACE/.github/archive-upload/node_modules/.bin/wrangler"
+          if ! "$uploader" pages deploy archive-site --branch trunk --commit-hash "$GITHUB_SHA" \
+            --project-name "$CLOUDFLARE_PAGES_PROJECT" > /dev/null 2>&1
+          then
+            echo "::error::Upload failed. Check the project and token in the hosting dashboard."
+            exit 1
+          fi
