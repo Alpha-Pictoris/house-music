@@ -47,8 +47,12 @@ With Node.js 20 or later and Python 3 installed, run this from the project direc
 npm start
 ```
 
-Open [House Music on this computer](http://localhost:5173/). Other devices on the same network can use the computer’s LAN address and port 5173. To publish, run `npm run build` and serve the contents of `dist/`. Each build gives its scripts, styles and recordings their own URLs.
+Open [House Music on this computer](http://localhost:5173/). Other devices on the same network can use the computer’s LAN address and port 5173.
 
 With Node.js 20 or later, run the tests with `npm test`.
 
 The instrument recordings use Frank Wen’s FluidR3 GM soundfont. [Sound credits and licence](web/credits.html)
+
+## Publish
+
+Run **Deploy game** from `trunk` to publish to GitHub Pages. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.

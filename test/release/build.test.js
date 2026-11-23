@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildSite } from "../../scripts/build.mjs";
@@ -17,4 +17,20 @@ test("the published records, player and recordings arrive in one edition", async
   assert.ok((await readFile(join(output, edition, "main.js"), "utf8")).includes("./scene/house-scene.js"));
   assert.equal((await readFile(join(output, edition, "audio", "horns.wav"))).toString("ascii", 0, 4), "RIFF");
   assert.equal(await buildSite(output), edition);
+});
+
+test("game pages and artwork resolve under the repository path", async t => {
+  const output = await mkdtemp(join(tmpdir(), "house-music-pages-"));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const edition = await buildSite(output);
+  const site = new URL("https://example.org/house-music/");
+  for (const file of ["index.html", "credits.html", edition + "/studio.css"]) {
+    const contents = await readFile(join(output, file), "utf8");
+    for (const [, link] of contents.matchAll(/(?:src="|href="|url\(")([^"#]+)"/g)) {
+      const url = new URL(link, new URL(file, site));
+      if (url.origin !== site.origin) continue;
+      assert.ok(url.pathname.startsWith(site.pathname), link);
+      await access(join(output, url.pathname.slice(site.pathname.length)));
+    }
+  }
 });

@@ -9,7 +9,7 @@
 
 - [The cassette archive](cassette-archive.md) follows the Rigger’s Yard complaint through the Portsea catalogue and back to House Music.
 - [Cassette playback](cassette-player-plan.md) covers the local preview, shared recordings and the return address for a separate deployment.
-- [Archive credits](archive-credits.md) identifies the harbour print, GOV.UK components and instrument recordings.
+- [Archive credits](archive-credits.md) lists sources and licences for the archive images, type, components and recordings.
 
 ## Proposed discoveries
 

@@ -19,6 +19,6 @@ To check the transfer by ear, make a one-bar house with a late snare. Listen to 
 
 ## Return to the game
 
-The stairwell test strip carries its own house. In the local preview it opens on port 5173 on the same computer. For a separate deployment, set `HOUSE_MUSIC_URL` to the game’s full address when running `npm run build:archive`. Serve `dist-archive/` at the root of the archive host. A build without a configured game address offers the house file for download outside the local preview. [Archive build](../../scripts/build-archive.mjs)
+The stairwell test strip carries its own house. In the local preview it opens on port 5173 on the same computer. Set `HOUSE_MUSIC_URL` when building the archive to open the strip in the hosted game. With that setting empty, visitors can download the house file. [Archive build](../../scripts/build-archive.mjs)
 
 The proposed B-side monitor should display the file reference and open the catalogue with `houseLink(transport.view().house, archiveURL)`. Taking the sounding house preserves what the player heard when an edit is waiting for the next loop.
