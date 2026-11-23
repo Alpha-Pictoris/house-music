@@ -1,12 +1,11 @@
-import { caseFiles } from "./holdings/case-files.mjs";
 import { civicHoldings } from "./holdings/civic.mjs";
 import { cultureHoldings } from "./holdings/culture.mjs";
 import { harbourHoldings } from "./holdings/harbour.mjs";
 import { localStudies } from "./holdings/local-studies.mjs";
 import { wartimeHoldings } from "./holdings/wartime.mjs";
 
-export const holdings = [...localStudies, ...civicHoldings, ...cultureHoldings, ...harbourHoldings, ...wartimeHoldings];
-export const catalogue = [...holdings, ...caseFiles].sort((a, b) => a.title.localeCompare(b.title, "en-GB"));
+export const holdings = [...localStudies, ...civicHoldings, ...cultureHoldings, ...harbourHoldings, ...wartimeHoldings]
+  .sort((a, b) => a.title.localeCompare(b.title, "en-GB"));
 
 function escapeHTML(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -14,9 +13,8 @@ function escapeHTML(value) {
 
 export function renderHoldingRow(record) {
   const terms = [record.reference, record.search].filter(Boolean).join(" ");
-  const href = record.href ?? `/records/${record.slug}/`;
-  return `<tr class="govuk-table__row" data-record="${escapeHTML(terms)}"${record.referenceOnly ? " data-reference-only hidden" : ""}>
-    <td class="govuk-table__cell"><a class="govuk-link" href="${escapeHTML(href)}">${escapeHTML(record.title)}</a><p class="govuk-body-s record-description">${escapeHTML(record.description)}</p></td>
+  return `<tr class="govuk-table__row" data-record="${escapeHTML(terms)}">
+    <td class="govuk-table__cell"><a class="govuk-link" href="/records/${escapeHTML(record.slug)}/">${escapeHTML(record.title)}</a><p class="govuk-body-s record-description">${escapeHTML(record.description)}</p></td>
     <td class="govuk-table__cell"><span class="catalogue-ref">${escapeHTML(record.reference ?? "—")}</span></td>
     <td class="govuk-table__cell">${escapeHTML(record.year)}</td>
   </tr>`;

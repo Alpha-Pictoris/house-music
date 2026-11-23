@@ -30,6 +30,12 @@ The catalogue displays resized WebP copies. The milk chart from the 1906 health 
 - **Sea lock and canal basin at Milton**. Timber from a gate at Milton Lock, November 2022. [Tim Sheerman-Chase, Last Surviving Part of Original Lock Gate, Milton Lock](<https://www.flickr.com/photos/68932647@N00/52525737285/>) · [CC BY 2.0](<https://creativecommons.org/licenses/by/2.0/>).
 - **The Royal Dockyard at Portsmouth, Robert Dodd**. Robert Dodd’s view from the Common Hard, May 1790. [Robert Dodd, Yale Center for British Art, Paul Mellon Collection](<https://collections.britishart.yale.edu/catalog/tms:31025>) · [Public domain](<https://britishart.yale.edu/collections-data-sharing>).
 
+## Cassette photograph
+
+Tim Reckmann photographed the black cassette with the blue and white paper label on 3 February 2015. The archive uses a resized WebP copy with the house title and recording number added in ink. [Original photograph on Flickr](https://www.flickr.com/photos/foto_db/15817133704/) · [Wikimedia Commons file record](<https://commons.wikimedia.org/wiki/File:Noname_blank_compact_cassette,_black_shell_and_paper_label_(1).jpg>) · [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/).
+
+The label uses Kalam Regular by Indian Type Foundry, distributed under the SIL Open Font License 1.1. [Kalam](https://github.com/google/fonts/tree/main/ofl/kalam) · [Font licence](https://github.com/google/fonts/blob/main/ofl/kalam/OFL.txt)
+
 ## Design
 
 The catalogue uses GOV.UK Frontend’s service navigation, forms, typography and record layouts. Its stylesheet is built from the official Sass components. [GOV.UK Design System](https://design-system.service.gov.uk/get-started/) · [GOV.UK Frontend licence](https://github.com/alphagov/govuk-frontend/blob/v6.6.0/LICENSE.txt)

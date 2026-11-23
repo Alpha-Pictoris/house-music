@@ -62,8 +62,28 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .letter > :last-child, .document > :last-child { margin-bottom: 0; }
 .evidence { padding: 1.25rem; border: 1px solid #b1b4b6; }
 .evidence-head { color: #505a5f; font-size: .94rem; margin-bottom: .4rem; }
-.tape-tray { display: grid; place-items: center; padding: 1.2rem; background: #e6e3d9; }
-.tape-tray img { width: 72%; height: auto; filter: drop-shadow(1px 3px 2px #332c2533); }
+@font-face {
+  font-family: Kalam;
+  src: url("/assets/kalam-latin.woff2") format("woff2");
+  font-display: swap;
+}
+.tape-photo { position: relative; container-type: inline-size; isolation: isolate; }
+.tape-photo img { width: 100%; height: auto; }
+.tape-inscription {
+  position: absolute;
+  left: 27%;
+  right: 13%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #25264a;
+  mix-blend-mode: multiply;
+  font: 400 4.3cqw/1.15 Kalam, cursive;
+  text-align: left;
+  transform-origin: left bottom;
+}
+.tape-name { bottom: 75.5%; transform: rotate(-.7deg); }
+.tape-number { bottom: 69.2%; font-size: 3.85cqw; transform: rotate(.35deg); }
 .play-row { display: flex; align-items: baseline; gap: .8rem; margin-block: 1rem .5rem; }
 .play { display: inline-flex; align-items: center; gap: .6rem; flex: none; width: auto; margin-bottom: 2px; }
 .play-icon { width: 0; height: 0; border: .37rem solid transparent; border-right: 0; border-left: .57rem solid currentColor; }
@@ -85,7 +105,6 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .sleeve summary strong { font-size: 1.1rem; }
 .sleeve[open] summary { transform: translate(.2rem,-.15rem) rotate(-2deg); }
 .under-label { background: #b5cbda; margin-top: .8rem; }
-.related { display: inline-block; margin-top: .5rem; }
 .site-footer { background: #f3f4f4; border-top: 1px solid #b1b4b6; padding-block: 1.5rem; }
 .site-footer p { margin: 0; }
 @media (max-width: 40.0624rem) {

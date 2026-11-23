@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { catalogue, holdings, renderHoldingPage, renderHoldingRow } from "../../scripts/holdings.mjs";
+import { referencePath } from "../../archive/file-references.js";
+import { holdings, renderHoldingPage, renderHoldingRow } from "../../scripts/holdings.mjs";
 
 test("each historical record has its own page and original catalogue link", () => {
   assert.equal(new Set(holdings.map(record => record.slug)).size, holdings.length);
@@ -10,8 +11,15 @@ test("each historical record has its own page and original catalogue link", () =
     assert.ok(renderHoldingRow(record).includes(`href="/records/${record.slug}/"`));
     assert.ok(renderHoldingPage(record).includes(new URL(record.sources[0][1]).origin));
   }
-  const sleeve = catalogue.find(record => record.reference === "HO/78/017");
-  assert.match(renderHoldingRow(sleeve), /data-record="HO\/78\/017" data-reference-only hidden/);
+});
+
+test("only a complete shelf mark produces a reference lookup", () => {
+  for (const query of ["BS/82/016", " bs-82-016 ", "bs82016", "bs 82 016"]) {
+    assert.equal(referencePath(query), "/records/BS-82-016/");
+  }
+  for (const query of ["", "Rigger’s Yard", "cassette", "HO/78", "HO/78/17", "EH/98/041a"]) {
+    assert.equal(referencePath(query), undefined, query);
+  }
 });
 
 test("record images ship locally with a caption, source credit and rights statement", async () => {

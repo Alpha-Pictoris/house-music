@@ -13,6 +13,15 @@ const referenceCopy = readHouse({
   ]
 });
 
+function recordingNumber(house) {
+  let hash = 0x811c9dc5;
+  for (const byte of new TextEncoder().encode(JSON.stringify(house))) {
+    hash = Math.imul(hash ^ byte, 0x01000193);
+  }
+  const digits = (hash >>> 0).toString(16).toUpperCase().padStart(8, "0");
+  return "041a / " + digits.slice(0, 4) + "-" + digits.slice(4);
+}
+
 export class TapePlayer {
   #request = 0;
   #timer;
@@ -24,13 +33,16 @@ export class TapePlayer {
     this.playButton = deck.querySelector("[data-tape-play]");
     this.action = deck.querySelector("[data-tape-action]");
     this.title = deck.querySelector("[data-tape-title]");
+    this.labelName = deck.querySelector("[data-tape-name]");
+    this.labelNumber = deck.querySelector("[data-tape-number]");
     this.status = deck.querySelector("[data-tape-status]");
     this.playButton.addEventListener("click", () => this.toggle());
 
     const document = deck.ownerDocument;
     const page = document.defaultView;
-    page.addEventListener("hashchange", () => {
-      if (!page.location.hash || new URLSearchParams(page.location.hash.slice(1)).has("h")) this.open(page.location.href);
+    page.addEventListener("hashchange", ({ oldURL, newURL }) => {
+      const recordingChanged = [oldURL, newURL].some(url => new URLSearchParams(new URL(url).hash.slice(1)).has("h"));
+      if (recordingChanged) this.open(newURL);
     });
     page.addEventListener("pagehide", () => this.pause());
     document.addEventListener("visibilitychange", () => {
@@ -44,6 +56,8 @@ export class TapePlayer {
       this.#load(houseFromLink(url) ?? referenceCopy);
     } catch {
       this.pause();
+      this.labelName.textContent = "";
+      this.labelNumber.textContent = "";
       this.title.textContent = "Unreadable copy";
       this.playButton.disabled = true;
       this.#show("error", "Recording unavailable.");
@@ -54,6 +68,8 @@ export class TapePlayer {
     this.pause();
     this.transport.reset();
     this.transport.setHouse(house);
+    this.labelName.textContent = house === referenceCopy ? "Flat below" : house.title;
+    this.labelNumber.textContent = house === referenceCopy ? "EH/98/041a" : recordingNumber(house);
     this.title.textContent = house === referenceCopy ? house.title : "Deposited copy · " + house.title;
     this.playButton.disabled = !this.transport.view().events.length;
     this.#show("ready", this.playButton.disabled ? "No notes were recorded on this tape." : "");

@@ -1,13 +1,21 @@
+import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileAsync } from "sass";
+import { referencePath } from "../archive/file-references.js";
 import { testStripURL } from "./archive-return.mjs";
-import { catalogue, holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
+import { holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const archive = join(root, "archive");
 const game = join(root, "web");
+const fileReferences = new Map([
+  ["EH/98/041", "/cases/041/"],
+  ["BS/82/016", "/records/landing/"],
+  ["RO/98/012", "/records/deposits/"],
+  ["HO/78/017", "/cases/017/"],
+]);
 const playbackFiles = [
   "audio", "music", "library/house-format.js",
   "building/catalogue.js", "building/fittings.js", "building/floor-plan.js",
@@ -28,17 +36,34 @@ async function copyPages(source, output, layout) {
 }
 
 export async function buildArchive(output) {
-  const [header, footer] = await Promise.all(["header", "footer"].map(name =>
+  const [header, footer, redirect] = await Promise.all(["header", "footer", "catalogue-redirect"].map(name =>
     readFile(join(archive, "_layout", name + ".html"), "utf8")));
-  const rows = catalogue.map(renderHoldingRow).join("\n");
+  const rows = holdings.map(renderHoldingRow).join("\n");
+  const entries = (await readdir(archive)).filter(name => /\.(?:js|css)$/.test(name));
+  const versions = new Map(await Promise.all(entries.map(async name => {
+    const content = await readFile(join(archive, name));
+    const version = createHash("sha256").update(content).digest("hex").slice(0, 12);
+    return [name, `/${name}?v=${version}`];
+  })));
   const stripURL = testStripURL().replaceAll("&", "&amp;").replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const layout = page => page.replaceAll("<!-- archive-header -->", () => header)
     .replaceAll("<!-- archive-footer -->", () => footer)
     .replace("<!-- catalogue-holdings -->", () => rows)
-    .replace("{{catalogue-total}}", () => catalogue.filter(record => !record.referenceOnly).length)
-    .replaceAll("{{test-strip-url}}", () => stripURL);
+    .replace("{{catalogue-total}}", () => holdings.length)
+    .replaceAll("{{test-strip-url}}", () => stripURL)
+    .replace(/"(\/([^/"]+\.(?:js|css)))"/g, (_attribute, path, name) => `"${versions.get(name) ?? path}"`);
   await copyPages(archive, output, layout);
+  for (const [reference, source] of fileReferences) {
+    const directory = join(output, referencePath(reference));
+    await mkdir(directory, { recursive: true });
+    const original = join(output, source, "index.html");
+    await rename(original, join(directory, "index.html"));
+    await writeFile(original, redirect);
+  }
+  for (const section of ["cases", "records"]) {
+    await writeFile(join(output, section, "index.html"), redirect);
+  }
   for (const record of holdings) {
     const directory = join(output, "records", record.slug);
     await mkdir(directory, { recursive: true });
