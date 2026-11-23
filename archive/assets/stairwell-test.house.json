@@ -1,0 +1,20 @@
+{
+  "title": "Stairwell test strip",
+  "mode": "cassette",
+  "band": false,
+  "rooms": [
+    { "id": "upper", "name": "Upper landing", "x": 0, "z": 0, "width": 4, "depth": 4, "finish": "moss" },
+    { "id": "lower", "name": "Lower landing", "x": 4, "z": 1, "width": 4, "depth": 4, "finish": "moonstone" }
+  ],
+  "doors": [
+    { "id": "stair-door", "rooms": ["upper", "lower"], "x": 4, "z": 2.5 }
+  ],
+  "pieces": [
+    { "id": "upper-strings", "kind": "bookcase", "roomId": "upper", "x": 0, "z": 0, "turn": 0, "pitch": 62, "phrase": "fall" },
+    { "id": "upper-answer", "kind": "mirror", "roomId": "upper", "x": 2.5, "z": 0.5, "turn": 1, "pitch": 45 },
+    { "id": "upper-chair", "kind": "chair", "roomId": "upper", "x": 1.4, "z": 2.6, "turn": 0 },
+    { "id": "lower-strings", "kind": "bookcase", "roomId": "lower", "x": 4, "z": 3.5, "turn": 2, "pitch": 62, "phrase": "fall" },
+    { "id": "lower-answer", "kind": "mirror", "roomId": "lower", "x": 7, "z": 2.5, "turn": 1, "pitch": 38 },
+    { "id": "lower-chair", "kind": "chair", "roomId": "lower", "x": 5.4, "z": 1.35, "turn": 2 }
+  ]
+}

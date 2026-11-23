@@ -4,7 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:archive": "node scripts/build-archive.mjs",
+    "start:archive": "npm run build:archive && python3 -m http.server 4174 --bind 0.0.0.0 --directory dist-archive",
     "test": "node --test",
     "start": "npm run build && python3 -m http.server 5173 --directory dist"
+  },
+  "devDependencies": {
+    "govuk-frontend": "6.6.0",
+    "sass": "1.108.2"
   }
 }

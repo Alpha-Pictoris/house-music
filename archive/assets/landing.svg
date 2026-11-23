@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 260">
+  <defs><pattern id="grid" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M0 14V0h14" fill="none" stroke="#a9ccd6" opacity=".35"/></pattern><pattern id="stairs" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 0v10" stroke="#d7e7e4" stroke-width="2"/></pattern></defs>
+  <rect width="420" height="260" fill="#436473"/><rect width="420" height="260" fill="url(#grid)"/>
+  <g stroke="#d7e7e4" fill="none"><rect x="10" y="10" width="400" height="240"/><path d="M45 57h306v108H240v33h-74v-33H45z" stroke-width="5"/><path d="M51 62h294v97H234v33h-62v-33H51z"/><path d="M64 78h115v63H64zm153 0h114v63H217z" fill="url(#stairs)" stroke-width="2"/><path d="M75 106h93l-9-4m9 4-9 4m158-4h-92l9-4m-9 4 9 4M43 38h310m-308-5v11m305-11v11M367 56v109m-5-107h10m-10 105h10"/><path d="M195 162v-30a30 30 0 0 1 30 30" stroke-dasharray="3 2"/></g>
+  <g fill="#e0ebe5" font-family="monospace" font-size="8"><text x="55" y="226">CITY SURVEYOR   /   PORTSEA</text><text x="286" y="226">SECTION A–A</text><text x="185" y="31">4 800</text></g>
+</svg>
