@@ -1,6 +1,6 @@
 # The cassette archive
 
-The Portsmouth City Record Office is a fictional municipal archive for House Music. The public catalogue sets the Rigger’s Yard files among eight documented subjects, including Fratton’s Carnegie Library, the Portsea tithe map and the Gosport ferry ticket office. Each historical entry links to its original catalogue or heritage record. The Rigger’s Yard residents, files, dates and references belong to the story.
+The Portsmouth City Record Office is a fictional municipal archive for House Music. The public catalogue sets the Rigger’s Yard files among historical entries for Portsmouth, including Conan Doyle’s Southsea correspondence, the Portsea tithe map and the Gosport ferry ticket office. Each historical entry links to its original catalogue or heritage record. The Rigger’s Yard residents, files, dates and references belong to the story.
 
 ## The complaint
 

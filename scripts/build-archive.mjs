@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileAsync } from "sass";
 import { testStripURL } from "./archive-return.mjs";
-import { holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
+import { catalogue, holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const archive = join(root, "archive");
@@ -30,12 +30,13 @@ async function copyPages(source, output, layout) {
 export async function buildArchive(output) {
   const [header, footer] = await Promise.all(["header", "footer"].map(name =>
     readFile(join(archive, "_layout", name + ".html"), "utf8")));
-  const rows = holdings.map(renderHoldingRow).join("\n");
+  const rows = catalogue.map(renderHoldingRow).join("\n");
   const stripURL = testStripURL().replaceAll("&", "&amp;").replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const layout = page => page.replaceAll("<!-- archive-header -->", () => header)
     .replaceAll("<!-- archive-footer -->", () => footer)
     .replace("<!-- catalogue-holdings -->", () => rows)
+    .replace("{{catalogue-total}}", () => catalogue.filter(record => !record.referenceOnly).length)
     .replaceAll("{{test-strip-url}}", () => stripURL);
   await copyPages(archive, output, layout);
   for (const record of holdings) {

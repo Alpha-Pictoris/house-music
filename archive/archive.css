@@ -45,6 +45,17 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .reading .govuk-heading-m { margin-top: 1.5rem; }
 .reading figure { max-width: 44rem; margin-block: 1rem 1.5rem; }
 .reading figure img { width: 100%; height: auto; }
+.record-image .image-credit { display: block; margin-top: .25rem; font-size: .875rem; }
+.reading .record-image img { width: auto; max-height: 70vh; }
+.file-link::after, a[download]::after, [data-test-strip][href^="/assets/"]::after {
+  content: "";
+  display: inline-block;
+  width: .85em;
+  height: .85em;
+  margin-inline-start: .25em;
+  background: currentColor;
+  mask: url("/assets/external-link.svg") center / contain no-repeat;
+}
 .case-columns { display: grid; grid-template-columns: 1.12fr 1fr; align-items: start; gap: 2rem; border-top: 1px solid #b1b4b6; padding-top: 1.5rem; }
 .letter, .document { margin: 1rem 0 1.5rem; padding: clamp(1rem, 2.8vw, 2rem); background: #f6f2e7; border: 1px solid #d3cdbc; }
 .letter .govuk-body, .document .govuk-body { font: 1rem/1.55 "Courier New", monospace; margin-bottom: .9rem; }

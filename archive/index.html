@@ -17,7 +17,7 @@
     <div class="govuk-width-container hero-inner">
       <div class="hero-copy">
         <h1 class="govuk-heading-xl">Public records archive</h1>
-        <p class="govuk-body-l">Photographs, plans and local authority records for Portsmouth and Portsea Island.</p>
+        <p class="govuk-body-l">Photographs, plans, letters and public records from Portsmouth and Portsea Island.</p>
         <form class="search" role="search" action="/" data-search hidden>
           <label class="govuk-label" for="query">Keyword or reference number</label>
           <div class="search-controls">
@@ -32,31 +32,15 @@
     </div>
   </section>
   <section class="govuk-width-container holdings" id="catalogue" aria-labelledby="holdings-heading">
-    <div class="section-head"><h2 class="govuk-heading-m" id="holdings-heading">Catalogue records</h2><span class="count" role="status" data-count>11 records</span></div>
+    <div class="section-head"><h2 class="govuk-heading-m" id="holdings-heading">Catalogue records</h2><span class="count" role="status" data-count>{{catalogue-total}} records</span></div>
     <table class="govuk-table catalogue-table">
       <thead class="govuk-table__head"><tr class="govuk-table__row">
         <th scope="col" class="govuk-table__header">Description</th>
         <th scope="col" class="govuk-table__header">Reference</th>
         <th scope="col" class="govuk-table__header">Date</th>
       </tr></thead>
-      <tbody class="govuk-table__body" data-record-list>
-      <!-- catalogue-holdings -->
-        <tr class="govuk-table__row" data-record="EH/98/041 party wall nuisance cassette" data-title="Noise complaint, Rigger’s Yard">
-          <td class="govuk-table__cell"><a class="govuk-link" href="/cases/041/">Noise complaint, Rigger’s Yard</a><p class="govuk-body-s record-description">Letter with a cassette recording. Environmental Health file, Portsea.</p></td>
-          <td class="govuk-table__cell"><span class="catalogue-ref">EH/98/041</span></td><td class="govuk-table__cell">1998</td>
-        </tr>
-        <tr class="govuk-table__row" data-record="BS/82/016 plan survey stairs Portsea" data-title="Common stair at Rigger’s Yard">
-          <td class="govuk-table__cell"><a class="govuk-link" href="/records/landing/">Common stair at Rigger’s Yard</a><p class="govuk-body-s record-description">Measured section of two flights and a half landing.</p></td>
-          <td class="govuk-table__cell"><span class="catalogue-ref">BS/82/016</span></td><td class="govuk-table__cell">1982</td>
-        </tr>
-        <tr class="govuk-table__row" data-record="RO/98/012 accessions received items" data-title="Register of deposits">
-          <td class="govuk-table__cell"><a class="govuk-link" href="/records/deposits/">Register of deposits</a><p class="govuk-body-s record-description">Receipts entered by the duty clerk, 9–13 November.</p></td>
-          <td class="govuk-table__cell"><span class="catalogue-ref">RO/98/012</span></td><td class="govuk-table__cell">1998</td>
-        </tr>
-        <tr class="govuk-table__row" data-record="HO/78/017" data-title="Return of an empty sleeve" data-reference-only hidden>
-          <td class="govuk-table__cell"><a class="govuk-link" href="/cases/017/">Return of an empty sleeve</a><p class="govuk-body-s record-description">Correction to the stores inventory of the lower flat, Rigger’s Yard.</p></td>
-          <td class="govuk-table__cell"><span class="catalogue-ref">HO/78/017</span></td><td class="govuk-table__cell">1978</td>
-        </tr>
+      <tbody class="govuk-table__body">
+        <!-- catalogue-holdings -->
       </tbody>
     </table>
     <p data-empty hidden>No records found. Try a shorter keyword or <a class="govuk-link" href="/">browse all records</a>.</p>

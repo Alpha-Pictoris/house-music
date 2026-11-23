@@ -1,8 +1,6 @@
 const form = document.querySelector("[data-search]");
 const query = form.elements.q;
 const records = [...document.querySelectorAll("[data-record]")];
-records.sort((left, right) => left.dataset.title.localeCompare(right.dataset.title, "en-GB"));
-document.querySelector("[data-record-list]").append(...records);
 const count = document.querySelector("[data-count]");
 const empty = document.querySelector("[data-empty]");
 
