@@ -55,4 +55,4 @@ The instrument recordings use Frank Wen’s FluidR3 GM soundfont. [Sound credits
 
 ## Publish
 
-Run **Deploy game** from `trunk` to publish to GitHub Pages. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.
+Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.

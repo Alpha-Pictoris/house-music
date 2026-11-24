@@ -1,8 +1,12 @@
 name: Deploy game
 
-on: workflow_dispatch
+on:
+  push:
+    branches: [trunk]
 
 permissions: {}
+
+concurrency: game-production
 
 jobs:
   build:
@@ -38,7 +42,6 @@ jobs:
     permissions:
       pages: write
       id-token: write
-    concurrency: game-production
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
