@@ -1,0 +1,23 @@
+@use "govuk/base" with (
+  $govuk-font-family: (Helvetica, Arial, sans-serif),
+  $govuk-functional-colours: (brand: #142e3a)
+);
+
+@use "govuk/core/links";
+@use "govuk/core/typography";
+@use "govuk/objects/form-group";
+@use "govuk/objects/grid";
+@use "govuk/objects/main-wrapper";
+@use "govuk/objects/template";
+@use "govuk/objects/width-container";
+@use "govuk/components/breadcrumbs";
+@use "govuk/components/button";
+@use "govuk/components/details";
+@use "govuk/components/generic-header";
+@use "govuk/components/input";
+@use "govuk/components/label";
+@use "govuk/components/service-navigation";
+@use "govuk/components/skip-link";
+@use "govuk/components/summary-list";
+@use "govuk/components/table";
+@use "govuk/utilities/visually-hidden";

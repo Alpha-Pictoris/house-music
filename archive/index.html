@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Public records archive · Portsmouth City Record Office</title>
+  <link rel="icon" href="/assets/office-mark.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#142e3a">
+  <link rel="stylesheet" href="/govuk.css">
+  <link rel="stylesheet" href="/archive.css">
+  <script type="module" src="/catalogue.js"></script>
+</head>
+<body>
+<!-- archive-header -->
+<main id="main" tabindex="-1">
+  <section class="hero">
+    <div class="govuk-width-container hero-inner">
+      <div class="hero-copy">
+        <h1 class="govuk-heading-xl">Public records archive</h1>
+        <p class="govuk-body-l">Photographs, plans, letters and public records from Portsmouth and Portsea Island.</p>
+        <form class="search" role="search" action="/" data-search hidden>
+          <label class="govuk-label" for="query">Keyword or reference number</label>
+          <div class="search-controls">
+          <input class="govuk-input" id="query" name="q" type="search">
+          <button class="govuk-button" type="submit">Search</button></div>
+        </form>
+      </div>
+      <figure class="harbour-print">
+        <img src="/assets/harbour.webp" width="1024" height="757" alt="Sailing ships moored beyond the waterfront tram at Portsmouth Harbour">
+        <figcaption><a class="govuk-link" href="/records/harbour-print/">Portsmouth Harbour, c. 1890–1900</a></figcaption>
+      </figure>
+    </div>
+  </section>
+  <section class="govuk-width-container holdings" id="catalogue" aria-labelledby="holdings-heading">
+    <div class="section-head"><h2 class="govuk-heading-m" id="holdings-heading">Catalogue records</h2><span class="count" role="status" data-count>{{catalogue-total}} records</span></div>
+    <table class="govuk-table catalogue-table">
+      <thead class="govuk-table__head"><tr class="govuk-table__row">
+        <th scope="col" class="govuk-table__header">Description</th>
+        <th scope="col" class="govuk-table__header">Reference</th>
+        <th scope="col" class="govuk-table__header">Date</th>
+      </tr></thead>
+      <tbody class="govuk-table__body">
+        <!-- catalogue-holdings -->
+      </tbody>
+    </table>
+    <p data-empty hidden>No records found. Try a shorter keyword or <a class="govuk-link" href="/">browse all records</a>.</p>
+  </section>
+</main>
+<!-- archive-footer -->
+</body>
+</html>

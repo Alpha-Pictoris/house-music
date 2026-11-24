@@ -1,0 +1,128 @@
+export const cultureHoldings = [
+  {
+    slug: "mary-rose-shawm", reference: "80A0545", title: "Still shawm from the Mary Rose",
+    kind: "Mary Rose Trust", year: "By 1545", date: "Recovered from the upper deck of the Mary Rose",
+    search: "Tudor woodwind reed musical instrument douçaine doucaine boxwood shipwreck Solent",
+    description: "Boxwood wind instrument, over a metre long. The two sections were found packed in the remains of their case.",
+    heading: "Construction",
+    paragraphs: [
+      "The instrument comes apart at a joint just above the bore. Unlike the ordinary shawm, the still shawm has a thumbhole and a cylindrical bore. It has a softer tone. The name douçaine was also used for it.",
+    ],
+    sources: [
+      ["Still shawm, Mary Rose Trust", "https://maryrose.org/artefacts/still-shawm-doucaine/"],
+      ["Les Bouffons, shawm recording", "https://maryrose.org/wp-content/uploads/2024/06/shawm-Les-Bouffons.mp3", "MP3"],
+    ],
+  },
+  {
+    slug: "mary-rose-fiddle", reference: "81A1973", title: "Fiddle from the hold of the Mary Rose",
+    kind: "Mary Rose Trust", year: "By 1545", date: "Recovered from the hold of the Mary Rose",
+    search: "Tudor violin musical instrument fiddler bow Solent shipwreck",
+    description: "Wooden fiddle found in a fitted box lined with decorated cattle hide.",
+    heading: "Instrument and bow",
+    paragraphs: [
+      "The player held the body against the chest with the neck pointing down. A bow was recovered from the wreck, but its findspot was not recorded. Its association with this fiddle is uncertain.",
+    ],
+    image: {
+      src: "/assets/records/mary-rose-fiddle.webp", width: 1100, height: 1100,
+      alt: "A narrow wooden fiddle with two curved sound holes, displayed beside a small drum. A bow lies below the fiddle.",
+      caption: "The fiddle, bow and tabor on display at the Mary Rose Museum, March 2026.",
+      credit: "Tim Sheerman-Chase", source: "https://commons.wikimedia.org/wiki/File:Musical_Instruments,_Mary_Rose.jpg",
+      licence: "CC BY 4.0", licenceURL: "https://creativecommons.org/licenses/by/4.0/",
+    },
+    sources: [["Fiddle, Mary Rose Trust", "https://maryrose.org/artefacts/fiddle/"]],
+  },
+  {
+    slug: "portsmouth-point", reference: "59.533.1106", title: "Portsmouth Point, Thomas Rowlandson",
+    kind: "The Metropolitan Museum of Art", year: "1814", date: "1814",
+    search: "etching caricature sailors ships tavern waterfront harbour Spice Island Point",
+    description: "Hand-coloured etching of sailors going aboard at Portsmouth Point. The Ship Tavern faces a shop dealing in old clothes.",
+    heading: "The print",
+    paragraphs: [
+      "A porter carries baggage down to the water. Casks roll between the people on the quay. Above the shop door a second sign advertises money lent by Moses Levy.",
+      "The sheet measures 24.8 by 35.2 cm. The Metropolitan Museum of Art acquired this impression in 1959.",
+    ],
+    image: {
+      src: "/assets/records/portsmouth-point.webp", width: 1400, height: 990,
+      alt: "Sailors, porters and families crowd a narrow street between a clothes shop and the Ship Tavern. Ship masts rise beyond the quay.",
+      caption: "Portsmouth Point, Thomas Rowlandson, 1814.",
+      credit: "The Metropolitan Museum of Art, The Elisha Whittelsey Collection, The Elisha Whittelsey Fund, 1959",
+      source: "https://www.metmuseum.org/art/collection/search/788317", licence: "Public domain",
+      licenceURL: "https://www.metmuseum.org/about-the-met/policies-and-documents/open-access",
+    },
+    sources: [["Portsmouth Point, The Metropolitan Museum of Art", "https://www.metmuseum.org/art/collection/search/788317"]],
+  },
+  {
+    slug: "chapman-letter", title: "Arthur Conan Doyle’s letter to Mr Chapman",
+    kind: "Portsmouth Conan Doyle Collection", year: "1890", date: "26 November 1890",
+    search: "Southsea Bush Villas Elm Grove doctor medical practice invoice receipt patient",
+    description: "Letter from Bush Villas informing a patient that Doyle is leaving Southsea. It names the doctor taking over his practice.",
+    heading: "Letter and invoice",
+    paragraphs: [
+      "Doyle gives the address of his successor, Dr Claremont of Petersleigh, Elm Grove. He tells Mr Chapman that he intends to practise in London and mentions one outstanding charge.",
+      "An invoice lists the treatment and fee. Doyle stamped and signed it to acknowledge payment.",
+    ],
+    sources: [["Letter and receipt, Portsmouth Conan Doyle Collection", "https://www.conandoylecollection.com/conan-doyle/you-dont-know-sherlock-holmes-yet/the-portsmouth-connection/chapman-letter"]],
+  },
+  {
+    slug: "fratton-park", reference: "FGE01/01/069/017", title: "North Stand at Fratton Park",
+    kind: "Historic England Archive", year: "1993", date: "1993",
+    search: "Simon Inglis Milton End terraces Pompey football ground Frogmore Road paddock",
+    description: "Simon Inglis’s photograph of the North Stand, taken from the standing terrace at the Milton End.",
+    heading: "The terraces",
+    paragraphs: [
+      "The North Stand dates from 1935. In the photograph its paddock, the terrace between the stand and the pitch, still has standing places. Seats went into the paddock in 1996. The Milton End terrace in the foreground was also replaced with seating.",
+    ],
+    sources: [["Fratton Park photograph, Historic England Archive", "https://historicengland.org.uk/images-books/photos/item/FGE01/01/069/017"]],
+  },
+  {
+    slug: "kings-theatre", reference: "1386801", title: "Kings Theatre, Albert Road",
+    kind: "National Heritage List for England", year: "1906–07", date: "Built 1906 to 1907",
+    search: "Frank Matcham Southsea theatre stage auditorium fly tower hemp painting frame scenery shops",
+    description: "Frank Matcham’s theatre for John W. Boughton incorporates three earlier shops on Albert Road, with their living quarters above.",
+    heading: "Stage machinery",
+    paragraphs: [
+      "Beside the stage is a scene dock with a painting frame for backcloths. Above the stage, the original hemp ropes and winches survive alongside power-operated bars for raising scenery.",
+    ],
+    image: {
+      src: "/assets/records/kings-theatre.webp", width: 1280, height: 852,
+      alt: "Rows of red seats beneath the tiers of boxes and gilded balconies, seen from the stage.",
+      caption: "Auditorium of the Kings Theatre, photographed from the stage on 26 September 2016.",
+      credit: "KingsTheatre2022, Wikimedia Commons", source: "https://commons.wikimedia.org/wiki/File:KingsTheatreAud.jpg",
+      licence: "CC BY-SA 4.0", licenceURL: "https://creativecommons.org/licenses/by-sa/4.0/",
+    },
+    sources: [["Kings Theatre listing, Historic England", "https://historicengland.org.uk/listing/the-list/list-entry/1386801"]],
+  },
+  {
+    slug: "canoe-lake", reference: "MPM2159", title: "Canoe Lake, Southsea",
+    kind: "Portsmouth Historic Environment Record", year: "1885–86", date: "Opened 17 June 1886",
+    search: "Craneswater Great Morass Minnow Pond engineer Boulnois tide seawater excavation Southsea Common",
+    description: "Saltwater boating lake designed by borough engineer H. P. Boulnois on former marshland at Southsea. A culvert renewed the water at each tide.",
+    heading: "Excavation and opening",
+    paragraphs: [
+      "The lake occupied part of the Great Morass known locally as the Minnow Pond. The borough leased the ground from the War Department. T. P. Hall built the lake with a concrete retaining wall and left the bottom unlined.",
+      "In September 1885 the Portsmouth Evening News and the Hampshire Telegraph reported that the excavation had uncovered a human skeleton. The remains were taken to the Coastguard Station. Mayor A. S. Blake opened the lake the following June.",
+    ],
+    image: {
+      src: "/assets/records/canoe-lake.webp", width: 1280, height: 960,
+      alt: "Aerial view with the lake in the foreground, houses to the left and the shingle beach on the right.",
+      caption: "Canoe Lake and the Southsea seafront, 22 June 2022.",
+      credit: "Tim Sheerman-Chase", source: "https://commons.wikimedia.org/wiki/File:Canoe_Lake_from_overhead,_Southsea.jpg",
+      licence: "CC BY 2.0", licenceURL: "https://creativecommons.org/licenses/by/2.0/",
+    },
+    sources: [["Canoe Lake, Portsmouth Heritage Explorer", "https://heritage.portsmouth.gov.uk/Monument/MPM2159"]],
+  },
+  {
+    slug: "southsea-roller-rink", reference: "AV9/2", title: "Southsea’s Roller Rink and Seaside Fun",
+    kind: "Wessex Film and Sound Archive", year: "c. 1946", date: "About 1946. Silent, 16 minutes.",
+    search: "Archibald Peskett Jean Phethean Ken Byrne figure skaters skating amateur film common family holiday beach miniature railway pier",
+    description: "Archibald Peskett’s film of the outdoor roller rink on Southsea Common includes an exhibition by champion skaters Jean Phethean and Ken Byrne.",
+    heading: "Southsea roller rink",
+    paragraphs: [
+      "In one sequence Peskett turns his camera down to follow the skaters’ shadows across the rink. The site had held roller hockey matches and skating competitions since the 1930s. Southsea Skatepark opened there in 1978.",
+    ],
+    sources: [
+      ["Southsea roller rink film, Wessex Film and Sound Archive", "https://www.youtube.com/watch?v=3PiEjM7lTy8"],
+      ["Film record, BFI Replay", "https://replay.bfi.org.uk/video/33b1bb82-f041-50fc-bce3-7275768ed66b"],
+    ],
+  },
+];

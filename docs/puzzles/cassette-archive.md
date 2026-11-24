@@ -1,23 +1,17 @@
 # The cassette archive
 
-*Proposed B-side discovery.*
+The Portsmouth City Record Office is a fictional municipal archive for House Music. Its public catalogue covers Portsmouth history. Each entry links to its original catalogue or heritage record. The four Rigger’s Yard files open when someone enters their full reference in the catalogue search. They are omitted from the public list and keyword results.
 
-An old tower and a curved CRT monitor belong to the downstairs room. The mains plug lies on the desk. One proposed way to find it is by ear. Leave a gap at the end of a phrase and three notes answer in the same key. On the last note, a green dot fades from the glass.
+## The complaint
 
-Double-clicking the monitor, or double-tapping it on a phone, would open a separate website. One story for the site is a noise complaint from the flat below.
+Enter **EH/98/041** in the catalogue search to open the noise complaint. The resident in the lower flat has enclosed a recording of music heard beside the meter cupboard. A shared house in the address stays with the visitor as they search and supplies the tune on the tape. An ordinary visit plays the office’s reference copy.
 
-> The music is fine. Please ask them to stop counting me in.
+The officer’s visit cites the stair plan **BS/82/016** and deposit register **RO/98/012**. The resident asks for the tape with the blue sleeve. The register records two labels, one over the other. Lifting the white label on the sleeve uncovers **HO/78/017**. Searching for that reference opens a housing inventory dated twenty years earlier.
 
-A cassette is attached as evidence. Its first loop should play the melody the player just made, with their instruments, timing and rests. If they put the snare a beat late, the tape dated 1998 has that same late snare. The other side could hold the neighbour’s answering phrase for the player to bring back as a refrain.
+The earlier file holds a stairwell test strip. Opening it in House Music reveals two landings. Both play the same descending figure. The bass answers half a beat later on the lower landing. The player can rearrange the house and keep their own copy. [Playback and local preview](cassette-player-plan.md)
 
-## How the tune travels
+## Later chapters
 
-The game already packs a house snapshot into a share link as Base64URL-encoded JSON. The proposed archive address could look like `https://archive.example/cases/041#h=…`. The path identifies a case anyone can visit. The fragment carries the sender’s house. The archive could use the same score, player and instrument recordings to reproduce both passes of the house band. A B-side snapshot would also carry the shadow positions and the side that was playing. A friend opening the full link could hear the same tape.
+The proposed entrance from the house is a defunct CRT on the B-side. Leave a gap at the end of a phrase and three notes answer in the same key. On the last note, a green dot fades from the glass. The monitor would display the complaint reference and open the archive catalogue with the sounding house. [The B-side](b-side.md)
 
-## A number on the sleeve
-
-A possible later SMS chapter would print a number on the cassette sleeve. A player who texts the case number could get a reply through Twilio.
-
-> Mine was the blue label. Who put that white one over it?
-
-Back on the website, peeling up the white label could reveal an older case number in blue ink. Every house supplies its own tape, and that older case gives players something they can investigate together.
+A possible later chapter would put a telephone number on the sleeve. A text containing the case number could reach the resident through Twilio. The paper trail already leads to the older file.

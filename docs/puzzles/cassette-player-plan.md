@@ -1,19 +1,24 @@
 # Cassette playback
 
-*Implementation plan for [the cassette archive](cassette-archive.md).*
+## Run the archive
 
-The first playable version is a case page on a second website. Press Play on the cassette and hear the house that came with the link. Any house can supply a tape before the downstairs computer exists.
+From the repository root, use Node.js 20.19 or later and Python 3.
 
-## Open a tape
+```sh
+npm ci
+npm run start:archive
+```
 
-Build the case link with `houseLink(house, caseURL)`. On the archive page, `houseFromLink(location.href)` reads the snapshot from `#h=…`. Keep it in memory so visitors can listen without changing their saved houses. The bare address still opens the case. A damaged fragment leaves the case readable with a prompt to ask for a fresh link. [House format](../../web/library/house-format.js)
+The archive opens on [port 4174](http://localhost:4174/). Run `npm start` in a second terminal to open the game on port 5173. On another device, use the computer’s LAN address with the same ports.
 
-## Play both passes
+## Bring a house to the case
 
-Give the page its own entry point and ship the game’s instrument recordings with it. On Play, enable the sampler and run the house through the game’s transport. This preserves the arrangement’s tempo, the spaces between notes and the band’s reply on the second pass. Pause cancels scheduled notes. [Sampler](../../web/music/sampler.js) · [Transport](../../web/music/transport.js) · [Build](../../scripts/build.mjs)
+Copy a share link from House Music. Append its `#h=` fragment to the archive homepage and search for **EH/98/041**. The cassette bears the house title and a short recording number calculated from the decoded house. The same saved version has the same number on another device. Press **Play tape** to hear the house using the game’s score, transport and recordings. The house stays in the browser. [Tape player](../../archive/player.js) · [House format](../../web/library/house-format.js)
 
-## Play it through
+To check the transfer by ear, make a one-bar house with a late snare. Listen to two passes in the house and on the cassette. The snare and the band’s reply should agree. With the house band off, the gaps between furnishings should agree too.
 
-Make a one-bar house with a late snare. Open its tape on a second local port in a fresh browser profile. Listen to both passes. The snare, the gaps and the band’s reply should match the house. Repeat with the band off to hear the furniture alone. [Score examples](../../test/music/house-band.test.js)
+## Return to the game
 
-When the CRT arrives, double-clicking or double-tapping it opens the case in a new tab. Take the house from `transport.view().house` so a queued edit cannot change the tape before the player has heard it. Include the playing side when the house gains a B-side.
+The stairwell test strip carries its own house. In the local preview it opens on port 5173 on the same computer. Set `HOUSE_MUSIC_URL` when building the archive to open the strip in the hosted game. With that setting empty, visitors can download the house file. [Archive build](../../scripts/build-archive.mjs)
+
+The proposed B-side monitor should display the file reference and open the catalogue with `houseLink(transport.view().house, archiveURL)`. Taking the sounding house preserves what the player heard when an edit is waiting for the next loop.
