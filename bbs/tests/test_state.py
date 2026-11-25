@@ -29,40 +29,40 @@ def test_begin_session_counts_and_history(store):
 
 
 def test_add_flag_is_idempotent(store):
-    assert store.add_flag("alice", "lantern") is True
-    assert store.add_flag("alice", "lantern") is False
-    assert store.load("alice").found_flags == ["lantern"]
-    assert store.has_flag("alice", "lantern")
-    assert not store.has_flag("bob", "lantern")
+    assert store.add_flag("alice", "override") is True
+    assert store.add_flag("alice", "override") is False
+    assert store.load("alice").found_flags == ["override"]
+    assert store.has_flag("alice", "override")
+    assert not store.has_flag("bob", "override")
 
 
 def test_atomic_write_keeps_old_file_on_failure(store, monkeypatch):
-    store.add_flag("alice", "lantern")
+    store.add_flag("alice", "override")
     before = (store.dir / "alice.json").read_text()
 
     def boom(*a, **k):
         raise OSError("disk full")
     monkeypatch.setattr(os, "replace", boom)
     with pytest.raises(OSError):
-        store.add_flag("alice", "northlight")
+        store.add_flag("alice", "keystone")
     monkeypatch.undo()
 
     assert (store.dir / "alice.json").read_text() == before
     assert [p.name for p in store.dir.iterdir()] == ["alice.json"]
-    assert store.load("alice").found_flags == ["lantern"]
+    assert store.load("alice").found_flags == ["override"]
 
 
 def test_atomic_write_failure_during_dump_leaves_no_temp(store, monkeypatch):
-    store.add_flag("alice", "lantern")
+    store.add_flag("alice", "override")
 
     def boom(*a, **k):
         raise RuntimeError("crash mid-write")
     monkeypatch.setattr(json, "dump", boom)
     with pytest.raises(RuntimeError):
-        store.add_flag("alice", "northlight")
+        store.add_flag("alice", "keystone")
     monkeypatch.undo()
     assert [p.name for p in store.dir.iterdir()] == ["alice.json"]
-    assert store.load("alice").found_flags == ["lantern"]
+    assert store.load("alice").found_flags == ["override"]
 
 
 def test_corrupt_state_recovers_fresh(store):
@@ -70,13 +70,13 @@ def test_corrupt_state_recovers_fresh(store):
     state = store.load("alice")
     assert state.found_flags == [] and state.username == "alice"
     assert (store.dir / "alice.corrupt").exists()
-    store.add_flag("alice", "lantern")
-    assert store.load("alice").found_flags == ["lantern"]
+    store.add_flag("alice", "override")
+    assert store.load("alice").found_flags == ["override"]
 
 
 def test_reset_and_list(store, capsys):
     store.begin_session("alice", "x")
-    store.add_flag("bob", "lantern")
+    store.add_flag("bob", "override")
     assert {u.username for u in store.all_users()} == {"alice", "bob"}
     assert cli.main(["--state-dir", str(store.dir), "--list-users"]) == 0
     out = capsys.readouterr().out
@@ -98,6 +98,6 @@ def test_add_key_records_and_caps(store):
 
 
 def test_flag_discovery_through_dos_is_persisted(dos, store):
-    out = dos("TYPE C:\\USERS\\KADE\\.NOTES\\.LANTERN")
-    assert "the lantern is lit" in out and "signal" not in out
-    assert StateStore(store.dir).load("alice").found_flags == ["lantern"]
+    out = dos("TYPE C:\\USERS\\KADE\\.NOTES\\.OVERRIDE")
+    assert "override engaged" in out and "signal" not in out
+    assert StateStore(store.dir).load("alice").found_flags == ["override"]

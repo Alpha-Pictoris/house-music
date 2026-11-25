@@ -13,7 +13,7 @@
 
 ## The bulletin board
 
-- [The KATOIKIA-7 board](katoikia-board.md) walks through the dial-in board, Kade’s hidden lantern and the relay handshake.
+- [The KATOIKIA-7 board](katoikia-board.md) walks through the dial-in board, Kade’s hidden override and the restore word (placeholder story).
 
 ## Proposed discoveries
 

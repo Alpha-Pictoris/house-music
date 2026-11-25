@@ -1,16 +1,19 @@
-MERIDIAN SIGNAL LABORATORY - INCIDENT REPORT 0413
-Classification: INTERNAL / DO NOT DISTRIBUTE
+[PLACEHOLDER TEXT]
+
+KATOIKIA-7 - INCIDENT REPORT 0413
+Classification: INTERNAL
 
 Summary
-  At 03:12 UTC the relay daemon on node TESSELLATE completed a handshake
-  with an unidentified carrier. The operator on shift (K. Okafor) was
-  logged in at the time. No further logins by K. Okafor were recorded.
+  At 03:12 UTC NOMOS failed to load its rule table and fell back to
+  degraded mode. Every room is locked. The operator on shift (K. Okafor)
+  was logged in at the time.
 
 Observations
-  - The relay refuses all keys unless a "carrier" is present. Engineering
-    believes "lantern" was the operator's name for the carrier check.
-  - The relay process cannot be stopped. It ignores SIGTERM and SIGKILL.
-  - The log capture (C:\LOGS\SYSLOG.TXT) is still running on line 1.
+  - In degraded mode NOMOS refuses every authorization key unless a
+    maintenance override is engaged.
+  - The operator prepared an override before the failure. Its location
+    is not recorded.
+  - The log capture (C:\LOGS\SYSLOG.TXT) is still running.
 
 Action
-  Node decommissioned. BBS left online for forensic review.
+  House sealed. Board left online so the system can be restored.

@@ -178,7 +178,7 @@ Screens are [Jinja2](https://jinja.palletsprojects.com/) templates. They can
 use `{{ bbs }}`, `{{ user }}` (the name as typed), `{{ calls }}` (this player's
 call count, including this one), `{{ last_login }}` (`never` on a first call),
 `{{ nomos_state }}`, `{{ meta }}` (all of `meta.json`) and `{{ ctx }}` (the
-session context, e.g. `{{ ctx.has_flag("lantern") }}`). Conditionals, loops,
+session context, e.g. `{{ ctx.has_flag("override") }}`). Conditionals, loops,
 filters and `{% include "other_screen" %}` all work. To pad a value inside a
 box, use `{{ value.ljust(28) }}`. Rendering is strict: a misspelled or unknown
 variable raises an error instead of printing nothing. Screens shown before login (`boot`,
@@ -219,7 +219,7 @@ Flags are names that record progress. Either attach one to a file, so
 reading the file with `TYPE` records it:
 
 ```json
-"node_flags": {"/USERS/KADE/.NOTES/.LANTERN": ["lantern"]}
+"node_flags": {"/USERS/KADE/.NOTES/.OVERRIDE": ["override"]}
 ```
 
 or grant it from the key handler with `ctx.grant_flag("name")`. Players
@@ -227,10 +227,10 @@ never see flags. Check progress with `--list-users` or in `state/*.json`.
 
 ## The shipped world
 
-The KATOIKIA-7 NOMOS Control System, a Meridian Signal Laboratory board left
-online after an incident. Start in `C:\USERS\KADE`. There are two flags: one
-is a hidden file, and the other comes from entering a key that the hidden file
-makes work. The walkthrough is in
+The KATOIKIA-7 NOMOS Control System, left online after NOMOS lost its rule
+table and locked the house. The story is placeholder text. Start in
+`C:\USERS\KADE`. There are two flags: one is a hidden file, and the other
+comes from entering a key that the hidden file makes work. The walkthrough is in
 [The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
 
 ## Deliberate limitations

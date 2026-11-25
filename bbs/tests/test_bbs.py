@@ -48,20 +48,20 @@ def test_non_base64_key_rejected_and_not_recorded(dial, store):
     assert store.load("wren").keys == []
 
 
-def test_key_needs_lantern_then_opens_relay(dial, store):
-    key = b64("NORTHLIGHT")
+def test_key_needs_override_then_restores_nomos(dial, store):
+    key = b64("KEYSTONE")
     _, _, chan = dial("wren", "", "K", key, "G")
-    assert "no carrier" in chan.text and "INVALID AUTHORIZATION KEY" in chan.text
-    _, _, chan = dial("wren", "", "F", "type \\users\\kade\\.notes\\.lantern", "exit", "K", key, "G")
-    assert "remote identifies as: LANTERN" in chan.text and "KEY ACCEPTED" in chan.text
+    assert "override not engaged" in chan.text and "INVALID AUTHORIZATION KEY" in chan.text
+    _, _, chan = dial("wren", "", "F", "type \\users\\kade\\.notes\\.override", "exit", "K", key, "G")
+    assert "rule table restored" in chan.text and "KEY ACCEPTED" in chan.text
     state = store.load("wren")
-    assert state.found_flags == ["lantern", "northlight"]
+    assert state.found_flags == ["override", "keystone"]
     assert [(k["key"], k["accepted"]) for k in state.keys] == [(key, False), (key, True)]
 
 
 def test_journal_note_works_as_a_key(dial, store):
-    note = "d2hlbiB0aGUgbGFudGVybiBidXJucywgc2F5IE5PUlRITElHSFQgdG8gdGhlIHJlbGF5"
-    store.add_flag("wren", "lantern")
+    note = "d2l0aCB0aGUgb3ZlcnJpZGUgZW5nYWdlZCwgZ2l2ZSBOT01PUyB0aGUgd29yZCBLRVlTVE9ORQ=="
+    store.add_flag("wren", "override")
     _, _, chan = dial("wren", "", "k", note, "G")
     assert "KEY ACCEPTED" in chan.text
 

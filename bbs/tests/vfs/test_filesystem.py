@@ -46,9 +46,9 @@ def test_listdir_sorted_case_insensitively(fs):
 def test_read_records_flags_once_per_read(world):
     seen = []
     view = FsView(world, on_flag=seen.append)
-    view.read("/USERS/KADE/.NOTES/.LANTERN")
-    view.read("/USERS/KADE/.NOTES/.LANTERN", record=False)
-    assert seen == ["lantern"]
+    view.read("/USERS/KADE/.NOTES/.OVERRIDE")
+    view.read("/USERS/KADE/.NOTES/.OVERRIDE", record=False)
+    assert seen == ["override"]
 
 
 def test_symlinks_skipped_and_ansi_screens_decoded(tmp_path):

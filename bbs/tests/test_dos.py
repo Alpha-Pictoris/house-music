@@ -24,7 +24,7 @@ def test_path_translation():
 
 def test_dir_lists_root(dos):
     out = dos("DIR")
-    assert " Volume in drive C is MERIDIAN" in out
+    assert " Volume in drive C is KATOIKIA" in out
     assert " Directory of C:\\" in out
     assert re.search(r"<DIR>\s+DOCS", out)
     assert re.search(r"04-13-24\s+\d+:\d\d[ap]\s+\d+ README.TXT", out)
@@ -74,7 +74,7 @@ def test_drives_unknown_commands_and_exit(dos):
     assert dos("rm readme.txt") == "Bad command or file name\n"
     assert dos("copy readme.txt x.txt") == "Bad command or file name\n"
     assert "TYPE" in dos("help") and "LS" in dos("help")
-    assert "Meridian DOS" in dos("ver")
+    assert "NOMOS DOS" in dos("ver")
     assert dos.left is False
     dos("exit")
     assert dos.left is True

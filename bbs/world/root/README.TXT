@@ -1,7 +1,11 @@
+[PLACEHOLDER TEXT]
+
 Welcome to the KATOIKIA-7 NOMOS Control System.
 
-If you've been connected to this system, a catastrophic failure has occurred.
+NOMOS sets the rules every room in the house follows: doors, lights and
+sound. If you are reading this, NOMOS has lost its rule table and locked
+the house down.
 
-Start with the system logs in C:\LOGS to determine possible root causes.
-In order to restart the system, you will need your authorization key. Without it,
-the system cannot be modified. 
+Start with the system logs in C:\LOGS to find out what went wrong.
+To restore NOMOS you will need an authorization key. Without it, the
+system cannot be changed.

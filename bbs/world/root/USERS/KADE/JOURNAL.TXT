@@ -1,21 +1,23 @@
+[PLACEHOLDER TEXT]
+
 2024-04-09
-Relay picked up the carrier again at 03:12. Same pattern as last week:
-three short, one long, then nothing. Lattice saw it too. Beacon did not.
+NOMOS threw another checksum warning on the rule table tonight. Cleared
+itself after a minute. Second time this week.
 
 2024-04-11
-Director wants the relay shut down. I told her the daemon won't accept a
-stop signal while the carrier is up. She thinks I'm joking.
+Director says the rule table is fine. I'm writing an override anyway, in
+case NOMOS locks the house and won't take a key.
 
 2024-04-12
-I moved the lantern somewhere only I would look. Hidden, the way all the
-important things in a home directory are hidden.
+Override is ready. I put it somewhere only I would look. Hidden, the way
+all the important things in a home directory are hidden.
 
-If someone else is reading this: I wrote the handshake down so I
+If someone else is reading this: I wrote the restore word down so I
 wouldn't forget it. Not in plain text. I'm not an idiot.
 
-    -----BEGIN MERIDIAN NOTE-----
-    d2hlbiB0aGUgbGFudGVybiBidXJucywgc2F5IE5PUlRITElHSFQgdG8gdGhlIHJlbGF5
-    -----END MERIDIAN NOTE-----
+    -----BEGIN NOMOS NOTE-----
+    d2l0aCB0aGUgb3ZlcnJpZGUgZW5nYWdlZCwgZ2l2ZSBOT01PUyB0aGUgd29yZCBLRVlTVE9ORQ==
+    -----END NOMOS NOTE-----
 
 2024-04-13
-It answered.
+It happened.

@@ -1,17 +1,19 @@
 # The KATOIKIA-7 board
 
-KATOIKIA-7 is the NOMOS Control System at the Meridian Signal Laboratory, still online after the night operator vanished. Players dial in with `ssh`, log in under any name and land on the board’s menu. The board remembers each caller’s progress by name. The world files are in [bbs/world](../../bbs/world/).
+> **Placeholder text.** The NOMOS story below, and the world files it describes, stand in until the board’s real narrative is written.
 
-## Finding the lantern
+KATOIKIA-7 is a house run by NOMOS, a control system that sets the rules every room follows. NOMOS has lost its rule table and locked the house. Players dial in with `ssh`, log in under any name and land on the board’s menu. The board remembers each caller’s progress by name. The world files are in [bbs/world](../../bbs/world/).
 
-`C:\README.TXT` sends the caller to the logs and warns that changes need an authorization key. The incident report `C:\DOCS\INC0413.TXT` says the relay refuses every key unless a carrier is present, and that engineering thinks “lantern” was the operator’s name for that check.
+## Finding the override
 
-Kade’s journal in `C:\USERS\KADE\JOURNAL.TXT` says the lantern was hidden “the way all the important things in a home directory are hidden”. `DIR /A` in Kade’s folder shows `.NOTES`, which holds `.LANTERN`. Reading it with `TYPE` lights the lantern and records the `lantern` flag.
+`C:\README.TXT` sends the caller to the logs and warns that restoring NOMOS needs an authorization key. The incident report `C:\DOCS\INC0413.TXT` says NOMOS refuses every key unless a maintenance override is engaged, and that the operator prepared one before the failure. `C:\LOGS\SYSLOG.TXT` shows the override was written to `C:\USERS\KADE\.NOTES`.
 
-## The handshake
+Kade’s journal in `C:\USERS\KADE\JOURNAL.TXT` says the override was hidden “the way all the important things in a home directory are hidden”. `DIR /A` in Kade’s folder shows `.NOTES`, which holds `.OVERRIDE`. Reading it with `TYPE` engages the override and records the `override` flag.
 
-The journal also holds a block marked `MERIDIAN NOTE`. Decoded from base64, it reads “when the lantern burns, say NORTHLIGHT to the relay”. Kade’s to-do list points at the key prompt on the board.
+## The restore word
 
-At the menu, **K** asks for an authorization key. The key has to be base64. Any key whose decoded text contains `NORTHLIGHT` reaches the relay. Without the lantern the relay answers “no carrier” and rejects it. With the lantern lit it opens a channel to something calling itself LANTERN and records the `northlight` flag. Later callers who repeat the key find the channel open and quiet.
+The journal also holds a block marked `NOMOS NOTE`. Decoded from base64, it reads “with the override engaged, give NOMOS the word KEYSTONE”. Kade’s to-do list points at the key prompt on the board.
 
-Pasting the note’s own text works, because it decodes to a phrase containing the handshake.
+At the menu, **K** asks for an authorization key. The key has to be base64. Any key whose decoded text contains `KEYSTONE` reaches NOMOS. Without the override NOMOS refuses it. With the override engaged NOMOS restores its rule table, unlocks the rooms and records the `keystone` flag. Later callers who repeat the key find the house already restored.
+
+Pasting the note’s own text works, because it decodes to a phrase containing the restore word.
