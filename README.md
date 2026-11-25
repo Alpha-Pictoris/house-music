@@ -53,6 +53,16 @@ With Node.js 20 or later, run the tests with `npm test`.
 
 The instrument recordings use Frank Wen’s FluidR3 GM soundfont. [Sound credits and licence](web/credits.html)
 
+## Dial in to the board
+
+The KATOIKIA-7 board is an old bulletin board that players reach with `ssh`. It lives in [bbs](bbs/). With Python 3.10 or later and [uv](https://docs.astral.sh/uv/) installed, run this from the `bbs` directory.
+
+```sh
+uv run ssharg --local
+```
+
+[Running the board over SSH](bbs/README.md)
+
 ## Publish
 
 Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.

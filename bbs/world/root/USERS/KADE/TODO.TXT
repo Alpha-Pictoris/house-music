@@ -1,0 +1,3 @@
+- ask lattice ops for the 0413 capture
+- rotate relay key (DONE? check the key prompt on the BBS)
+- stop leaving the log capture running on line 1

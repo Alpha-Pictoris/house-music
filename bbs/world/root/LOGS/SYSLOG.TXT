@@ -1,0 +1,17 @@
+Apr 12 23:58:01 tessellate CRON[2201]: (root) CMD (/usr/lib/meridian/rotate-captures)
+Apr 13 00:00:01 tessellate rsyslogd: [origin software="rsyslogd"] rsyslogd was HUPed
+Apr 13 01:44:19 tessellate sshd[2390]: Accepted password for kade from 10.41.7.2 port 51122 ssh2
+Apr 13 01:44:19 tessellate systemd-logind[388]: New session 41 of user kade.
+Apr 13 02:30:02 tessellate relayd[812]: carrier check: lantern present (C:\USERS\KADE\.NOTES)
+Apr 13 03:11:58 tessellate relayd[812]: carrier detected on 7070/udp: pattern ...-
+Apr 13 03:12:00 tessellate relayd[812]: handshake key accepted (key redacted by policy)
+Apr 13 03:12:00 tessellate relayd[812]: channel open. remote identifies as: LANTERN
+Apr 13 03:12:04 tessellate kernel: [811203.441] relay0: entered promiscuous mode
+Apr 13 03:12:09 tessellate relayd[812]: forwarding session 41 to remote
+Apr 13 03:12:09 tessellate systemd-logind[388]: Session 41 logged out. Waiting for processes to exit.
+Apr 13 03:12:10 tessellate relayd[812]: channel closed by remote
+Apr 13 03:12:10 tessellate relayd[812]: carrier check: lantern absent, refusing further keys
+Apr 13 07:02:44 tessellate sshd[2510]: Accepted password for root from 10.41.7.9 port 40110 ssh2
+Apr 13 07:05:13 tessellate relayd[812]: ignoring signal 15 (carrier policy)
+Apr 13 07:05:21 tessellate relayd[812]: ignoring signal 9 (carrier policy)
+Apr 13 07:09:40 tessellate kernel: [825481.002] NOTICE: node marked decommissioned by root

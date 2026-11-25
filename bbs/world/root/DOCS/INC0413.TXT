@@ -1,0 +1,16 @@
+MERIDIAN SIGNAL LABORATORY - INCIDENT REPORT 0413
+Classification: INTERNAL / DO NOT DISTRIBUTE
+
+Summary
+  At 03:12 UTC the relay daemon on node TESSELLATE completed a handshake
+  with an unidentified carrier. The operator on shift (K. Okafor) was
+  logged in at the time. No further logins by K. Okafor were recorded.
+
+Observations
+  - The relay refuses all keys unless a "carrier" is present. Engineering
+    believes "lantern" was the operator's name for the carrier check.
+  - The relay process cannot be stopped. It ignores SIGTERM and SIGKILL.
+  - The log capture (C:\LOGS\SYSLOG.TXT) is still running on line 1.
+
+Action
+  Node decommissioned. BBS left online for forensic review.

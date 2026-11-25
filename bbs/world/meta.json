@@ -1,0 +1,14 @@
+{
+  "name": "KATOIKIA-7",
+  "volume": "MERIDIAN",
+  "dos_version": "Meridian DOS Version 6.22",
+  "epoch": 1712977920,
+  "boot_delay": 0.0,
+  "flags": {
+    "lantern": "Kade's lantern, still burning in a hidden file.",
+    "northlight": "The relay accepted the handshake key."
+  },
+  "node_flags": {
+    "/USERS/KADE/.NOTES/.LANTERN": ["lantern"]
+  }
+}

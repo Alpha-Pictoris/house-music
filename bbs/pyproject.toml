@@ -1,0 +1,26 @@
+[project]
+name = "ssharg"
+version = "0.1.0"
+description = "An old bulletin board system over SSH for alternate reality games."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jinja2>=3.1",
+    "paramiko>=3.4",
+    "pydantic>=2.7",
+]
+
+[project.scripts]
+ssharg = "ssharg.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

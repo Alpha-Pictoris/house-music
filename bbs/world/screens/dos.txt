@@ -1,0 +1,2 @@
+
+Entering file area. Type HELP for commands, EXIT to return.
