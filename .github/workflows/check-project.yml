@@ -45,3 +45,4 @@ jobs:
           enable-cache: false
       - run: uv sync --locked
       - run: uv run pytest
+      - run: docker build .
