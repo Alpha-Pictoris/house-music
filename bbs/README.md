@@ -87,6 +87,28 @@ session user=wren src=127.0.0.1:60882 history=["F", "dir", "exit", "K", "Tk9S...
 
 Run the tests with `uv run pytest`. They open no sockets.
 
+### Docker
+
+`compose.yaml` runs the board in a container on port 2222. Set
+`SSHARG_PORT` to publish another port. Create the CA and certificates
+with the `cert` tool, which writes to this directory as your own user:
+
+```sh
+export HOST_UID=$(id -u) HOST_GID=$(id -g)
+docker compose build
+docker compose run --rm cert ca
+docker compose run --rm cert issue wren --userdata "lamp in the hall"
+docker compose up -d
+ssh -p 2222 -i players/wren wren@127.0.0.1
+```
+
+The `bbs` container only sees `user_ca.pub`, never the CA's private key.
+If it says `bind source path does not exist`, run `docker compose run
+--rm cert ca` first. `world/` is mounted read-only, so restart the
+container after editing it: `docker compose restart bbs`. The host key and
+player progress live in the `data` volume. `docker compose down -v`
+deletes them, and players will then see a host key warning.
+
 ## The session
 
 1. **Login.** The `login` screen, then `USER NAME:` and `PASSWORD:` (masked
