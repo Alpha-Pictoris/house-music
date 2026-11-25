@@ -2,7 +2,8 @@
 
 A small server that pretends to be an old bulletin board system that's still
 online, for alternate reality games. Players dial in with an ordinary `ssh`
-client (or locally from a terminal), log in, watch it boot, and land on the
+client and a certificate you issue them (or locally from a terminal), log in,
+watch it boot, and land on the
 BBS menu. From there they can enter an authorization key or browse a
 read-only file area with a DOS-style prompt.
 
@@ -18,13 +19,16 @@ Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync                       # create .venv and install deps from uv.lock
+uv run ssharg-cert ca         # once: writes user_ca and user_ca.pub
 uv run ssharg --port 2222     # or: uv run python -m ssharg
 ```
 
-Then, from anywhere:
+Issue each player a certificate, then send them the three files in
+`players/`:
 
 ```sh
-ssh -p 2222 anyname@127.0.0.1
+uv run ssharg-cert issue wren --userdata "lamp in the hall"
+ssh -p 2222 -i players/wren wren@127.0.0.1
 ```
 
 Or dial in from your own terminal with no SSH involved:
@@ -33,7 +37,29 @@ Or dial in from your own terminal with no SSH involved:
 uv run ssharg --local
 ```
 
-The SSH username is ignored and no SSH password is needed. Players log in
+### SSH certificates
+
+The server only admits clients whose certificate was signed by `user_ca`.
+Passwords and plain keys are refused. A certificate is refused if it:
+
+- was signed by another CA or its signature does not check out,
+- has expired or is not valid yet,
+- does not list the SSH username the player connects as,
+- carries any critical options, or
+- has no `userdata@house-music` extension.
+
+Each accepted certificate logs its `userdata@house-music` value, and each
+refused one logs the reason (`cert rejected user="eve": not issued for user
+'eve'`). Keep `user_ca` private: anyone holding it can issue logins.
+
+`ssharg-cert issue NAME` makes a new key pair in `players/NAME` by default.
+To sign a key the player already has, pass `--key their_key.pub`, and send
+back `their_key-cert.pub`. `--days` sets how long it lasts (default 30) and
+`--ca` picks another CA file.
+
+### Playing
+
+Once connected, players log in
 to the BBS itself: any name and any password are accepted, and progress is
 saved per name (`Dark Wren` is stored as `dark_wren`). `ssh host command`
 is refused because the BBS needs an interactive terminal. Piped input
@@ -49,6 +75,7 @@ Options:
 | `--world` | `world` | world directory |
 | `--state-dir` | `state` | where per-player progress JSON lives |
 | `--host-key` | `host_key` | RSA host key; generated on first run |
+| `--user-ca` | `user_ca.pub` | CA public key that signs player certificates |
 | `--list-users` | | print saved players and exit |
 | `--reset-user NAME` | | delete NAME's progress and exit |
 
@@ -121,6 +148,7 @@ in upper case. Anything else gets `Bad command or file name`.
 ```
 src/ssharg/
   cli.py            argparse entry point (`ssharg` script, `python -m ssharg`)
+  certs.py          player certificates: `ssharg-cert`, and the server's checks
   bbs.py            the session: login, boot, menu, authorization keys
   dos.py            the file-area prompt and its commands
   context.py        per-session context shared by the BBS, DOS and world hooks

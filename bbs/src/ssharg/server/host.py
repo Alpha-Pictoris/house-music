@@ -1,6 +1,7 @@
 """Paramiko SSH server: authentication, channel requests, and per-connection session handling."""
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import socket
@@ -8,9 +9,12 @@ import threading
 import time
 import traceback
 import paramiko
+from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.hazmat.primitives.serialization import SSHCertificate, SSHPublicKeyTypes, load_ssh_public_identity
 from pydantic import BaseModel, ConfigDict
 
 from ..bbs import run_session
+from ..certs import CertificateRejected, verify
 from ..state import StateStore
 from ..terminal import Terminal
 from ..vfs import World
@@ -26,15 +30,18 @@ class ServerConfig(BaseModel):
     world: World
     store: StateStore
     host_key: paramiko.PKey
+    user_ca: SSHPublicKeyTypes
 
 
 class ArgServer(paramiko.ServerInterface):
-    """Accepts any username; password, none and keyboard-interactive succeed; publickey fails.
+    """Admits only clients holding a certificate that `certs.verify` accepts for their username.
 
-    The SSH username is ignored: players log in to the BBS itself once connected.
+    Every other auth method fails through paramiko's defaults. Players still log in to the BBS
+    itself once connected.
     """
 
-    def __init__(self, banner: str = "") -> None:
+    def __init__(self, user_ca: SSHPublicKeyTypes, banner: str = "") -> None:
+        self.user_ca = user_ca
         self.banner = banner
         self.username = "guest"
         self.ready = threading.Event()
@@ -45,26 +52,19 @@ class ArgServer(paramiko.ServerInterface):
         self.terminal: Terminal | None = None
 
     def get_allowed_auths(self, username: str) -> str:
-        return "password,keyboard-interactive"
-
-    def _accept(self, username: str) -> int:
-        self.username = username
-        return paramiko.AUTH_SUCCESSFUL
-
-    def check_auth_none(self, username: str) -> int:
-        return self._accept(username)
-
-    def check_auth_password(self, username: str, password: str) -> int:
-        return self._accept(username)
+        return "publickey"
 
     def check_auth_publickey(self, username: str, key: paramiko.PKey) -> int:
-        return paramiko.AUTH_FAILED
-
-    def check_auth_interactive(self, username: str, submethods: str) -> paramiko.InteractiveQuery:
+        cert = _certificate(key)
+        if cert is None:
+            return paramiko.AUTH_FAILED
+        try:
+            userdata = verify(cert, self.user_ca, username)
+        except CertificateRejected as e:
+            print(f"cert rejected user={json.dumps(username)}: {e}", flush=True)
+            return paramiko.AUTH_FAILED
+        print(f"cert extension userdata@house-music: {json.dumps(userdata.decode('utf-8', 'replace'))}", flush=True)
         self.username = username
-        return paramiko.InteractiveQuery()
-
-    def check_auth_interactive_response(self, responses: list[str]) -> int:
         return paramiko.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
@@ -102,6 +102,17 @@ class ArgServer(paramiko.ServerInterface):
 NO_EXEC = "This system requires an interactive terminal.\n"
 
 
+def _certificate(key: paramiko.PKey) -> SSHCertificate | None:
+    blob = getattr(key, "public_blob", None)
+    if blob is None:
+        return None
+    try:
+        identity = load_ssh_public_identity(blob.key_type.encode() + b" " + base64.b64encode(blob.key_blob))
+    except (ValueError, UnsupportedAlgorithm):
+        return None
+    return identity if isinstance(identity, SSHCertificate) else None
+
+
 def _session_log(username: str, addr: tuple, history: list[str]) -> None:
     source = f"{addr[0]}:{addr[1]}" if len(addr) >= 2 else str(addr)
     print(f"session user={username} src={source} history={json.dumps(history)}", flush=True)
@@ -127,7 +138,7 @@ def handle_connection(sock: socket.socket, addr: tuple, cfg: ServerConfig) -> No
         transport = paramiko.Transport(sock)
         transport.local_version = SERVER_VERSION
         transport.add_server_key(cfg.host_key)
-        server = ArgServer(cfg.world.banner)
+        server = ArgServer(cfg.user_ca, cfg.world.banner)
         transport.start_server(server=server)
         channel = transport.accept(CHANNEL_WAIT)
         if channel is None or not server.ready.wait(CHANNEL_WAIT):

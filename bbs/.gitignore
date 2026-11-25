@@ -4,4 +4,7 @@ __pycache__/
 .pytest_cache/
 state/
 host_key
+user_ca
+user_ca.pub
+players/
 .run_result.json

@@ -5,6 +5,7 @@ description = "An old bulletin board system over SSH for alternate reality games
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "cryptography>=40",
     "jinja2>=3.1",
     "paramiko>=3.4",
     "pydantic>=2.7",
@@ -12,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 ssharg = "ssharg.cli:main"
+ssharg-cert = "ssharg.certs:main"
 
 [dependency-groups]
 dev = [
