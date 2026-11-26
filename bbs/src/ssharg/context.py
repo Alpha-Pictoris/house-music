@@ -1,8 +1,11 @@
 """Per-session context shared by the BBS, the DOS prompt, and world hooks."""
 from __future__ import annotations
 
+import time
+
 from pydantic import BaseModel, ConfigDict, Field
 
+from .screens import play_screen, strip_timing
 from .state import StateStore
 from .terminal import LineReader, Terminal
 from .vfs import FsView, World
@@ -33,6 +36,45 @@ class Context(BaseModel):
             self.history.append(line.strip())
             self.store.record_command(self.username, self.session_id, line.strip())
         return line
+
+    def screen_vars(self) -> dict[str, object]:
+        """The variables every screen template can use."""
+        return {
+            "bbs": self.world.name,
+            "user": self.handle,
+            "last_login": self.last_login or "never",
+            "calls": self.calls,
+            "nomos_state": self.nomos_state,
+            "meta": self.world.meta,
+            "ctx": self,
+        }
+
+    def key_ready(self) -> bool:
+        """True when a keystroke is already waiting for the reader."""
+        if self.reader.pending:
+            return True
+        for name in ("poll", "recv_ready"):
+            probe = getattr(self.reader.channel, name, None)
+            if callable(probe):
+                try:
+                    return bool(probe())
+                except Exception:
+                    return False
+        return False
+
+    def show_rendered(self, text: str, line_delay: float = 0.0) -> None:
+        """Write a rendered screen: paced on a live terminal, all at once otherwise."""
+        if self.pace and self.term.tty:
+            if play_screen(text, self.term.write, time.sleep, line_delay, self.key_ready):
+                self._swallow_key()
+        else:
+            self.term.write(strip_timing(text))
+
+    def _swallow_key(self) -> None:
+        """Discard the keystrokes that stopped an animation, up to and including its Enter."""
+        while self.reader.pending:
+            if self.reader.pending.popleft() == "\n":
+                return
 
     def has_flag(self, flag: str) -> bool:
         return self.store.has_flag(self.username, flag)

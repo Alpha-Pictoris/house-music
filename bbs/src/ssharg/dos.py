@@ -11,6 +11,7 @@ import traceback
 from typing import Callable
 
 from .context import Context
+from .screens import render_text
 from .vfs import FsError, Node
 
 DRIVE = "C"
@@ -118,6 +119,22 @@ def type_(ctx: Context, args: list[str], switches: set[str]) -> bool:
         raise DosError("Access denied" if exc.reason == "Access denied" else f"File not found - {args[0].upper()}")
     text = data.decode("utf-8", "replace")
     ctx.term.write(text if text.endswith("\n") or not text else text + "\n")
+    return False
+
+
+@command("PLAY", "Play an animation file.  PLAY file")
+def play(ctx: Context, args: list[str], switches: set[str]) -> bool:
+    """Render the file as a screen template and honour its timing and animation blocks."""
+    if not args:
+        raise DosError("Required parameter missing")
+    arg = args[0]
+    try:
+        canon = ctx.fs.resolve(to_vfs(arg))
+        data = ctx.fs.read(canon)
+    except FsError as exc:
+        raise DosError("Access denied" if exc.reason == "Access denied" else f"File not found - {arg.upper()}")
+    source = data.decode("cp437" if canon.lower().endswith(".ans") else "utf-8", "replace")
+    ctx.show_rendered(render_text(ctx.world.templates, source, ctx.screen_vars()))
     return False
 
 

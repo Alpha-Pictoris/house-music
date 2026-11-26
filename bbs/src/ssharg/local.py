@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import select
 import shutil
 import signal
 from typing import Iterator
@@ -36,6 +37,10 @@ class LocalChannel:
 
     def recv(self, nbytes: int) -> bytes:
         return os.read(self.stdin_fd, nbytes)
+
+    def poll(self) -> bool:
+        """True when input is already waiting, so an animation can stop on a key."""
+        return bool(select.select([self.stdin_fd], [], [], 0)[0])
 
     def sendall(self, data: bytes) -> None:
         _write_all(self.stdout_fd, data)

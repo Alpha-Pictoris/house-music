@@ -40,7 +40,7 @@ def test_missing_and_not_a_directory(fs):
 
 def test_listdir_sorted_case_insensitively(fs):
     assert [n for n, _ in fs.listdir("/")] == ["DOCS", "LOGS", "README.TXT", "USERS"]
-    assert [n for n, _ in fs.listdir(".")] == [".NOTES", "JOURNAL.TXT", "TODO.TXT"]
+    assert [n for n, _ in fs.listdir(".")] == [".NOTES", "JOURNAL.TXT", "SCANNER.ANS", "TODO.TXT"]
 
 
 def test_read_records_flags_once_per_read(world):

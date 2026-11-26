@@ -10,6 +10,8 @@ KATOIKIA-7 is a house run by NOMOS, a control system that sets the rules every r
 
 Kade’s journal in `C:\USERS\KADE\JOURNAL.TXT` says the override was hidden “the way all the important things in a home directory are hidden”. `DIR /A` in Kade’s folder shows `.NOTES`, which holds `.OVERRIDE`. Reading it with `TYPE` engages the override and records the `override` flag.
 
+`SCANNER.ANS` sits in the same folder as a working prop, not a clue. `PLAY SCANNER.ANS` shows a signal-scan animation that redraws until the player presses a key.
+
 ## The restore word
 
 The journal also holds a block marked `NOMOS NOTE`. Decoded from base64, it reads “with the override engaged, give NOMOS the word KEYSTONE”. Kade’s to-do list points at the key prompt on the board.

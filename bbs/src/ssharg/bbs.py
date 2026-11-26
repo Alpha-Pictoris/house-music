@@ -7,12 +7,11 @@ from __future__ import annotations
 
 import base64
 import binascii
-import time
 import traceback
 
 from .context import Context
 from .dos import run_dos
-from .screens import play_screen, render_screen, strip_timing
+from .screens import render_screen
 from .scripts import HOOKS
 from .state import StateStore, safe_username
 from .terminal import Channel, LineReader, SessionClosed, Terminal
@@ -25,20 +24,12 @@ DEFAULT_BOOT_DELAY = 0.05
 
 def render(ctx: Context, name: str) -> str:
     """The text of screen `name`, rendered as a Jinja template (see `screen_vars`)."""
-    return render_screen(ctx.world.templates, name, screen_vars(ctx))
+    return render_screen(ctx.world.templates, name, ctx.screen_vars())
 
 
 def screen_vars(ctx: Context) -> dict[str, object]:
     """The variables every screen template can use."""
-    return {
-        "bbs": ctx.world.name,
-        "user": ctx.handle,
-        "last_login": ctx.last_login or "never",
-        "calls": ctx.calls,
-        "nomos_state": ctx.nomos_state,
-        "meta": ctx.world.meta,
-        "ctx": ctx,
-    }
+    return ctx.screen_vars()
 
 
 def show(ctx: Context, name: str, line_delay: float = 0.0) -> None:
@@ -47,11 +38,7 @@ def show(ctx: Context, name: str, line_delay: float = 0.0) -> None:
     `line_delay` is the wait after each line outside any `rate` block. Without pacing
     (tests, or a caller with no terminal) the screen is written at once.
     """
-    text = render(ctx, name)
-    if ctx.pace and ctx.term.tty:
-        play_screen(text, ctx.term.write, time.sleep, line_delay)
-    else:
-        ctx.term.write(strip_timing(text))
+    ctx.show_rendered(render(ctx, name), line_delay)
 
 
 def decode_key(key: str) -> bytes | None:

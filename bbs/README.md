@@ -157,6 +157,7 @@ A read-only DOS-style prompt (`C:\USERS\KADE>`) over the world tree:
 | `DIR [path] [/A]` (or `LS`, `ls -a`) | list a directory; `/A` includes hidden files |
 | `CD [path]` (or `CHDIR`) | change directory; `CD ..`, `CD..`, `CD \` work |
 | `TYPE file` | print a file |
+| `PLAY file` | play the file as an animated screen (see Animations) |
 | `CLS` | clear the screen |
 | `VER` | print `dos_version` from `meta.json` |
 | `HELP` | list commands |
@@ -256,6 +257,34 @@ Modem on COM1 .................... 2400 baud, carrier present
 {% endcall %}
 ```
 
+#### Animations
+
+Any screen, and any file run with `PLAY`, can redraw frames in place:
+
+```
+{% call animate(0.2, loops=0) %}
+  [          ] SEARCHING
+{{ frame(0.5) }}
+  [██████████] NO RULE TABLE
+{% endcall %}
+```
+
+| in the block | effect |
+| --- | --- |
+| `{% call animate(0.2) %}…{% endcall %}` | show each frame 0.2 s apart, once |
+| `loops=3` | repeat the frames 3 times |
+| `loops=0` | repeat until the player presses a key |
+| `{{ frame() }}` on its own line | split the block into frames |
+| `{{ frame(0.5) }}` | wait 0.5 s after the frame the marker just ended |
+
+Each frame replaces the one before it: the engine moves the cursor back
+up and redraws. End every frame with a newline and keep it inside the
+terminal width. The key that stops a `loops=0` animation is swallowed,
+so it does not leak into the next prompt. Timing only happens on a real
+terminal. Without pacing, only the last frame prints, so let the last
+frame show the state you want left on screen. `PLAY` renders its file
+like a screen and decodes `.ans` as CP437, like ANSI screens.
+
 ### Add a file
 
 Drop it into `world/root/` at the path you want and restart the server.
@@ -279,7 +308,8 @@ never see flags. Check progress with `--list-users` or in `state/*.json`.
 
 The KATOIKIA-7 NOMOS Control System, left online after NOMOS lost its rule
 table and locked the house. The story is placeholder text. Start in
-`C:\USERS\KADE`. There are two flags: one is a hidden file, and the other
+`C:\USERS\KADE`, where `PLAY SCANNER.ANS` runs Kade's signal scanner
+animation. There are two flags: one is a hidden file, and the other
 comes from entering a key that the hidden file makes work. The walkthrough is in
 [The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
 
