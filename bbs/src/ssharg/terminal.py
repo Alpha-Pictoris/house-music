@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import codecs
+import re
 from collections import deque
 from typing import Callable, Protocol
 
@@ -79,6 +80,9 @@ class LineReader:
         self.skip_lf = False
         self.eof = False
         self.ready = ready_check(channel)
+        # A terminal reply that may still arrive, such as an unanswered capability probe.
+        # The first match is dropped from input, so it never reads as typing.
+        self.late_reply: re.Pattern[bytes] | None = None
 
     def _receive(self) -> bool:
         """Read one chunk from the channel into `pending`. False at end of input."""
@@ -89,6 +93,9 @@ class LineReader:
         if not data:
             self.eof = True
             return False
+        if self.late_reply is not None and (found := self.late_reply.search(data)):
+            data = data[:found.start()] + data[found.end():]
+            self.late_reply = None
         self.pending.extend(self.decoder.decode(data))
         return True
 

@@ -127,7 +127,8 @@ sixel images. It sends the Primary Device Attributes query (`ESC [ c`) and
 reads the reply, such as `ESC [ ? 62;4;6 c`. Attribute `4` means sixel. A
 terminal that does not answer within half a second counts as no sixel, so
 plain and older terminals simply wait that long at connect. Keys the player
-types during the wait are kept. Piped sessions are never asked.
+types during the wait are kept. If the reply turns up after the wait, the
+board drops it from the player's input. Piped sessions are never asked.
 
 Screens can branch on the result:
 
