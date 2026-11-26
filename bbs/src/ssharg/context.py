@@ -28,6 +28,7 @@ class Context(BaseModel):
     calls: int = 0
     history: list[str] = Field(default_factory=list)
     nomos_state: str = "Degraded"
+    sixel: bool = False
 
     def ask(self, prompt: str, mask: str | None = None, record: bool = True) -> str | None:
         """Prompt for a line. Records it in the session history unless `record` is False."""
@@ -45,6 +46,7 @@ class Context(BaseModel):
             "last_login": self.last_login or "never",
             "calls": self.calls,
             "nomos_state": self.nomos_state,
+            "sixel": self.sixel,
             "meta": self.world.meta,
             "ctx": self,
         }

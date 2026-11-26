@@ -120,6 +120,27 @@ deletes them, and players will then see a host key warning.
    - `F`: the file area (DOS prompt). `EXIT` comes back to the menu.
    - `G` (or `Q`): the `goodbye` screen, then hang up.
 
+### Terminal capabilities
+
+Before the boot screen, the board asks a real terminal whether it can draw
+sixel images. It sends the Primary Device Attributes query (`ESC [ c`) and
+reads the reply, such as `ESC [ ? 62;4;6 c`. Attribute `4` means sixel. A
+terminal that does not answer within half a second counts as no sixel, so
+plain and older terminals simply wait that long at connect. Keys the player
+types during the wait are kept. Piped sessions are never asked.
+
+Screens can branch on the result:
+
+```
+{% if sixel %}
+...sixel image...
+{% else %}
+[ no image on this terminal ]
+{% endif %}
+```
+
+`{{ ctx.sixel }}` holds the same value.
+
 ### Authorization keys
 
 The player pastes a key at `AUTHORIZATION KEY:`. The key must be base64
@@ -176,6 +197,7 @@ src/ssharg/
   dos.py            the file-area prompt and its commands
   context.py        per-session context shared by the BBS, DOS and world hooks
   terminal.py       transport-agnostic terminal output and line reader
+  probe.py          terminal capability probe (sixel)
   scripts.py        world hook registry (`key_handler`)
   state.py          per-player progress persisted as JSON
   local.py          local-terminal front end (`--local`)

@@ -11,6 +11,7 @@ import traceback
 
 from .context import Context
 from .dos import run_dos
+from .probe import probe_sixel
 from .screens import render_screen
 from .scripts import HOOKS
 from .state import StateStore, safe_username
@@ -124,6 +125,11 @@ def run_session(world: World, store: StateStore, channel: Channel, term: Termina
     ctx = Context(world=world, store=store, term=term, reader=LineReader(channel, term),
                   fs=FsView(world), source=source, pace=pace)
     ctx.fs.on_flag = ctx.grant_flag
+    if term.tty:
+        # Consume the terminal's reply now, or key_ready() would mistake it for a keystroke.
+        typed = bytearray()
+        ctx.sixel = probe_sixel(channel, typed=typed)
+        ctx.reader.pending.extend(ctx.reader.decoder.decode(bytes(typed)))
     try:
         show(ctx, "boot", float(world.meta.get("boot_delay", DEFAULT_BOOT_DELAY)))
         if not login(ctx):
