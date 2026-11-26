@@ -24,13 +24,8 @@ DEFAULT_BOOT_DELAY = 0.05
 
 
 def render(ctx: Context, name: str) -> str:
-    """The text of screen `name`, rendered as a Jinja template (see `screen_vars`)."""
+    """The text of screen `name`, rendered as a Jinja template (see `Context.screen_vars`)."""
     return render_screen(ctx.world.templates, name, ctx.screen_vars())
-
-
-def screen_vars(ctx: Context) -> dict[str, object]:
-    """The variables every screen template can use."""
-    return ctx.screen_vars()
 
 
 def show(ctx: Context, name: str, line_delay: float = 0.0) -> None:

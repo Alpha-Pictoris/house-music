@@ -295,17 +295,21 @@ Any screen, and any file run with `PLAY`, can redraw frames in place:
 | --- | --- |
 | `{% call animate(0.2) %}…{% endcall %}` | show each frame 0.2 s apart, once |
 | `loops=3` | repeat the frames 3 times |
-| `loops=0` | repeat until the player presses a key |
+| `loops=0` | repeat until the player presses a key, at least 0.05 s per frame |
 | `{{ frame() }}` on its own line | split the block into frames |
 | `{{ frame(0.5) }}` | wait 0.5 s after the frame the marker just ended |
 
 Each frame replaces the one before it: the engine moves the cursor back
 up and redraws. End every frame with a newline and keep it inside the
-terminal width. The key that stops a `loops=0` animation is swallowed,
-so it does not leak into the next prompt. Timing only happens on a real
-terminal. Without pacing, only the last frame prints, so let the last
-frame show the state you want left on screen. `PLAY` renders its file
-like a screen and decodes `.ans` as CP437, like ANSI screens.
+terminal width. Put any "press a key" instruction above a `loops=0`
+animation, because text after it only appears once the animation stops.
+The key that stops it is swallowed, so it does not leak into the next
+prompt. Timing only happens on a real terminal. Without pacing, only the
+last frame prints, so let the last frame show the state you want left on
+screen. `PLAY` renders its file like a screen and decodes `.ans` as
+CP437, like ANSI screens. A file that is not a valid screen template,
+such as notes with `{{` in them, prints as plain text, and the server log
+names the file and the template error.
 
 ### Add a file
 

@@ -190,12 +190,16 @@ def _collect_frames(parts: list[str], start: int) -> tuple[list[str], list[float
             depth += 1
         elif command == "end":
             if depth == 0:
-                frames.append("".join(frame))
+                # A frame() marker just before endcall ends the last frame; it does not start an empty one.
+                if "".join(frame) or not frames:
+                    frames.append("".join(frame))
                 return frames, delays, i
             depth -= 1
 
 
 REDRAW = "\x1b[0m\r\x1b[{}A\x1b[J"  # reset, column 0, up N lines, clear below
+# An endless animation never redraws faster than this, so it cannot flood the connection.
+MIN_ENDLESS_DELAY = 0.05
 
 
 def _play_animation(frames: list[str], delays: list[float | None], default_delay: float,
@@ -205,7 +209,8 @@ def _play_animation(frames: list[str], delays: list[float | None], default_delay
 
     Each frame must end with a newline, so the redraw can find the frame's first
     column again. A frame's wait comes from its `frame(seconds)` marker, or from
-    the block delay when the marker carries none. True if a key stopped the loop.
+    the block delay when the marker carries none. An endless loop waits at least
+    `MIN_ENDLESS_DELAY` per frame. True if a key stopped the loop.
     """
     loop, written_lines = 0, -1
     while loops == 0 or loop < loops:
@@ -223,7 +228,8 @@ def _play_animation(frames: list[str], delays: list[float | None], default_delay
             delay = delays[k] if k < len(delays) else None
             if interrupt():
                 return True
-            sleep(default_delay if delay is None else delay)
+            wait = default_delay if delay is None else delay
+            sleep(max(wait, MIN_ENDLESS_DELAY) if loops == 0 else wait)
     return False
 
 

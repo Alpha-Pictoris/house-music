@@ -1,6 +1,7 @@
 NOMOS SIGNAL SCANNER - v1.3 (Kade's build)
 
 Searching for the rule table...
+Press any key to stop the scan.
 
 {% call animate(0.15, loops=0) %}
   [          ]  0%  listening...
@@ -25,5 +26,3 @@ Searching for the rule table...
 {{ frame() }}
   [лллллллллл] 100% NO RULE TABLE
 {% endcall %}
-
-Press any key to stop the scan.

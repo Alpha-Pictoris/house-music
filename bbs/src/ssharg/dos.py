@@ -6,9 +6,12 @@ are switches. Names starting with `.` are hidden from DIR unless `/A` is given.
 from __future__ import annotations
 
 import re
+import sys
 import time
 import traceback
 from typing import Callable
+
+from jinja2 import TemplateError
 
 from .context import Context
 from .screens import render_text
@@ -134,7 +137,15 @@ def play(ctx: Context, args: list[str], switches: set[str]) -> bool:
     except FsError as exc:
         raise DosError("Access denied" if exc.reason == "Access denied" else f"File not found - {arg.upper()}")
     source = data.decode("cp437" if canon.lower().endswith(".ans") else "utf-8", "replace")
-    ctx.show_rendered(render_text(ctx.world.templates, source, ctx.screen_vars()))
+    try:
+        text = render_text(ctx.world.templates, source, ctx.screen_vars())
+    except TemplateError as exc:
+        # Plain text with braces is not an animation: show it as TYPE would, and tell the world author.
+        print(f"PLAY {canon}: not a screen template ({exc}); shown as plain text", file=sys.stderr)
+        text = source if source.endswith("\n") or not source else source + "\n"
+        ctx.term.write(text)
+        return False
+    ctx.show_rendered(text)
     return False
 
 

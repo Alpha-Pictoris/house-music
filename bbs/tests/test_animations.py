@@ -1,6 +1,13 @@
 import pytest
 
-from ssharg.screens import make_environment, play_screen, render_screen, render_text, strip_timing
+from ssharg.context import Context
+from ssharg.dos import run_command
+from ssharg.screens import (MIN_ENDLESS_DELAY, make_environment, play_screen, render_screen,
+                            render_text, strip_timing)
+from ssharg.terminal import LineReader, Terminal
+from ssharg.vfs import FsView, load_world
+
+from .conftest import FakeChannel, PtyChannel
 
 
 def _play(template: str, line_delay: float = 0.0, interrupt=None, **variables):
@@ -109,21 +116,59 @@ def test_play_screen_reports_whether_a_key_stopped_the_animation():
     assert play_screen(finite, lambda t: None, lambda s: None, 0, lambda: False) is False
 
 
+def _live_ctx(world, store, chan):
+    term = Terminal(chan, tty=True)
+    return Context(world=world, store=store, term=term, reader=LineReader(chan, term),
+                   fs=FsView(world), pace=True)
+
+
+ENDLESS = "{% call animate(0, loops=0) %}\nA\n{{ frame() }}\nB\n{% endcall %}\n"
+
+
 def test_the_key_that_stops_an_animation_is_swallowed(world, store):
     """A stop key must not leak into the next prompt as a stray command."""
-    from ssharg.context import Context
-    from ssharg.terminal import LineReader, Terminal
-    from ssharg.vfs import FsView
+    chan = PtyChannel([b"x\r"])  # the key is still on the channel, as over SSH
+    ctx = _live_ctx(world, store, chan)
+    ctx.show_rendered(render_text(world.templates, ENDLESS, ctx.screen_vars()))
+    chan.chunks.append(b"DIR\r")
+    assert ctx.reader.read_line("> ") == "DIR"
 
-    class Chan:
-        def recv(self, n): return b""
-        def sendall(self, data): pass
 
-    chan = Chan()
-    ctx = Context(world=world, store=store, term=Terminal(chan, tty=True),
-                  reader=LineReader(chan, Terminal(chan, tty=True)), fs=FsView(world), pace=True)
-    ctx.reader.pending.extend("x\n")  # the key that "stopped" the animation, plus Enter
-    text = render_text(world.templates, "{% call animate(0, loops=0) %}\nA\n{{ frame() }}\nB\n{% endcall %}\n",
-                       ctx.screen_vars())
-    ctx.show_rendered(text)
-    assert list(ctx.reader.pending) == []
+def test_a_hang_up_stops_an_endless_animation(world, store):
+    class HungUp(PtyChannel):
+        def recv_ready(self): return True  # paramiko reports EOF as readable
+
+    ctx = _live_ctx(world, store, HungUp())
+    ctx.show_rendered(render_text(world.templates, ENDLESS, ctx.screen_vars()))
+    assert ctx.reader.read_line("> ") is None
+
+
+def test_frame_marker_before_endcall_does_not_add_an_empty_frame():
+    template = "{% call animate(1, loops=2) %}\nA\n{{ frame() }}\nB\n{{ frame(0.25) }}\n{% endcall %}\nAFTER\n"
+    text, events = _play(template)
+    assert events == ["A\n", 1.0, REDRAW, "B\n", 0.25, REDRAW, "A\n", 1.0, REDRAW, "B\n", "AFTER\n"]
+    assert strip_timing(text) == "B\nAFTER\n"
+
+
+def test_endless_animation_waits_a_minimum_between_frames():
+    keys = iter([False, False, True])
+    _, events = _play(ENDLESS, interrupt=lambda: next(keys))
+    assert [e for e in events if isinstance(e, float)] == [MIN_ENDLESS_DELAY, MIN_ENDLESS_DELAY]
+
+
+def test_scanner_says_how_to_stop_before_it_starts(dos):
+    dos("cd users\\kade")
+    out = dos("play scanner.ans")
+    assert out.index("Press any key to stop the scan.") < out.index("[")
+
+
+def test_play_shows_plain_text_with_braces_as_typed(tmp_path, store, capsys):
+    (tmp_path / "root").mkdir()
+    (tmp_path / "root" / "PRICES.TXT").write_text("lamp: {{ cost }}\n{% shelf %}\n")
+    world = load_world(tmp_path)
+    chan = FakeChannel()
+    term = Terminal(chan, tty=False)
+    ctx = Context(world=world, store=store, term=term, reader=LineReader(chan, term), fs=FsView(world))
+    run_command(ctx, "play prices.txt")
+    assert chan.text == "lamp: {{ cost }}\n{% shelf %}\n"
+    assert "PRICES.TXT" in capsys.readouterr().err

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import codecs
 from collections import deque
-from typing import Protocol
+from typing import Callable, Protocol
 
 MAX_LINE = 4096
 BLUE, GREEN, CYAN, RED, YELLOW, BOLD = "1;34", "1;32", "1;36", "1;31", "1;33", "1"
@@ -17,6 +17,15 @@ class SessionClosed(Exception):
 class Channel(Protocol):
     def recv(self, nbytes: int, /) -> bytes: ...
     def sendall(self, data: bytes, /) -> None: ...
+
+
+def ready_check(channel: Channel) -> Callable[[], bool] | None:
+    """The channel's non-blocking "input waiting?" helper: `poll` (local) or `recv_ready` (paramiko)."""
+    for name in ("poll", "recv_ready"):
+        check = getattr(channel, name, None)
+        if callable(check):
+            return check
+    return None
 
 
 class Terminal:
@@ -69,19 +78,48 @@ class LineReader:
         self.decoder = codecs.getincrementaldecoder("utf-8")("replace")
         self.skip_lf = False
         self.eof = False
+        self.ready = ready_check(channel)
+
+    def _receive(self) -> bool:
+        """Read one chunk from the channel into `pending`. False at end of input."""
+        try:
+            data = self.channel.recv(1024)
+        except Exception:
+            data = b""
+        if not data:
+            self.eof = True
+            return False
+        self.pending.extend(self.decoder.decode(data))
+        return True
+
+    def _channel_ready(self) -> bool:
+        if self.eof or self.ready is None:
+            return False
+        try:
+            return bool(self.ready())
+        except Exception:
+            return False
+
+    def key_waiting(self) -> bool:
+        """True when the player has typed something not yet read, or has hung up.
+
+        Reads only what the channel already holds, so it never blocks.
+        """
+        while not self.pending and self._channel_ready():
+            if not self._receive():
+                break
+        return bool(self.pending) or self.eof
+
+    def discard_waiting(self) -> None:
+        """Drop everything typed but not yet read, such as the key that stopped an animation."""
+        while self._channel_ready() and self._receive():
+            pass
+        self.pending.clear()
 
     def _next(self) -> str | None:
         while not self.pending:
-            if self.eof:
+            if self.eof or not self._receive():
                 return None
-            try:
-                data = self.channel.recv(1024)
-            except Exception:
-                data = b""
-            if not data:
-                self.eof = True
-                return None
-            self.pending.extend(self.decoder.decode(data))
         return self.pending.popleft()
 
     def _skip_escape(self) -> None:

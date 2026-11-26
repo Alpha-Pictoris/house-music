@@ -53,30 +53,18 @@ class Context(BaseModel):
 
     def key_ready(self) -> bool:
         """True when a keystroke is already waiting for the reader."""
-        if self.reader.pending:
-            return True
-        for name in ("poll", "recv_ready"):
-            probe = getattr(self.reader.channel, name, None)
-            if callable(probe):
-                try:
-                    return bool(probe())
-                except Exception:
-                    return False
-        return False
+        return self.reader.key_waiting()
 
     def show_rendered(self, text: str, line_delay: float = 0.0) -> None:
-        """Write a rendered screen: paced on a live terminal, all at once otherwise."""
+        """Write a rendered screen: paced on a live terminal, all at once otherwise.
+
+        The key that stops an animation is discarded, so it does not reach the next prompt.
+        """
         if self.pace and self.term.tty:
             if play_screen(text, self.term.write, time.sleep, line_delay, self.key_ready):
-                self._swallow_key()
+                self.reader.discard_waiting()
         else:
             self.term.write(strip_timing(text))
-
-    def _swallow_key(self) -> None:
-        """Discard the keystrokes that stopped an animation, up to and including its Enter."""
-        while self.reader.pending:
-            if self.reader.pending.popleft() == "\n":
-                return
 
     def has_flag(self, flag: str) -> bool:
         return self.store.has_flag(self.username, flag)

@@ -7,6 +7,7 @@ import pytest
 from ssharg.bbs import run_session
 from ssharg.context import Context
 from ssharg.dos import run_command
+from ssharg.probe import DA1_QUERY
 from ssharg.scripts import load_world_scripts
 from ssharg.state import StateStore
 from ssharg.terminal import LineReader, Terminal
@@ -40,6 +41,25 @@ class FakeChannel:
     @property
     def text(self) -> str:
         return self.sent.decode("utf-8", "replace")
+
+
+class PtyChannel(FakeChannel):
+    """A FakeChannel with paramiko's `recv_ready`. Queued chunks are ready at once.
+
+    `reply` is what the terminal answers to the DA1 query; it lands ahead of any typed input.
+    """
+
+    def __init__(self, chunks: list[bytes] | None = None, reply: bytes | None = None) -> None:
+        super().__init__(chunks)
+        self.reply = reply
+
+    def recv_ready(self) -> bool:
+        return bool(self.chunks)
+
+    def sendall(self, data: bytes) -> None:
+        super().sendall(data)
+        if data == DA1_QUERY and self.reply is not None:
+            self.chunks.insert(0, self.reply)
 
 
 @pytest.fixture(scope="session")
