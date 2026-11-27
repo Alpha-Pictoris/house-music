@@ -1,13 +1,12 @@
 services:
   bbs:
     build: .
-    image: ssharg
+    image: ghcr.io/alpha-pictoris/house-music-board:latest
     restart: unless-stopped
     ports:
       - "${SSHARG_PORT:-2222}:2222"
     volumes:
       - data:/data
-      - ./world:/app/world:ro
       - type: bind
         source: ./user_ca.pub
         target: /ca/user_ca.pub
@@ -26,7 +25,7 @@ services:
   # Issues player certificates. The CA private key stays on the host and is
   # only mounted for these one-off runs, never into the bbs container.
   cert:
-    image: ssharg
+    image: ghcr.io/alpha-pictoris/house-music-board:latest
     profiles: [tools]
     entrypoint: ["ssharg-cert"]
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
