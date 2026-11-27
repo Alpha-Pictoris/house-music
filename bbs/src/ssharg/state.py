@@ -126,7 +126,7 @@ class StateStore:
         return added
 
     def add_key(self, username: str, key: str, accepted: bool) -> None:
-        """Record an authorization key the player submitted (valid base64 only)."""
+        """Record an authorization key the player submitted, with the verdict."""
         def apply(s: UserState) -> None:
             s.keys.append({"key": key, "at": now_iso(), "accepted": accepted})
             s.keys = s.keys[-MAX_KEYS_KEPT:]

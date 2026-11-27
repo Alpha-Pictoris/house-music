@@ -10,8 +10,9 @@ read-only file area with a DOS-style prompt.
 Nothing a player types is ever executed on the host, and the host's real
 filesystem is never exposed: the whole world is loaded into memory from the
 `world/` directory at startup. The game master changes the game by editing
-files under `world/`, not engine code. The one exception is the
-authorization-key handler, a few lines of Python in `world/scripts.py`.
+files under `world/`, not engine code. The one exception is
+`world/scripts.py`: a few lines of Python for the authorization-key handler
+and the board's programs.
 
 ## Running it
 
@@ -82,7 +83,7 @@ Options:
 Each finished SSH session logs one line to stdout:
 
 ```
-session user=wren src=127.0.0.1:60882 history=["F", "dir", "exit", "K", "Tk9S...", "G"]
+session user=wren src=127.0.0.1:60882 history=["F", "dir", "exit", "K", "7QX2M", "G"]
 ```
 
 Run the tests with `uv run pytest`. They open no sockets.
@@ -162,20 +163,18 @@ Screens can branch on the result:
 
 ### Authorization keys
 
-The player pastes a key at `AUTHORIZATION KEY:`. The key must be base64
-(standard or URL-safe, padding optional, whitespace ignored). Anything else
-is rejected without being saved. A valid key's decoded bytes go to the
-world's key handler, which returns True to accept it or False to reject it.
-Every valid key a player submits is saved in their progress file with a
-timestamp and the verdict. With no handler registered, any valid base64 key
-is accepted.
+The player types a key at `AUTHORIZATION KEY:`. Whitespace is removed and
+the text goes to the world's key handler, which returns True to accept it
+or False to reject it. A blank key goes back to the menu. Every key a
+player submits is saved in their progress file with a timestamp and the
+verdict. With no handler registered, any key is accepted.
 
 ```python
 from ssharg.scripts import key_handler
 
 @key_handler
-def check_key(ctx, payload: bytes) -> bool:
-    if payload != b"expected":
+def check_key(ctx, key: str) -> bool:
+    if key.upper() != "EXPECTED":
         return False
     ctx.term.line("TRANSMISSION RECEIVED.")
     ctx.grant_flag("transmission")
@@ -190,7 +189,7 @@ raises, the key counts as rejected.
 
 ### The file area
 
-A read-only DOS-style prompt (`C:\USERS\KADE>`) over the world tree:
+A read-only DOS-style prompt (`C:\USER\KRONOS>`) over the world tree:
 
 | command | does |
 | --- | --- |
@@ -204,7 +203,30 @@ A read-only DOS-style prompt (`C:\USERS\KADE>`) over the world tree:
 | `EXIT` | back to the BBS menu |
 
 Paths use `\` and may start with `C:`. Names are case-insensitive and shown
-in upper case. Anything else gets `Bad command or file name`.
+in upper case. Typing a name that is not a command runs the program of that
+name (see Programs). Anything else gets `Bad command or file name`.
+
+### Programs
+
+A program is a `.EXE` file in the world tree plus a Python function in
+`world/scripts.py`. Players run it by typing its name, with or without
+`.EXE`, from its own directory, from anywhere if it is in `C:\BIN`, or by
+path (`BIN\ELEVATE`, `C:\BIN\ELEVATE.EXE`). The file's bytes are only what
+`TYPE` and `DIR` show; the function does the work.
+
+```python
+from ssharg.scripts import program
+
+@program("ELEVATE")
+def elevate(ctx, args: list[str]) -> None:
+    word = ctx.ask("PASSWORD: ", mask="*", record=False) or ""
+    ctx.term.line("ACCESS GRANTED." if word.upper() == "OPEN SESAME" else "ACCESS DENIED.")
+```
+
+`args` are the words typed after the name. The function gets the same `ctx`
+as the key handler, plus `ctx.ask()` to prompt and `ctx.ip`, the caller's
+address without the port (`local` for `--local`). A `.EXE` with no function
+says `This program cannot be run in DOS mode.`
 
 ## Code layout
 
@@ -217,7 +239,7 @@ src/ssharg/
   context.py        per-session context shared by the BBS, DOS and world hooks
   terminal.py       transport-agnostic terminal output and line reader
   probe.py          terminal capability probe (sixel)
-  scripts.py        world hook registry (`key_handler`)
+  scripts.py        world hook registry (`key_handler`, `program`)
   state.py          per-player progress persisted as JSON
   local.py          local-terminal front end (`--local`)
   server/host.py    SSH front end: Paramiko auth and channel dispatch
@@ -235,7 +257,7 @@ world/
   banner.txt      shown by the ssh client before connecting (and by --local)
   meta.json       BBS name, volume label, DOS version, file dates, flags
   screens/        BBS screens (see below)
-  scripts.py      the authorization-key handler
+  scripts.py      the authorization-key handler and programs
   root/           the file area; root/ is C:\
 ```
 
@@ -250,6 +272,7 @@ world/
 | `boot_delay` | default seconds per line for the boot screen (default 0.05; other screens default to 0) |
 | `flags` | flag names and descriptions, for the game master's reference |
 | `node_flags` | files that record a flag when read with `TYPE` |
+| `templates` | files that `TYPE` renders as screens, so they can use `{% if sixel %}` and timing |
 
 ### Screens
 
@@ -270,7 +293,7 @@ Screens are [Jinja2](https://jinja.palletsprojects.com/) templates. They can
 use `{{ bbs }}`, `{{ user }}` (the name as typed), `{{ calls }}` (this player's
 call count, including this one), `{{ last_login }}` (`never` on a first call),
 `{{ nomos_state }}`, `{{ meta }}` (all of `meta.json`) and `{{ ctx }}` (the
-session context, e.g. `{{ ctx.has_flag("override") }}`). Conditionals, loops,
+session context, e.g. `{{ ctx.has_flag("rebooted") }}`). Conditionals, loops,
 filters and `{% include "other_screen" %}` all work. To pad a value inside a
 box, use `{{ value.ljust(28) }}`. Rendering is strict: a misspelled or unknown
 variable raises an error instead of printing nothing. Screens shown before login (`boot`,
@@ -343,20 +366,20 @@ Flags are names that record progress. Either attach one to a file, so
 reading the file with `TYPE` records it:
 
 ```json
-"node_flags": {"/USERS/KADE/.NOTES/.OVERRIDE": ["override"]}
+"node_flags": {"/USER/KRONOS/SECRETS.TXT": ["read_secrets"]}
 ```
 
-or grant it from the key handler with `ctx.grant_flag("name")`. Players
+or grant it from the key handler or a program with `ctx.grant_flag("name")`. Players
 never see flags. Check progress with `--list-users` or in `state/*.json`.
 
 ## The shipped world
 
-The KATOIKIA-7 NOMOS Control System, left online after NOMOS lost its rule
-table and locked the house. The story is placeholder text. Start in
-`C:\USERS\KADE`, where `PLAY SCANNER.ANS` runs Kade's signal scanner
-animation. There are two flags: one is a hidden file, and the other
-comes from entering a key that the hidden file makes work. The walkthrough is in
-[The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
+The Katoikia-7 Nomos Control Center. NOMOS has failed to start, so the
+house sweeps from left to right and plays one note per item. Callers read
+`C:\README.TXT`, unscramble Kronos's password, run `ELEVATE` for a key made
+from their address and login name, enter the key at **[K]** and run
+`REBOOT`. The flags are `elevated`, `authorized` and `rebooted`. The
+walkthrough is in [The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
 
 ## Deliberate limitations
 

@@ -96,17 +96,41 @@ def test_frame_marker_outside_an_animation_is_harmless():
 
 # --- PLAY through the DOS prompt (paced off: shows the final frame) -----------------
 
-def test_play_shows_the_final_frame_of_a_world_animation(dos):
-    dos("cd users\\kade")
-    out = dos("play scanner.ans")
-    assert "NO RULE TABLE" in out          # text only the last frame carries
-    assert out.count("[") == out.count("]")  # one bar, not every frame
+SCAN = ("Press any key to stop the scan.\n\n{% call animate(0.15, loops=0) %}\n"
+        "  [    ] listening\n{{ frame() }}\n  [====] NO RULE TABLE\n{% endcall %}\n")
 
 
-def test_play_missing_file_and_directory(dos):
-    assert dos("play nowhere.ans") == "File not found - NOWHERE.ANS\n"
-    assert dos("play users").startswith("Access denied")
-    assert dos("play") == "Required parameter missing\n"
+@pytest.fixture
+def play(tmp_path, store):
+    """play(line) -> output, in a world holding C:\\SCANS\\SCAN.ANS."""
+    (tmp_path / "root" / "SCANS").mkdir(parents=True)
+    (tmp_path / "root" / "SCANS" / "SCAN.ANS").write_bytes(SCAN.encode("cp437"))
+    world = load_world(tmp_path)
+    chan = FakeChannel()
+    term = Terminal(chan, tty=False)
+    ctx = Context(world=world, store=store, term=term, reader=LineReader(chan, term), fs=FsView(world))
+
+    def go(line: str) -> str:
+        mark = len(chan.sent)
+        run_command(ctx, line)
+        return chan.sent[mark:].decode()
+    return go
+
+
+def test_play_shows_the_final_frame_of_an_animation(play):
+    out = play("play scans\\scan.ans")
+    assert "NO RULE TABLE" in out and "listening" not in out
+
+
+def test_play_says_how_to_stop_before_the_animation_starts(play):
+    out = play("play scans\\scan.ans")
+    assert out.index("Press any key to stop the scan.") < out.index("[")
+
+
+def test_play_missing_file_and_directory(play):
+    assert play("play nowhere.ans") == "File not found - NOWHERE.ANS\n"
+    assert play("play scans").startswith("Access denied")
+    assert play("play") == "Required parameter missing\n"
 
 
 def test_play_screen_reports_whether_a_key_stopped_the_animation():
@@ -154,12 +178,6 @@ def test_endless_animation_waits_a_minimum_between_frames():
     keys = iter([False, False, True])
     _, events = _play(ENDLESS, interrupt=lambda: next(keys))
     assert [e for e in events if isinstance(e, float)] == [MIN_ENDLESS_DELAY, MIN_ENDLESS_DELAY]
-
-
-def test_scanner_says_how_to_stop_before_it_starts(dos):
-    dos("cd users\\kade")
-    out = dos("play scanner.ans")
-    assert out.index("Press any key to stop the scan.") < out.index("[")
 
 
 def test_play_shows_plain_text_with_braces_as_typed(tmp_path, store, capsys):
