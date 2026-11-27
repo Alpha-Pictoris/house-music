@@ -1,6 +1,11 @@
 import re
 
-from ssharg.dos import parse, prompt, to_dos, to_vfs
+from ssharg.context import Context
+from ssharg.dos import parse, prompt, run_command, to_dos, to_vfs
+from ssharg.terminal import LineReader, Terminal
+from ssharg.vfs import FsView, load_world
+
+from .conftest import FakeChannel
 
 
 def test_parse_handles_switches_aliases_and_glued_forms():
@@ -15,24 +20,34 @@ def test_parse_handles_switches_aliases_and_glued_forms():
 
 
 def test_path_translation():
-    assert to_vfs("C:\\USERS\\KADE") == "/USERS/KADE"
+    assert to_vfs("C:\\USER\\KRONOS") == "/USER/KRONOS"
     assert to_vfs("c:docs") == "docs"
-    assert to_vfs("..\\LOGS") == "../LOGS"
+    assert to_vfs("..\\BIN") == "../BIN"
     assert to_dos("/") == "C:\\"
-    assert to_dos("/USERS/kade") == "C:\\USERS\\KADE"
+    assert to_dos("/USER/kronos") == "C:\\USER\\KRONOS"
 
 
 def test_dir_lists_root(dos):
     out = dos("DIR")
-    assert " Volume in drive C is KATOIKIA" in out
+    assert " Volume in drive C is NOMOS" in out
     assert " Directory of C:\\" in out
-    assert re.search(r"<DIR>\s+DOCS", out)
+    assert re.search(r"<DIR>\s+BIN", out)
     assert re.search(r"04-13-24\s+\d+:\d\d[ap]\s+\d+ README.TXT", out)
-    assert "1 file(s)" in out and "3 dir(s)" in out
+    assert "1 file(s)" in out and "2 dir(s)" in out
 
 
-def test_dir_hides_dotfiles_unless_all(dos):
-    dos("cd \\users\\kade")
+def test_dir_hides_dotfiles_unless_all(tmp_path, store):
+    (tmp_path / "root" / "HOME" / ".NOTES").mkdir(parents=True)
+    world = load_world(tmp_path)
+    chan = FakeChannel()
+    term = Terminal(chan, tty=False)
+    ctx = Context(world=world, store=store, term=term, reader=LineReader(chan, term), fs=FsView(world))
+
+    def dos(line: str) -> str:
+        mark = len(chan.sent)
+        run_command(ctx, line)
+        return chan.sent[mark:].decode()
+    dos("cd home")
     assert ".NOTES" not in dos("dir")
     assert ".NOTES" in dos("dir /a")
     assert ".NOTES" in dos("ls -a")
@@ -40,18 +55,18 @@ def test_dir_hides_dotfiles_unless_all(dos):
 
 
 def test_dir_of_single_file_and_missing(dos):
-    assert "JOURNAL.TXT" in dos("dir c:\\users\\kade\\journal.txt")
+    assert "SECRETS.TXT" in dos("dir c:\\user\\kronos\\secrets.txt")
     assert dos("dir nowhere") == "File Not Found\n"
 
 
 def test_cd_navigation_and_prompt(dos):
     assert prompt(dos.ctx) == "C:\\>"
-    assert dos("cd users") == ""
-    assert dos("cd kade") == ""
-    assert prompt(dos.ctx) == "C:\\USERS\\KADE>"
-    assert dos("cd") == "C:\\USERS\\KADE\n"
+    assert dos("cd user") == ""
+    assert dos("cd kronos") == ""
+    assert prompt(dos.ctx) == "C:\\USER\\KRONOS>"
+    assert dos("cd") == "C:\\USER\\KRONOS\n"
     dos("cd..")
-    assert dos.ctx.fs.cwd == "/USERS"
+    assert dos.ctx.fs.cwd == "/USER"
     dos("cd\\")
     assert dos.ctx.fs.cwd == "/"
     dos("cd ..")
@@ -61,9 +76,9 @@ def test_cd_navigation_and_prompt(dos):
 
 
 def test_type(dos):
-    assert "Welcome to the KATOIKIA-7" in dos("type readme.txt")
+    assert "Welcome to the Nomos Control BBS." in dos("type readme.txt")
     assert dos("TYPE") == "Required parameter missing\n"
-    assert dos("type docs") == "Access denied\n"
+    assert dos("type bin") == "Access denied\n"
     assert dos("type nope.txt") == "File not found - NOPE.TXT\n"
 
 

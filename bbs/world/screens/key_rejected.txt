@@ -1,2 +1,3 @@
 
   *** INVALID AUTHORIZATION KEY ***
+  Run C:\BIN\ELEVATE.EXE in the file area for a key.

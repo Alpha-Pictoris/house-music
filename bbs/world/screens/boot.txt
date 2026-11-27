@@ -1,4 +1,4 @@
-SETEC BIOS v2.11  (C) Setec Astronomy
+KRONOS BIOS v2.11  (C) Katoikia Systems
 {{ pause(0.4) }}
 Memory test ......................{{ pause(0.4) }} 640K OK
 Extended memory ..................{{ pause(0.6) }} 3072K OK

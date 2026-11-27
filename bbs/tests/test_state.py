@@ -98,6 +98,5 @@ def test_add_key_records_and_caps(store):
 
 
 def test_flag_discovery_through_dos_is_persisted(dos, store):
-    out = dos("TYPE C:\\USERS\\KADE\\.NOTES\\.OVERRIDE")
-    assert "override engaged" in out and "signal" not in out
-    assert StateStore(store.dir).load("alice").found_flags == ["override"]
+    dos("ELEVATE too many secrets")
+    assert StateStore(store.dir).load("alice").found_flags == ["elevated"]

@@ -24,5 +24,5 @@ def test_run_local_piped_session(world, store):
     chan, collect = _pipes(b"bob\npw\nF\ntype readme.txt\nexit\nG\n")
     assert run_local(world, store, channel=chan, pace=False) == 0
     out = collect()
-    assert "Welcome to the KATOIKIA-7" in out and "NO CARRIER" in out
+    assert "Welcome to the Nomos Control BBS." in out and "NO CARRIER" in out
     assert store.load("bob").session_count == 1

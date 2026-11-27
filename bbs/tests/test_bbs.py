@@ -33,17 +33,6 @@ def test_key_whitespace_is_removed_and_blank_key_skipped(dial, store):
     assert [k["key"] for k in store.load("wren").keys] == ["keystone"]
 
 
-def test_key_needs_override_then_restores_nomos(dial, store):
-    key = "KEYSTONE"
-    _, _, chan = dial("wren", "", "K", key, "G")
-    assert "override not engaged" in chan.text and "INVALID AUTHORIZATION KEY" in chan.text
-    _, _, chan = dial("wren", "", "F", "type \\users\\kade\\.notes\\.override", "exit", "K", key, "G")
-    assert "rule table restored" in chan.text and "KEY ACCEPTED" in chan.text
-    state = store.load("wren")
-    assert state.found_flags == ["override", "keystone"]
-    assert [(k["key"], k["accepted"]) for k in state.keys] == [(key, False), (key, True)]
-
-
 def test_key_handler_absent_accepts_any_key(dial, store, monkeypatch):
     from ssharg import scripts
     monkeypatch.setattr(scripts, "HOOKS", {})

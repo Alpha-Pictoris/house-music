@@ -1,6 +1,7 @@
-  
+
+  KATOIKIA-7 NOMOS CONTROL CENTER
   +----------------- MAIN MENU -----------------+
-  |   NOMOS Status: {{ nomos_state.ljust(28) }}|
+  |   NOMOS Status: {{ ("Restarted" if ctx.has_flag("rebooted") else nomos_state).ljust(28) }}|
   |                                             |
   |   [K]  Enter authorization key              |
   |   [F]  File area                            |

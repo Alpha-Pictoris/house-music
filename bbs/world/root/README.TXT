@@ -1,12 +1,10 @@
-[PLACEHOLDER TEXT]
+Welcome to the Nomos Control BBS.
 
-Welcome to the KATOIKIA-7 NOMOS Control System.
+If you are reading this, NOMOS has failed to initialize properly. To
+prevent catastrophic musical collapse, reboot the system.
 
-NOMOS sets the rules every room in the house follows: doors, lights and
-sound. If you are reading this, NOMOS has lost its rule table and locked
-the house down.
+You will need the authorization key. Kronos was the last administrator
+to change the secrets over... but he was also so forgetful.
 
-Start with the system logs in C:\LOGS to find out what went wrong.
-Type PLAY USERS\KADE\SCANNER.ANS to run Kade's signal scanner.
-To restore NOMOS you will need an authorization key. Without it, the
-system cannot be changed.
+User data is stored in the USER folder. Programs can be found in BIN.
+Elevate yourself and reboot the NOMOS system.

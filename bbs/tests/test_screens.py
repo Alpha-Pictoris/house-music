@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from jinja2 import UndefinedError
 
@@ -26,7 +28,7 @@ def test_blocks_and_includes_leave_no_stray_lines():
 
 
 def test_world_menu_box_stays_aligned(world):
-    out = render_screen(world.templates, "menu", {"nomos_state": "Degraded"})
+    out = render_screen(world.templates, "menu", {"nomos_state": "Degraded", "ctx": SimpleNamespace(has_flag=lambda flag: False)})
     widths = {len(line) for line in out.splitlines() if line.strip().startswith(("|", "+"))}
     assert len(widths) == 1
 

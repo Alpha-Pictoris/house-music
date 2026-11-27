@@ -1,14 +1,13 @@
 {
   "name": "KATOIKIA-7",
-  "volume": "KATOIKIA",
+  "volume": "NOMOS",
   "dos_version": "NOMOS DOS Version 6.22",
   "epoch": 1712977920,
   "boot_delay": 0.0,
   "flags": {
-    "override": "Kade's maintenance override, read from a hidden file.",
-    "keystone": "NOMOS accepted the restore word."
+    "elevated": "ELEVATE.EXE accepted Kronos's password and issued a key.",
+    "authorized": "The BBS accepted the caller's authorization key.",
+    "rebooted": "REBOOT.EXE restarted NOMOS."
   },
-  "node_flags": {
-    "/USERS/KADE/.NOTES/.OVERRIDE": ["override"]
-  }
+  "templates": ["/USER/KRONOS/FIND.ME"]
 }
