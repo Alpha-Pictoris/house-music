@@ -56,7 +56,7 @@ export async function buildArchive(output, env = process.env) {
     .replace("{{catalogue-total}}", () => holdings.length)
     .replaceAll("{{test-strip-url}}", () => stripURL)
     .replaceAll("{{board-command}}", () => boardCommand(settings.board))
-    .replace("<!-- label-number -->", () => settings.number ? `<span class="label-number">${writtenNumber(settings.number)}</span>` : "")
+    .replace("{{label-number}}", () => writtenNumber(settings.number))
     .replace(/"(\/([^/"]+\.(?:js|css)))"/g, (_attribute, path, name) => `"${versions.get(name) ?? path}"`);
   await copyPages(archive, output, layout);
   await writeFile(join(output, settingsPath), JSON.stringify(settings));

@@ -19,7 +19,7 @@ Search for **EH/98/041** and lift the white label. The local archive writes a st
 curl -d From=+447700900001 -d Body=hello http://localhost:4174/texts
 ```
 
-The reply Twilio would send is inside `<Message>`. Search for the reference it gives, lift the label on the sleeve and take the ticket. Set `SMS_NUMBER` to write another number on the label.
+The reply Twilio would send is inside `<Message>`. Search for the reference it gives, lift the label on the sleeve and take the ticket. The published archive writes the Record Office’s own number, or the one in `SMS_NUMBER`.
 
 Tickets are signed with the board’s key in `bbs/user_ca` when that file exists, or with `BOARD_CA_KEY`. Otherwise the archive makes a throwaway key and prints the public line a local board should trust. Set `BOARD_HOST`, `BOARD_PORT` and `BOARD_USER` when building to change the address in the transcript, the captions and the ticket. [Local archive](../../scripts/serve-archive.mjs) · [Texting the video reference](video-reference.md)
 

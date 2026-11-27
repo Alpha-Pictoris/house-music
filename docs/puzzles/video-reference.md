@@ -1,6 +1,6 @@
 # Texting the video reference
 
-*Playable discovery. The film is a sample until the footage is cut, and the label has no number until one is bought.*
+*Playable discovery. The film is a sample until the footage is cut.*
 
 ## The blue label
 
@@ -11,8 +11,6 @@ Send that number any text. One text comes back.
 > Record Office: Rigger's Yard video. Catalogue reference AV/98/019.
 
 The register of deposits **RO/98/012** says what the reference is for. It records a video cassette left at the counter on 12 November for the Rigger’s Yard file, with no label and no name.
-
-The number appears once the archive is built with one. Until then the blue label gives the housing reference alone.
 
 ## The film
 

@@ -21,8 +21,8 @@ export function officeSettings(env = process.env) {
     },
     sender: setting(env.SMS_SENDER_NAME || "Record Office", /^[\w .&'-]{1,30}$/,
       "Set SMS_SENDER_NAME to the name the text opens with, in 30 characters or fewer."),
-    number: env.SMS_NUMBER ? setting(env.SMS_NUMBER, /^\+[1-9]\d{7,14}$/,
-      "Set SMS_NUMBER to the number that answers texts, with its country code, such as +447700900982.") : null,
+    number: setting(env.SMS_NUMBER || "+447460039666", /^\+[1-9]\d{7,14}$/,
+      "Set SMS_NUMBER to the number that answers texts, with its country code, such as +447700900982."),
   };
 }
 

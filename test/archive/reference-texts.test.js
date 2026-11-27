@@ -93,6 +93,6 @@ test("the ledger and the log keep no telephone number", async t => {
 test("the label shows a UK mobile the way it would be written", () => {
   assert.equal(writtenNumber("+447700900982"), "07700 900982");
   assert.equal(writtenNumber("+12025550143"), "+12025550143");
-  assert.equal(officeSettings({}).number, null);
+  assert.equal(writtenNumber(officeSettings({}).number), "07460 039666");
   assert.throws(() => officeSettings({ SMS_NUMBER: "07700 900982" }), /Set SMS_NUMBER to the number that answers texts/);
 });

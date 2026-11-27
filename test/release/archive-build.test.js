@@ -79,8 +79,8 @@ test("the film, its captions and the ticket desk are built with one board addres
   assert.doesNotMatch(tape + register, /AV\/98\/019|\{\{|<form/);
 
   await buildArchive(output, {});
-  const unlisted = await readFile(join(output, referencePath("EH/98/041"), "index.html"), "utf8");
-  assert.match(unlisted, /<strong>HO\/78\/017<\/strong><\/div>/);
+  const published = await readFile(join(output, referencePath("EH/98/041"), "index.html"), "utf8");
+  assert.match(published, /<span class="label-number">07460 039666<\/span>/);
   await assert.rejects(buildArchive(output, { BOARD_PORT: "70000" }), /Set BOARD_PORT to a port number below 65536\./);
 });
 
