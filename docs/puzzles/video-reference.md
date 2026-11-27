@@ -24,9 +24,9 @@ The cassette sleeve has a Record Office label, like the tape on EH/98/041. Lift 
 | --- | --- |
 | `readers-ticket` | The key `ssh` presents |
 | `readers-ticket-cert.pub` | The Record Office’s signature admitting that key for 30 days |
-| `readers-ticket.txt` | How to show the ticket |
+| `readers-ticket.txt` | The ticket’s dates and the recording it is made out to |
 
-Unzip the three files into one folder and add `-i readers-ticket` to the command in the film.
+The ticket says nothing about how to show it. Unzip the three files into one folder and add `-i readers-ticket` to the command in the film. The key arrives readable by its owner alone, as `ssh` requires.
 
 ```sh
 ssh -i readers-ticket reader@board.portsmouth.technology
