@@ -89,9 +89,26 @@ Run the tests with `uv run pytest`. They open no sockets.
 
 ### Docker
 
-`compose.yaml` runs the board in a container on port 2222. Set
-`SSHARG_PORT` to publish another port. Create the CA and certificates
-with the `cert` tool, which writes to this directory as your own user:
+Each merge to `trunk` that changes the board publishes its image as
+`ghcr.io/alpha-pictoris/house-music-board`. The image carries `world/`.
+`compose.yaml` runs it on port 2222. Set `SSHARG_PORT` to publish another
+port.
+
+To host the board, copy `compose.yaml` and `user_ca.pub` into one
+directory on the host:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+The image must be public for a host to pull it without logging in. If the
+pull is denied, make the `house-music-board` package public on GitHub, or
+run `docker login ghcr.io` on the host first.
+
+To work on the board from a checkout, build the image here. Create the CA
+and certificates with the `cert` tool, which writes to this directory as
+your own user:
 
 ```sh
 export HOST_UID=$(id -u) HOST_GID=$(id -g)
@@ -102,12 +119,13 @@ docker compose up -d
 ssh -p 2222 -i players/wren wren@127.0.0.1
 ```
 
+After editing `world/`, rebuild and restart: `docker compose up -d --build`.
+
 The `bbs` container only sees `user_ca.pub`, never the CA's private key.
 If it says `bind source path does not exist`, run `docker compose run
---rm cert ca` first. `world/` is mounted read-only, so restart the
-container after editing it: `docker compose restart bbs`. The host key and
-player progress live in the `data` volume. `docker compose down -v`
-deletes them, and players will then see a host key warning.
+--rm cert ca` first, or copy `user_ca.pub` beside `compose.yaml`. The host
+key and player progress live in the `data` volume. `docker compose down
+-v` deletes them, and players will then see a host key warning.
 
 ## The session
 

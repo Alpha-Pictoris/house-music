@@ -1,0 +1,51 @@
+name: Publish board
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      - bbs/**
+      - .github/workflows/publish-board.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency: board-image
+
+jobs:
+  publish:
+    name: Publish the board image
+    if: github.repository == 'Alpha-Pictoris/house-music' && github.ref == 'refs/heads/trunk'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: bbs
+    env:
+      IMAGE: ghcr.io/alpha-pictoris/house-music-board
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
+      - run: uv sync --locked
+      - run: uv run pytest
+      - name: Build the image
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "$IMAGE:latest" \
+            --tag "$IMAGE:$GITHUB_SHA" \
+            .
+      - name: Log in to the container registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Push the image
+        run: docker push --all-tags "$IMAGE"
