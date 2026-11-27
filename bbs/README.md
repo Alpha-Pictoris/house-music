@@ -189,7 +189,7 @@ raises, the key counts as rejected.
 
 ### The file area
 
-A read-only DOS-style prompt (`C:\USERS\KADE>`) over the world tree:
+A read-only DOS-style prompt (`C:\USER\KRONOS>`) over the world tree:
 
 | command | does |
 | --- | --- |
@@ -293,7 +293,7 @@ Screens are [Jinja2](https://jinja.palletsprojects.com/) templates. They can
 use `{{ bbs }}`, `{{ user }}` (the name as typed), `{{ calls }}` (this player's
 call count, including this one), `{{ last_login }}` (`never` on a first call),
 `{{ nomos_state }}`, `{{ meta }}` (all of `meta.json`) and `{{ ctx }}` (the
-session context, e.g. `{{ ctx.has_flag("override") }}`). Conditionals, loops,
+session context, e.g. `{{ ctx.has_flag("rebooted") }}`). Conditionals, loops,
 filters and `{% include "other_screen" %}` all work. To pad a value inside a
 box, use `{{ value.ljust(28) }}`. Rendering is strict: a misspelled or unknown
 variable raises an error instead of printing nothing. Screens shown before login (`boot`,
@@ -366,20 +366,20 @@ Flags are names that record progress. Either attach one to a file, so
 reading the file with `TYPE` records it:
 
 ```json
-"node_flags": {"/USERS/KADE/.NOTES/.OVERRIDE": ["override"]}
+"node_flags": {"/USER/KRONOS/SECRETS.TXT": ["read_secrets"]}
 ```
 
-or grant it from the key handler with `ctx.grant_flag("name")`. Players
+or grant it from the key handler or a program with `ctx.grant_flag("name")`. Players
 never see flags. Check progress with `--list-users` or in `state/*.json`.
 
 ## The shipped world
 
-The KATOIKIA-7 NOMOS Control System, left online after NOMOS lost its rule
-table and locked the house. The story is placeholder text. Start in
-`C:\USERS\KADE`, where `PLAY SCANNER.ANS` runs Kade's signal scanner
-animation. There are two flags: one is a hidden file, and the other
-comes from entering a key that the hidden file makes work. The walkthrough is in
-[The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
+The Katoikia-7 Nomos Control Center. NOMOS has failed to start, so the
+house sweeps from left to right and plays one note per item. Callers read
+`C:\README.TXT`, unscramble Kronos's password, run `ELEVATE` for a key made
+from their address and login name, enter the key at **[K]** and run
+`REBOOT`. The flags are `elevated`, `authorized` and `rebooted`. The
+walkthrough is in [The KATOIKIA-7 board](../docs/puzzles/katoikia-board.md).
 
 ## Deliberate limitations
 

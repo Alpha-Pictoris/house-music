@@ -15,4 +15,4 @@
 
 ## The bulletin board
 
-- [The KATOIKIA-7 board](katoikia-board.md) walks through the dial-in board, Kade’s hidden override and the restore word (placeholder story).
+- [The KATOIKIA-7 board](katoikia-board.md) walks through the dial-in board: Kronos’s scrambled password, the authorization key and the NOMOS reboot.
