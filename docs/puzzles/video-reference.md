@@ -32,7 +32,7 @@ Unzip the three files into one folder and add `-i readers-ticket` to the command
 ssh -i readers-ticket -p 2222 reader@board.example
 ```
 
-A visitor carrying a house gets a ticket made out to their cassette, such as `041a / 51EA-8814 · The blue room`. The board logs that name when the ticket is shown. Other visitors get a ticket marked `reference copy`.
+A visitor carrying a house gets a ticket made out to their cassette, such as `041a / 51EA-8814 · The blue room`. The board logs that name when the ticket is shown. Other visitors get a ticket marked `reference copy`. [The KATOIKIA-7 board](katoikia-board.md)
 
 ## Limits
 
