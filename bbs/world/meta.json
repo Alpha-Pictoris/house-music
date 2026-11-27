@@ -1,0 +1,14 @@
+{
+  "name": "KATOIKIA-7",
+  "volume": "KATOIKIA",
+  "dos_version": "NOMOS DOS Version 6.22",
+  "epoch": 1712977920,
+  "boot_delay": 0.0,
+  "flags": {
+    "override": "Kade's maintenance override, read from a hidden file.",
+    "keystone": "NOMOS accepted the restore word."
+  },
+  "node_flags": {
+    "/USERS/KADE/.NOTES/.OVERRIDE": ["override"]
+  }
+}

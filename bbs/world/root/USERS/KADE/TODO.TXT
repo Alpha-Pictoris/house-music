@@ -1,0 +1,5 @@
+[PLACEHOLDER TEXT]
+
+- ask for the 0413 rule table backup
+- rotate the restore word (DONE? check the key prompt on the BBS)
+- stop leaving the log capture running

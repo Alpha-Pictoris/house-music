@@ -1,0 +1,18 @@
+SETEC BIOS v2.11  (C) Setec Astronomy
+{{ pause(0.4) }}
+Memory test ......................{{ pause(0.4) }} 640K OK
+Extended memory ..................{{ pause(0.6) }} 3072K OK
+Detecting drives .................{{ pause(0.9) }} C: 40MB
+Detecting rooms ..................{{ pause(0.75) }} Multiple active rooms found
+Loading relay driver .............{{ pause(0.7) }} RELAY.SYS resident
+Loading NOMOS system .............{{ pause(1.0) }} System loaded
+NOMOS status .....................{{ pause(0.5) }} Degraded, please proceed to BBS
+
+{% call typed(0.1) %}
+EMERGENCY PROTOCOLS ACTIVATED
+
+CONNECTING TO NOMOS CONTROL SYSTEM
+{% endcall %}
+Verifying modem .................{{ pause(0.2) }} Modem found on COM1
+Dialing BBS {% call typed(0.2) %}..................{% endcall %}{% call typed(0.4) %}...{% endcall %} Success
+

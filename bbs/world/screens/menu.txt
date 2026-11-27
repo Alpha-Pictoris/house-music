@@ -1,0 +1,10 @@
+  
+  +----------------- MAIN MENU -----------------+
+  |   NOMOS Status: {{ nomos_state.ljust(28) }}|
+  |                                             |
+  |   [K]  Enter authorization key              |
+  |   [F]  File area                            |
+  |   [G]  Goodbye                              |
+  |                                             |
+  +---------------------------------------------+
+

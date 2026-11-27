@@ -1,0 +1,14 @@
+
+CONNECT 2400
+ ===========================================
+  ▖▖▄▖▄▖▄▖▄▖▖▖▄▖▄▖  ▄▖  ▄ ▄ ▄▖
+  ▙▘▌▌▐ ▌▌▐ ▙▘▐ ▌▌▄▖ ▌  ▙▘▙▘▚ 
+  ▌▌▛▌▐ ▙▌▟▖▌▌▟▖▛▌   ▌  ▙▘▙▘▄▌                           
+ -------------------------------------------
+  Sysop: J. Howard
+  
+  NOMOS System: Active
+
+  New callers: supply username and password
+  to register new user.
+

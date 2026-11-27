@@ -11,6 +11,10 @@
 - [Cassette playback](cassette-player-plan.md) covers the local preview, shared recordings and the return address for a separate deployment.
 - [Archive credits](archive-credits.md) lists sources and licences for the archive images, type, components and recordings.
 
+## The bulletin board
+
+- [The KATOIKIA-7 board](katoikia-board.md) walks through the dial-in board, Kade’s hidden override and the restore word (placeholder story).
+
 ## Proposed discoveries
 
 - [The B-side](b-side.md) gives a furnishing’s shadow its own place in the music and the house a second arrangement.

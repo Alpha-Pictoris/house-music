@@ -1,0 +1,13 @@
+.venv/
+.pytest_cache/
+**/__pycache__/
+*.pyc
+tests/
+state/
+players/
+host_key
+user_ca
+user_ca.pub
+Dockerfile
+compose.yaml
+.dockerignore
