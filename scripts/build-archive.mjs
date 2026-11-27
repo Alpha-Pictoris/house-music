@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileAsync } from "sass";
 import { referencePath } from "../archive/file-references.js";
+import { boardCommand, officeSettings, settingsPath, videoReference } from "../archive-worker/office-settings.js";
 import { testStripURL } from "./archive-return.mjs";
 import { holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
 
@@ -15,6 +16,7 @@ const fileReferences = new Map([
   ["BS/82/016", "/records/landing/"],
   ["RO/98/012", "/records/deposits/"],
   ["HO/78/017", "/cases/017/"],
+  [videoReference, "/records/videotape/"],
 ]);
 const playbackFiles = [
   "audio", "music", "library/house-format.js",
@@ -29,13 +31,13 @@ async function copyPages(source, output, layout) {
     const to = join(output, entry.name);
     if (from === join(archive, "_layout")) continue;
     if (entry.isDirectory()) await copyPages(from, to, layout);
-    else if (entry.name.endsWith(".html")) {
+    else if (/\.(?:html|vtt)$/.test(entry.name)) {
       await writeFile(to, layout(await readFile(from, "utf8")));
     } else await cp(from, to);
   }
 }
 
-export async function buildArchive(output) {
+export async function buildArchive(output, env = process.env) {
   const [header, footer, redirect] = await Promise.all(["header", "footer", "catalogue-redirect"].map(name =>
     readFile(join(archive, "_layout", name + ".html"), "utf8")));
   const rows = holdings.map(renderHoldingRow).join("\n");
@@ -47,13 +49,16 @@ export async function buildArchive(output) {
   })));
   const stripURL = testStripURL().replaceAll("&", "&amp;").replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const settings = officeSettings(env);
   const layout = page => page.replaceAll("<!-- archive-header -->", () => header)
     .replaceAll("<!-- archive-footer -->", () => footer)
     .replace("<!-- catalogue-holdings -->", () => rows)
     .replace("{{catalogue-total}}", () => holdings.length)
     .replaceAll("{{test-strip-url}}", () => stripURL)
+    .replaceAll("{{board-command}}", () => boardCommand(settings.board))
     .replace(/"(\/([^/"]+\.(?:js|css)))"/g, (_attribute, path, name) => `"${versions.get(name) ?? path}"`);
   await copyPages(archive, output, layout);
+  await writeFile(join(output, settingsPath), JSON.stringify(settings));
   for (const [reference, source] of fileReferences) {
     const directory = join(output, referencePath(reference));
     await mkdir(directory, { recursive: true });

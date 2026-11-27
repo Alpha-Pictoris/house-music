@@ -105,6 +105,9 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .sleeve summary strong { font-size: 1.1rem; }
 .sleeve[open] summary { transform: translate(.2rem,-.15rem) rotate(-2deg); }
 .under-label { background: #b5cbda; margin-top: .8rem; }
+.film { width: 100%; height: auto; background: #0b0c0c; }
+.transcript li { display: grid; grid-template-columns: 2.6rem 1fr; gap: .6rem; }
+.transcript code { overflow-wrap: anywhere; }
 .site-footer { background: #f3f4f4; border-top: 1px solid #b1b4b6; padding-block: 1.5rem; }
 .site-footer p { margin: 0; }
 @media (max-width: 40.0624rem) {
