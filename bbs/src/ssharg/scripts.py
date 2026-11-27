@@ -1,7 +1,8 @@
 """World hooks. World authors register handlers from `world/scripts.py`.
 
-Currently one hook: the authorization-key handler, which receives the key a player entered
-on the BBS and decides whether it is accepted.
+Two kinds of hook: the authorization-key handler, which receives the key a player entered
+on the BBS and decides whether it is accepted, and programs, which run when a player types
+the name of a `.EXE` file at the DOS prompt.
 """
 from __future__ import annotations
 
@@ -13,7 +14,9 @@ if TYPE_CHECKING:
     from .context import Context
 
 KeyHandler = Callable[["Context", str], bool]
+Program = Callable[["Context", list[str]], None]
 HOOKS: dict[str, KeyHandler] = {}
+PROGRAMS: dict[str, Program] = {}
 
 
 def key_handler(fn: KeyHandler) -> KeyHandler:
@@ -27,8 +30,21 @@ def key_handler(fn: KeyHandler) -> KeyHandler:
     return fn
 
 
+def program(name: str) -> Callable[[Program], Program]:
+    """Register `fn(ctx, args)` to run when the player runs `NAME.EXE` from the DOS prompt.
+
+    The file `NAME.EXE` must exist in the world tree; the player runs it by name from its own
+    directory or from `\\BIN`, or by path. `args` are the words typed after the name.
+    """
+    def register(fn: Program) -> Program:
+        PROGRAMS[name.upper()] = fn
+        return fn
+    return register
+
+
 def load_world_scripts(world_dir: str | Path) -> None:
     HOOKS.clear()
+    PROGRAMS.clear()
     path = Path(world_dir) / "scripts.py"
     if not path.exists():
         return

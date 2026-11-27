@@ -30,6 +30,12 @@ class Context(BaseModel):
     nomos_state: str = "Degraded"
     sixel: bool = False
 
+    @property
+    def ip(self) -> str:
+        """The caller's address without the port: `203.0.113.5` for `203.0.113.5:60882`."""
+        host, sep, port = self.source.rpartition(":")
+        return host if sep and port.isdigit() else self.source
+
     def ask(self, prompt: str, mask: str | None = None, record: bool = True) -> str | None:
         """Prompt for a line. Records it in the session history unless `record` is False."""
         line = self.reader.read_line(prompt, mask)

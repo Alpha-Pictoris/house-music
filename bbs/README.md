@@ -10,8 +10,9 @@ read-only file area with a DOS-style prompt.
 Nothing a player types is ever executed on the host, and the host's real
 filesystem is never exposed: the whole world is loaded into memory from the
 `world/` directory at startup. The game master changes the game by editing
-files under `world/`, not engine code. The one exception is the
-authorization-key handler, a few lines of Python in `world/scripts.py`.
+files under `world/`, not engine code. The one exception is
+`world/scripts.py`: a few lines of Python for the authorization-key handler
+and the board's programs.
 
 ## Running it
 
@@ -202,7 +203,30 @@ A read-only DOS-style prompt (`C:\USERS\KADE>`) over the world tree:
 | `EXIT` | back to the BBS menu |
 
 Paths use `\` and may start with `C:`. Names are case-insensitive and shown
-in upper case. Anything else gets `Bad command or file name`.
+in upper case. Typing a name that is not a command runs the program of that
+name (see Programs). Anything else gets `Bad command or file name`.
+
+### Programs
+
+A program is a `.EXE` file in the world tree plus a Python function in
+`world/scripts.py`. Players run it by typing its name, with or without
+`.EXE`, from its own directory, from anywhere if it is in `C:\BIN`, or by
+path (`BIN\ELEVATE`, `C:\BIN\ELEVATE.EXE`). The file's bytes are only what
+`TYPE` and `DIR` show; the function does the work.
+
+```python
+from ssharg.scripts import program
+
+@program("ELEVATE")
+def elevate(ctx, args: list[str]) -> None:
+    word = " ".join(args) or ctx.ask("PASSWORD: ", mask="*", record=False) or ""
+    ctx.term.line("ACCESS GRANTED." if word.upper() == "OPEN SESAME" else "ACCESS DENIED.")
+```
+
+`args` are the words typed after the name. The function gets the same `ctx`
+as the key handler, plus `ctx.ask()` to prompt and `ctx.ip`, the caller's
+address without the port (`local` for `--local`). A `.EXE` with no function
+says `This program cannot be run in DOS mode.`
 
 ## Code layout
 
@@ -215,7 +239,7 @@ src/ssharg/
   context.py        per-session context shared by the BBS, DOS and world hooks
   terminal.py       transport-agnostic terminal output and line reader
   probe.py          terminal capability probe (sixel)
-  scripts.py        world hook registry (`key_handler`)
+  scripts.py        world hook registry (`key_handler`, `program`)
   state.py          per-player progress persisted as JSON
   local.py          local-terminal front end (`--local`)
   server/host.py    SSH front end: Paramiko auth and channel dispatch
@@ -233,7 +257,7 @@ world/
   banner.txt      shown by the ssh client before connecting (and by --local)
   meta.json       BBS name, volume label, DOS version, file dates, flags
   screens/        BBS screens (see below)
-  scripts.py      the authorization-key handler
+  scripts.py      the authorization-key handler and programs
   root/           the file area; root/ is C:\
 ```
 

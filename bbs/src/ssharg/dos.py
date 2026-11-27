@@ -15,9 +15,12 @@ from jinja2 import TemplateError
 
 from .context import Context
 from .screens import render_text
+from .scripts import PROGRAMS
+from .terminal import SessionClosed
 from .vfs import FsError, Node
 
 DRIVE = "C"
+PATH = "/BIN"
 Command = Callable[[Context, list[str], set[str]], bool]
 COMMANDS: dict[str, tuple[Command, str]] = {}
 ALIASES = {"LS": "DIR", "CHDIR": "CD"}
@@ -168,6 +171,7 @@ def help_(ctx: Context, args: list[str], switches: set[str]) -> bool:
     for name, (_, summary) in sorted(COMMANDS.items()):
         ctx.term.line(f"{name:<8} {summary}")
     ctx.term.line(f"{'LS':<8} Same as DIR.")
+    ctx.term.line("To run a program, type its name, e.g. STATUS for STATUS.EXE.")
     return False
 
 
@@ -182,7 +186,7 @@ def parse(line: str) -> tuple[str, list[str], set[str]]:
     if not tokens:
         return "", [], set()
     glued = _GLUED.match(tokens[0])
-    if glued:
+    if glued and (glued.group(1).upper() in COMMANDS or glued.group(1).upper() in ALIASES):
         tokens[:1] = [glued.group(1), glued.group(2)]
     name = tokens[0].upper()
     args, switches = [], set()
@@ -197,6 +201,32 @@ def parse(line: str) -> tuple[str, list[str], set[str]]:
     return ALIASES.get(name, name), args, switches
 
 
+def find_program(ctx: Context, word: str) -> str | None:
+    """The path of the `.EXE` that `word` names: a path, or a name in the current directory or PATH."""
+    path = to_vfs(word)
+    if not path.upper().endswith(".EXE"):
+        path += ".EXE"
+    candidates = [path] if "/" in path else [path, f"{PATH}/{path}"]
+    for candidate in candidates:
+        try:
+            canon = ctx.fs.resolve(candidate)
+        except FsError:
+            continue
+        if not ctx.fs.is_dir(canon):
+            return canon
+    return None
+
+
+def run_program(ctx: Context, word: str, args: list[str]) -> None:
+    path = find_program(ctx, word)
+    if path is None:
+        raise DosError("Bad command or file name")
+    program = PROGRAMS.get(path.rsplit("/", 1)[1].upper().removesuffix(".EXE"))
+    if program is None:
+        raise DosError("This program cannot be run in DOS mode.")
+    program(ctx, args)
+
+
 def run_command(ctx: Context, line: str) -> bool:
     """Run one line. Returns True if the player asked to leave the prompt."""
     name, args, switches = parse(line)
@@ -207,13 +237,15 @@ def run_command(ctx: Context, line: str) -> bool:
             ctx.term.line("Invalid drive specification")
         return False
     entry = COMMANDS.get(name)
-    if entry is None:
-        ctx.term.line("Bad command or file name")
-        return False
     try:
+        if entry is None:
+            run_program(ctx, line.split()[0], args)
+            return False
         return entry[0](ctx, args, switches)
     except DosError as exc:
         ctx.term.line(str(exc))
+    except SessionClosed:
+        raise
     except FsError:
         ctx.term.line("File not found")
     except Exception:
