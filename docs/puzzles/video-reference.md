@@ -1,6 +1,6 @@
 # Texting the video reference
 
-*Playable discovery. The film is a sample until the footage is cut.*
+*Playable discovery.*
 
 ## The blue label
 
@@ -14,7 +14,7 @@ The register of deposits **RO/98/012** says what the reference is for. It record
 
 ## The film
 
-Searching for **AV/98/019** opens the video cassette. The film shows the address of the next machine as an `ssh` command. The captions and the transcript carry the same command. The sample film shows `ssh -p 2222 reader@board.example`.
+Searching for **AV/98/019** opens the video cassette. The tape plays as static, and one line of type shows through it: the address of the next machine as an `ssh` command. The captions and the transcript carry the same command, `ssh reader@board.portsmouth.technology`.
 
 ## The reader’s ticket
 
@@ -29,7 +29,7 @@ The cassette sleeve has a Record Office label, like the tape on EH/98/041. Lift 
 Unzip the three files into one folder and add `-i readers-ticket` to the command in the film.
 
 ```sh
-ssh -i readers-ticket -p 2222 reader@board.example
+ssh -i readers-ticket reader@board.portsmouth.technology
 ```
 
 A visitor carrying a house gets a ticket made out to their cassette, such as `041a / 51EA-8814 · The blue room`. The board logs that name when the ticket is shown. Other visitors get a ticket marked `reference copy`. [The KATOIKIA-7 board](katoikia-board.md)
