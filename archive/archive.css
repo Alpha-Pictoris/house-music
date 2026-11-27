@@ -105,6 +105,7 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .sleeve summary strong { font-size: 1.1rem; }
 .sleeve[open] summary { transform: translate(.2rem,-.15rem) rotate(-2deg); }
 .under-label { background: #b5cbda; margin-top: .8rem; }
+.label-number { justify-self: end; color: #25264a; font: 400 1.35rem/1.1 Kalam, cursive; transform: rotate(-2deg); }
 .under-label.ticket { background: #f1d3c2; }
 .ticket form { margin-top: .5rem; }
 .ticket .govuk-button { width: auto; margin-bottom: 2px; }
@@ -113,10 +114,6 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .film { width: 100%; height: auto; background: #0b0c0c; }
 .transcript li { display: grid; grid-template-columns: 2.6rem 1fr; gap: .6rem; }
 .transcript code { overflow-wrap: anywhere; }
-.text-request { max-width: 45rem; }
-.text-send { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
-.text-send .govuk-button { flex: none; width: auto; margin-bottom: 2px; }
-.text-send p { flex: 1 1 14rem; margin: 0; }
 .text-preview { width: fit-content; max-width: 22rem; margin: 0 0 1rem; padding: .7rem 1rem; border-radius: 1.1rem 1.1rem 1.1rem .3rem; background: #e3e6e8; }
 .site-footer { background: #f3f4f4; border-top: 1px solid #b1b4b6; padding-block: 1.5rem; }
 .site-footer p { margin: 0; }

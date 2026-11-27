@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#142e3a">
   <link rel="stylesheet" href="/govuk.css">
   <link rel="stylesheet" href="/archive.css">
-  <script type="module" src="/text-request.js"></script>
 </head>
 <body>
 <!-- archive-header -->
@@ -28,24 +27,6 @@
       <tr class="govuk-table__row"><th class="govuk-table__header" scope="row">13 Nov</th><td class="govuk-table__cell">Copy of stair plan BS/82/016 for the district officer. Original returned to the surveyor.</td></tr>
     </tbody></table>
   <h2 class="govuk-heading-m">Clerk’s note</h2><p class="govuk-body">The blue label shows at one corner. Leave the white one loose until we know which file to return it to.</p>
-  <hr class="govuk-section-break govuk-section-break--xl govuk-section-break--visible">
-  <section class="text-request" aria-labelledby="text-heading" data-text-request>
-    <h2 class="govuk-heading-m" id="text-heading">Ask for the video reference</h2>
-    <p class="govuk-body">The video cassette received on 12 November 1998 has since been given its own catalogue entry. We can text you its reference.</p>
-    <form method="post" action="/texts" novalidate hidden>
-      <input type="hidden" name="consent" value="{{consent-version}}">
-      <div class="govuk-form-group">
-        <label class="govuk-label govuk-label--s" for="mobile">Mobile number</label>
-        <div class="govuk-hint" id="mobile-hint">A UK mobile number, like 07700 900 982</div>
-        <input class="govuk-input govuk-input--width-20" id="mobile" name="mobile" type="tel" autocomplete="tel" spellcheck="false" aria-describedby="mobile-hint">
-      </div>
-      <div class="text-send">
-        <button class="govuk-button" type="submit">Text me the reference</button>
-        <p class="govuk-body-s"><strong>{{sms-sender}}</strong> will send one text about the Rigger’s Yard recording.</p>
-      </div>
-    </form>
-    <noscript><p class="govuk-body">Enable JavaScript to ask for the text.</p></noscript>
-  </section>
 </main>
 <!-- archive-footer -->
 </body>

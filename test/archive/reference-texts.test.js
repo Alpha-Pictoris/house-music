@@ -1,141 +1,98 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import test from "node:test";
-import { officeSettings } from "../../archive-worker/office-settings.js";
+import { officeSettings, writtenNumber } from "../../archive-worker/office-settings.js";
 import { RecordOffice } from "../../archive-worker/record-office.js";
-import { consentVersion, ukMobile } from "../../archive-worker/reference-texts.js";
 import { limits } from "../../archive-worker/request-ledger.js";
+import { TwilioSignature } from "../../archive-worker/twilio-signature.js";
 import { memoryLedger } from "../../scripts/archive-stand-ins.mjs";
 
-const origin = "https://archive.example";
-const twilio = { TWILIO_ACCOUNT_SID: "AC0123", TWILIO_AUTH_TOKEN: "token", TWILIO_FROM: "+447700900000", NUMBER_HASH_KEY: "pepper" };
-const accepted = () => Response.json({ sid: "SM1" }, { status: 201 });
-const rejected = code => () => Response.json({ code, message: "Twilio said no", status: 400 }, { status: 400 });
+const address = "https://archive.example/texts";
+const token = "auth-token";
+const silence = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+const reference = '<?xml version="1.0" encoding="UTF-8"?><Response>'
+  + "<Message>Portsea Records: Rigger's Yard video. Catalogue reference AV/98/019.</Message></Response>";
 
-// An archive whose texts go to a stand-in for Twilio. `answer` decides what Twilio says next.
-function openOffice(t, secrets = twilio) {
-  const office = { time: Date.UTC(2026, 10, 27, 12), sent: [], answer: accepted, logged: [] };
+function sign(fields, key = token, url = address) {
+  const signed = url + Object.keys(fields).sort().map(name => name + fields[name]).join("");
+  return createHmac("sha1", key).update(signed).digest("base64");
+}
+
+// An archive that Twilio passes texts on to. `text` is one text from a handset.
+function openOffice(t, secrets = { TWILIO_AUTH_TOKEN: token }) {
+  const office = { time: Date.UTC(2026, 10, 27, 12), logged: [] };
   for (const method of ["log", "error"]) t.mock.method(console, method, (...words) => office.logged.push(words.join(" ")));
   const now = () => office.time;
   const env = { ...secrets, ASSETS: { fetch: async () => Response.json(officeSettings({ SMS_SENDER_NAME: "Portsea Records" })) } };
   office.ledger = env.LEDGER = memoryLedger(env, now);
-  const fetch = async (url, request) => {
-    office.sent.push({ url, authorization: request.headers.Authorization, ...Object.fromEntries(request.body) });
-    return office.answer();
-  };
-  const desk = new RecordOffice(env, { fetch, now });
-  office.ask = async (mobile, { visitor = "203.0.113.7", from = origin, consent = consentVersion } = {}) => {
-    const response = await desk.fetch(new Request(origin + "/texts", {
-      method: "POST", headers: { Origin: from, "CF-Connecting-IP": visitor }, body: new URLSearchParams({ mobile, consent }),
+  const desk = new RecordOffice(env, { now });
+  office.text = async (from, body = "Hello", signature) => {
+    const fields = { From: from, To: "+447700900982", Body: body, MessageSid: "SM1" };
+    const response = await desk.fetch(new Request(address, {
+      method: "POST", headers: { "X-Twilio-Signature": signature ?? sign(fields) }, body: new URLSearchParams(fields),
     }));
-    return { code: response.status, ...await response.json() };
+    return { code: response.status, type: response.headers.get("Content-Type"), reply: await response.text() };
   };
   return office;
 }
 
-test("a UK mobile number is read however the reader types it", () => {
-  for (const entry of ["07700 900982", "+44 7700 900982", "0044 7700-900-982", "+44 (0)7700 900982", "447700900982"]) {
-    assert.equal(ukMobile(entry), "+447700900982", entry);
-  }
-  for (const entry of ["", "0770090098", "077009009821", "02392 822251", "+1 202 555 0143", "07000 900982", "seven"]) {
-    assert.equal(ukMobile(entry), undefined, entry);
-  }
+test("the signature check accepts the example in Twilio's documentation", async () => {
+  const fields = { Digits: "1234", To: "+18005551212", From: "+14158675310", Caller: "+14158675310", CallSid: "CA1234567890ABCDE" };
+  const check = new TwilioSignature("12345");
+  const url = "https://example.com/myapp.php?foo=1&bar=2";
+  assert.equal(await check.genuine(url, Object.entries(fields), "L/OH5YylLD5NRKLltdqwSvS0BnU="), true);
+  assert.equal(await check.genuine(url, Object.entries({ ...fields, Digits: "1235" }), "L/OH5YylLD5NRKLltdqwSvS0BnU="), false);
 });
 
-test("before texting is switched on the reply carries the text for the page to show", async t => {
-  const office = openOffice(t, {});
-  const reply = await office.ask("07700 900982");
-  assert.equal(reply.status, "requested");
-  assert.equal(reply.preview, "Portsea Records: Rigger's Yard video. Catalogue reference AV/98/019. Reply STOP to unsubscribe.");
-  assert.deepEqual(await office.ask("023 9282 2251"),
-    { code: 422, status: "invalid", field: "mobile", message: "Enter a UK mobile number, like 07700 900 982" });
-  assert.equal((await office.ask("07700 900982", { consent: "2025-01-01" })).status, "stale");
-  assert.equal((await office.ask("07700 900982", { from: "https://elsewhere.example" })).code, 403);
-});
-
-test("three requests for one number send one text and keep the reference out of every reply", async t => {
+test("a text to the number on the label is answered with the video reference", async t => {
   const office = openOffice(t);
-  const replies = await Promise.all([office.ask("07700 900982"), office.ask("+44 7700 900982")]);
-  replies.push(await office.ask("07700900982"));
+  assert.deepEqual(await office.text("+447700900001"), { code: 200, type: "text/xml; charset=utf-8", reply: reference });
+});
 
-  assert.deepEqual(office.sent, [{
-    url: "https://api.twilio.com/2010-04-01/Accounts/AC0123/Messages.json",
-    authorization: "Basic " + btoa("AC0123:token"), To: "+447700900982", From: "+447700900000",
-    Body: "Portsea Records: Rigger's Yard video. Catalogue reference AV/98/019. Reply STOP to unsubscribe.",
-  }]);
-  for (const reply of replies) {
-    assert.equal(reply.status, "requested");
-    assert.doesNotMatch(JSON.stringify(reply), /AV\/98\/019|preview/);
+test("only a text signed by Twilio gets the reference", async t => {
+  const office = openOffice(t);
+  const fields = { From: "+447700900001", To: "+447700900982", Body: "Hello", MessageSid: "SM1" };
+  for (const signature of ["", "not base64 %", sign(fields, "another-token"), sign({ ...fields, From: "+447700900002" })]) {
+    const refused = await office.text("+447700900001", "Hello", signature);
+    assert.equal(refused.code, 403);
+    assert.doesNotMatch(refused.reply, /AV\/98\/019/);
   }
-  const kept = JSON.stringify(office.ledger.storage.kv.list());
-  assert.doesNotMatch(kept + office.logged.join(), /7700900982|203\.0\.113\.7|token/);
-  const [, record] = office.ledger.storage.kv.list({ prefix: "number:" })[0];
-  assert.deepEqual(record.requests, [{ at: office.time, consent: consentVersion, sid: "SM1" }]);
+  const unset = await openOffice(t, {}).text("+447700900001");
+  assert.equal(unset.code, 503);
+  assert.doesNotMatch(unset.reply, /AV\/98\/019/);
+});
+
+test("a second text inside two minutes and the words Twilio answers itself get no reply", async t => {
+  const office = openOffice(t);
+  const [first, second] = await Promise.all([office.text("+447700900001"), office.text("+447700900001")]);
+  assert.deepEqual([first.reply, second.reply].sort(), [reference, silence].sort());
+  assert.equal((await office.text("+447700900001")).reply, silence);
+  assert.equal((await office.text("+447700900002")).reply, reference);
+  for (const word of ["STOP", " stop ", "Help", "START"]) assert.equal((await office.text("+447700900003", word)).reply, silence);
 
   office.time += limits.cooldown;
-  assert.equal((await office.ask("07700 900982")).status, "requested");
-  assert.equal(office.sent.length, 2);
+  assert.equal((await office.text("+447700900001")).reply, reference);
 });
 
-test("a number Twilio rejects can be corrected straight away", async t => {
+test("the archive stops answering at the ceiling for the event", async t => {
+  const office = openOffice(t, { TWILIO_AUTH_TOKEN: token, SMS_SEND_CEILING: "2" });
+  const replies = [];
+  for (const last of [1, 2, 3]) replies.push((await office.text("+44770090000" + last)).reply);
+  assert.deepEqual(replies, [reference, reference, silence]);
+});
+
+test("the ledger and the log keep no telephone number", async t => {
   const office = openOffice(t);
-  office.answer = rejected(21614);
-  assert.deepEqual(await office.ask("07700 900982"),
-    { code: 422, status: "invalid", field: "mobile", message: "Enter a mobile number that can receive texts" });
-  office.answer = accepted;
-  assert.equal((await office.ask("07700 900982")).status, "requested");
-  assert.equal(office.sent.length, 2);
+  await office.text("+447700900001");
+  await office.text("+447700900001", "STOP");
+  const kept = JSON.stringify([...office.ledger.storage.kv.list()]) + office.logged.join("\n");
+  assert.doesNotMatch(kept, /7700900001/);
+  assert.match(kept, /number:[0-9a-f]{64}/);
 });
 
-test("a number that replied STOP is left alone until the next day", async t => {
-  const office = openOffice(t);
-  office.answer = rejected(21610);
-  assert.equal((await office.ask("07700 900982")).status, "opted-out");
-  office.answer = accepted;
-  office.time += limits.cooldown;
-  const reply = await office.ask("07700 900982");
-  assert.equal(reply.code, 409);
-  assert.match(reply.message, /opted out of texts from Portsea Records\. Reply START/);
-  assert.equal(office.sent.length, 1);
-
-  office.time += limits.optOutHold;
-  assert.equal((await office.ask("07700 900982")).status, "requested");
-  assert.equal(office.sent.length, 2);
-});
-
-test("an unanswered send holds the number so a refresh cannot text it twice", async t => {
-  const office = openOffice(t);
-  office.answer = () => { throw new DOMException("timed out", "TimeoutError"); };
-  const reply = await office.ask("07700 900982");
-  assert.equal(reply.code, 503);
-  assert.match(reply.message, /could not confirm that the text was sent.*ask again in 2 minutes/);
-  office.answer = accepted;
-  assert.equal((await office.ask("07700 900982")).status, "requested");
-  assert.equal(office.sent.length, 1);
-
-  office.time += limits.pendingHold;
-  await office.ask("07700 900982");
-  assert.equal(office.sent.length, 2);
-  assert.deepEqual(office.logged, ["text unconfirmed", "text accepted SM1"]);
-
-  office.answer = rejected(20003);
-  const refused = await office.ask("07700 900111", { visitor: "203.0.113.8" });
-  assert.deepEqual([refused.code, refused.message], [503, "We could not send the text. Try again in a few minutes."]);
-});
-
-test("one connection and the whole event each have a limit", async t => {
-  const office = openOffice(t, { ...twilio, SMS_SEND_CEILING: "6" });
-  for (let last = 0; last < limits.textsPerVisitor; last++) await office.ask("07700 90010" + last);
-  office.time += 20 * 60e3;
-  const waiting = await office.ask("07700 900200");
-  assert.deepEqual([waiting.code, waiting.message], [429, "Too many requests from this connection. Try again in 40 minutes."]);
-  assert.equal(office.sent.length, limits.textsPerVisitor);
-
-  assert.equal((await office.ask("07700 900201", { visitor: "203.0.113.8" })).status, "requested");
-  const full = await office.ask("07700 900202", { visitor: "203.0.113.8" });
-  assert.deepEqual([full.code, full.status], [503, "unavailable"]);
-  assert.equal(office.sent.length, 6);
-
-  office.time += 3 * limits.visitWindow;
-  office.ledger.ledger.alarm();
-  assert.deepEqual(office.ledger.storage.kv.list({ prefix: "visitor:" }), []);
+test("the label shows a UK mobile the way it would be written", () => {
+  assert.equal(writtenNumber("+447700900982"), "07700 900982");
+  assert.equal(writtenNumber("+12025550143"), "+12025550143");
+  assert.equal(officeSettings({}).number, null);
+  assert.throws(() => officeSettings({ SMS_NUMBER: "07700 900982" }), /Set SMS_NUMBER to the number that answers texts/);
 });

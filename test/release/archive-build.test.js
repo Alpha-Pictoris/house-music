@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 import { buildArchive } from "../../scripts/build-archive.mjs";
 import { referencePath } from "../../archive/file-references.js";
 import { RecordOffice } from "../../archive-worker/record-office.js";
-import { consentVersion } from "../../archive-worker/reference-texts.js";
 import { PublishedPages } from "../../scripts/archive-stand-ins.mjs";
 
 test("the case ships with its own navigation, playback modules and credited recordings", async t => {
@@ -58,7 +57,8 @@ test("the case ships with its own navigation, playback modules and credited reco
 test("the film, its captions and the ticket desk are built with one board address", async t => {
   const output = await mkdtemp(join(tmpdir(), "portsmouth-archive-"));
   t.after(() => rm(output, { recursive: true, force: true }));
-  await buildArchive(output, { BOARD_HOST: "board.portsea.example", BOARD_PORT: "22", BOARD_USER: "caller", SMS_SENDER_NAME: "Portsea Records" });
+  await buildArchive(output, { BOARD_HOST: "board.portsea.example", BOARD_PORT: "22", BOARD_USER: "caller",
+    SMS_SENDER_NAME: "Portsea Records", SMS_NUMBER: "+447700900982" });
 
   const film = await readFile(join(output, referencePath("AV/98/019"), "index.html"), "utf8");
   assert.match(film, /<code>ssh caller@board\.portsea\.example<\/code>/);
@@ -70,12 +70,17 @@ test("the film, its captions and the ticket desk are built with one board addres
   const clip = await readFile(join(output, "assets/riggers-yard-sample.mp4"));
   assert.equal(clip.toString("ascii", 4, 8), "ftyp");
   assert.deepEqual(JSON.parse(await readFile(join(output, "settings.json"), "utf8")),
-    { board: { host: "board.portsea.example", port: 22, user: "caller" }, sender: "Portsea Records" });
+    { board: { host: "board.portsea.example", port: 22, user: "caller" }, sender: "Portsea Records", number: "+447700900982" });
 
+  const tape = await readFile(join(output, referencePath("EH/98/041"), "index.html"), "utf8");
+  assert.match(tape, /<strong>HO\/78\/017<\/strong><span class="label-number">07700 900982<\/span>/);
   const register = await readFile(join(output, referencePath("RO/98/012"), "index.html"), "utf8");
-  assert.ok(register.includes(`name="consent" value="${consentVersion}"`));
-  assert.match(register, /<strong>Portsea Records<\/strong> will send one text about the Rigger’s Yard recording\./);
-  assert.doesNotMatch(register, /AV\/98\/019|\{\{/);
+  assert.match(register, /One video cassette for the Rigger’s Yard file/);
+  assert.doesNotMatch(tape + register, /AV\/98\/019|\{\{|<form/);
+
+  await buildArchive(output, {});
+  const unlisted = await readFile(join(output, referencePath("EH/98/041"), "index.html"), "utf8");
+  assert.match(unlisted, /<strong>HO\/78\/017<\/strong><\/div>/);
   await assert.rejects(buildArchive(output, { BOARD_PORT: "70000" }), /Set BOARD_PORT to a port number below 65536\./);
 });
 

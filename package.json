@@ -5,7 +5,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:archive": "node scripts/build-archive.mjs",
-    "start:archive": "npm run build:archive && node scripts/serve-archive.mjs",
+    "start:archive": "node scripts/serve-archive.mjs",
     "test": "node --test",
     "start": "npm run build && python3 -m http.server 5173 --directory dist"
   },

@@ -20,8 +20,16 @@ export function officeSettings(env = process.env) {
         "Set BOARD_USER to the lower-case SSH username shown in the film, such as reader."),
     },
     sender: setting(env.SMS_SENDER_NAME || "Record Office", /^[\w .&'-]{1,30}$/,
-      "Set SMS_SENDER_NAME to the name the text arrives from, in 30 characters or fewer."),
+      "Set SMS_SENDER_NAME to the name the text opens with, in 30 characters or fewer."),
+    number: env.SMS_NUMBER ? setting(env.SMS_NUMBER, /^\+[1-9]\d{7,14}$/,
+      "Set SMS_NUMBER to the number that answers texts, with its country code, such as +447700900982.") : null,
   };
+}
+
+// The number as someone would write it on a label: a UK mobile in its national form.
+export function writtenNumber(number) {
+  const mobile = /^\+44(7\d{3})(\d{6})$/.exec(number);
+  return mobile ? `0${mobile[1]} ${mobile[2]}` : number;
 }
 
 export function boardCommand({ host, port, user }) {

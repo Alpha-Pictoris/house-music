@@ -4,8 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileAsync } from "sass";
 import { referencePath } from "../archive/file-references.js";
-import { boardCommand, officeSettings, settingsPath, videoReference } from "../archive-worker/office-settings.js";
-import { consentVersion } from "../archive-worker/reference-texts.js";
+import { boardCommand, officeSettings, settingsPath, videoReference, writtenNumber } from "../archive-worker/office-settings.js";
 import { testStripURL } from "./archive-return.mjs";
 import { holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
 
@@ -57,8 +56,7 @@ export async function buildArchive(output, env = process.env) {
     .replace("{{catalogue-total}}", () => holdings.length)
     .replaceAll("{{test-strip-url}}", () => stripURL)
     .replaceAll("{{board-command}}", () => boardCommand(settings.board))
-    .replaceAll("{{sms-sender}}", () => settings.sender)
-    .replace("{{consent-version}}", () => consentVersion)
+    .replace("<!-- label-number -->", () => settings.number ? `<span class="label-number">${writtenNumber(settings.number)}</span>` : "")
     .replace(/"(\/([^/"]+\.(?:js|css)))"/g, (_attribute, path, name) => `"${versions.get(name) ?? path}"`);
   await copyPages(archive, output, layout);
   await writeFile(join(output, settingsPath), JSON.stringify(settings));
@@ -91,15 +89,18 @@ export async function buildArchive(output, env = process.env) {
   }
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+export async function publishArchive(env = process.env) {
   const output = join(root, "dist-archive");
   const stage = await mkdtemp(join(root, ".dist-archive-"));
   try {
-    await buildArchive(stage);
+    await buildArchive(stage, env);
     await rm(output, { recursive: true, force: true });
     await rename(stage, output);
     console.log("Built the archive in " + output);
   } finally {
     await rm(stage, { recursive: true, force: true });
   }
+  return output;
 }
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await publishArchive();
