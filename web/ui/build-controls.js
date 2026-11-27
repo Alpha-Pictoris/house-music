@@ -1,12 +1,14 @@
 import { fittingOf, furniture, newPiece } from "../building/catalogue.js";
 import { FurnitureSpots } from "../building/furniture-spots.js";
 import { FloorPlan } from "../building/floor-plan.js";
+import { BSide, Shadows } from "../building/b-side.js";
 import { TouchCamera } from "./touch-camera.js";
 
 export class BuildControls extends EventTarget {
   selection = null;
   tool = "room";
   preview = null;
+  flipped = false;
   pointer = { x: 0, z: 0 };
   #anchor = null;
   #gesture = null;
@@ -16,21 +18,22 @@ export class BuildControls extends EventTarget {
   #openOnClick = false;
   #touchCamera;
 
-  constructor(canvas, scene, editor, notify) {
+  constructor(canvas, scene, editor, notify, side = new BSide()) {
     super();
     this.canvas = canvas;
     this.scene = scene;
     this.editor = editor;
     this.notify = notify;
+    this.side = side;
     this.#touchCamera = new TouchCamera(scene);
     canvas.addEventListener("touchmove", event => event.preventDefault(), { passive: false });
     canvas.addEventListener("pointerdown", event => this.#down(event));
     canvas.addEventListener("pointermove", event => this.#move(event));
     canvas.addEventListener("pointerup", event => this.#up(event));
     canvas.addEventListener("click", () => {
-      if (!this.#openOnClick) return;
+      const open = this.#openOnClick;
       this.#openOnClick = false;
-      this.arrange();
+      if (open) open();
     });
     const interrupt = event => {
       this.#touchCamera.end(event);
@@ -54,6 +57,7 @@ export class BuildControls extends EventTarget {
   reset(editor) {
     this.editor = editor;
     this.selection = null;
+    if (this.flipped) this.#turned(false);
     this.pointer = { x: 0, z: 0 };
     this.scene.enter(editor.house);
     this.use(editor.house.rooms.length ? "select" : "room");
@@ -66,9 +70,40 @@ export class BuildControls extends EventTarget {
   }
 
   use(tool) {
+    if (this.flipped && ["room", "door", "place"].includes(tool)) this.#turned(false);
     this.tool = tool;
     this.#copy = this.kind = null;
     this.cancel();
+  }
+
+  #turned(flipped) {
+    this.flipped = flipped;
+    this.dispatchEvent(new Event("turn"));
+  }
+
+  turnOver(flipped = !this.flipped) {
+    if (flipped === this.flipped || (flipped && !this.side.read(this.editor.house).open)) return;
+    this.#turned(flipped);
+    this.select(null);
+  }
+
+  // On the B-side the selected piece is handled by its shadow.
+  get shadowPiece() {
+    const piece = this.flipped && this.tool === "select" && this.selectedPiece;
+    return piece && FloorPlan.castsShadow(piece) ? piece : null;
+  }
+
+  callShadow() {
+    const piece = this.shadowPiece;
+    if (!piece?.shadow) return;
+    const back = this.#run(() => this.editor.callShadow(piece.id));
+    if (back) this.#audition(back);
+  }
+
+  #moveShadow(piece, point) {
+    const moved = this.#run(() => this.editor.moveShadow(piece.id, point));
+    if (moved && moved !== piece) this.#audition(moved);
+    return moved;
   }
 
   choose(kind, source = null) {
@@ -94,6 +129,7 @@ export class BuildControls extends EventTarget {
   get selectedPiece() { return this.editor.house.pieces.find(piece => piece.id === this.selection); }
 
   get rotatingPiece() {
+    if (this.flipped) return null;
     const piece = this.tool === "place" && this.kind ? { kind: this.kind, turn: this.#turn }
       : this.tool === "select" ? this.selectedPiece : null;
     return piece && furniture[piece.kind].layer !== "wall" ? piece : null;
@@ -101,7 +137,7 @@ export class BuildControls extends EventTarget {
 
   arrange() {
     const piece = this.selectedPiece;
-    if (piece && FurnitureSpots.slots(piece.kind).length) this.dispatchEvent(new CustomEvent("arrange", { detail: piece.id }));
+    if (piece && !this.flipped && FurnitureSpots.slots(piece.kind).length) this.dispatchEvent(new CustomEvent("arrange", { detail: piece.id }));
   }
 
   #run(action) {
@@ -124,7 +160,7 @@ export class BuildControls extends EventTarget {
   }
 
   remove() {
-    if (!this.selection) return;
+    if (!this.selection || this.flipped) return;
     this.editor.remove(this.selection);
     this.selection = null;
     this.use(this.editor.house.rooms.length ? "select" : "room");
@@ -138,6 +174,16 @@ export class BuildControls extends EventTarget {
   #piecePreview(piece, point) {
     const placed = this.editor.preview(piece, point);
     this.preview = { type: "piece", piece: placed, valid: !FloorPlan.pieceError(this.editor.house, placed) };
+  }
+
+  #shadowPreview(piece, point) {
+    const placed = Shadows.moved(piece, point);
+    this.preview = { type: "shadow", piece: placed, valid: !FloorPlan.pieceError(this.editor.house, placed) };
+  }
+
+  #shadowDestination(piece, dx, dz) {
+    const at = Shadows.at(piece);
+    return { x: at.x + dx, z: at.z + dz };
   }
 
   #destination(piece, dx, dz) {
@@ -171,12 +217,19 @@ export class BuildControls extends EventTarget {
     const point = this.scene.groundAt(event.clientX, event.clientY);
     this.pointer = point;
     const pan = event.button === 1 || this.tool === "pan";
-    const id = !pan && this.tool === "select" ? this.scene.pick(event.clientX, event.clientY, this.editor.house) : null;
-    const piece = this.editor.house.pieces.find(item => item.id === id);
+    const house = this.editor.house;
+    let id = null, piece, shadow = null, hatch = null;
+    if (!pan && this.tool === "select") {
+      const side = this.side.read(house);
+      id = this.scene.pick(event.clientX, event.clientY, house, this.flipped ? side : null);
+      if (this.flipped) shadow = side.shadows.find(item => item.id === id) ?? null;
+      else piece = house.pieces.find(item => item.id === id);
+      if (!id) hatch = BSide.hatchAt(side, point, this.flipped);
+    }
     const last = this.#lastTap;
     const repeat = last && last.id === id && last.type === event.pointerType && event.timeStamp - last.time <= 460
       && Math.hypot(event.clientX - last.x, event.clientY - last.y) < 22;
-    this.#capture(event, point, { repeat, piece, pan });
+    this.#capture(event, point, { repeat, piece, pan, shadow, hatch, monitor: id === BSide.monitorId });
   }
 
   #capture(event, point, gesture) {
@@ -206,7 +259,9 @@ export class BuildControls extends EventTarget {
     if (drag.pan) {
       this.scene.pan({ x: drag.lastX, y: drag.lastY }, { x: event.clientX, y: event.clientY });
     } else if (this.tool === "room") this.#roomPreview(this.#anchor ?? drag.start, point);
-    else if (this.tool === "select" && drag.piece) {
+    else if (this.tool === "select" && drag.shadow) {
+      this.#shadowPreview(drag.shadow, this.#shadowDestination(drag.shadow, point.x - drag.start.x, point.z - drag.start.z));
+    } else if (this.tool === "select" && drag.piece) {
       this.#piecePreview(drag.piece, this.#destination(drag.piece, point.x - drag.start.x, point.z - drag.start.z));
     } else if (this.tool === "orbit" || this.tool === "select") {
       this.scene.orbit(event.clientX - drag.lastX, event.clientY - drag.lastY);
@@ -276,7 +331,17 @@ export class BuildControls extends EventTarget {
       else { this.#firstCorner(point); return; }
     } else if (this.tool === "place") this.#placeAt(point);
     else if (this.tool === "door") this.#doorAt(point);
-    else if (this.tool === "select" && drag.piece) {
+    else if (this.tool === "select" && drag.shadow) {
+      const to = this.#shadowDestination(drag.shadow, point.x - drag.start.x, point.z - drag.start.z);
+      if (drag.moved && !this.#moveShadow(drag.shadow, to)) { this.preview = null; return; }
+      this.select(drag.shadow.id);
+    } else if (this.tool === "select" && drag.hatch && !drag.moved) this.turnOver();
+    else if (this.tool === "select" && drag.monitor && !drag.moved) {
+      this.select(null);
+      const { timeStamp: time, clientX: x, clientY: y, pointerType: type } = event;
+      if (drag.repeat) this.#openOnClick = () => this.dispatchEvent(new Event("monitor"));
+      else this.#lastTap = { id: BSide.monitorId, time, x, y, type };
+    } else if (this.tool === "select" && drag.piece) {
       if (drag.moved) {
         const to = this.#destination(drag.piece, point.x - drag.start.x, point.z - drag.start.z);
         const moved = this.#run(() => this.editor.move(drag.piece.id, to));
@@ -287,12 +352,12 @@ export class BuildControls extends EventTarget {
       if (!drag.moved && FurnitureSpots.slots(drag.piece.kind).length) {
         const { timeStamp: time, clientX: x, clientY: y, pointerType: type } = event;
         if (drag.repeat) {
-          this.#openOnClick = true;
+          this.#openOnClick = () => this.arrange();
         } else {
           this.#lastTap = { id: drag.piece.id, time, x, y, type };
         }
       }
-    } else if (this.tool === "select" && !drag.moved) {
+    } else if (this.tool === "select" && !drag.moved && !this.flipped) {
       const house = this.editor.house;
       const door = house.doors.find(d => Math.hypot(d.x - point.x, d.z - point.z) < 0.4);
       this.select(door?.id ?? FloorPlan.roomAt(house, point)?.id);
@@ -307,7 +372,9 @@ export class BuildControls extends EventTarget {
       event.preventDefault();
       const [dx, dz] = arrows[event.key], step = event.shiftKey ? 1 : 0.25;
       const selected = this.selectedPiece;
-      if (this.tool === "select" && selected) {
+      const shadow = this.shadowPiece;
+      if (shadow) this.#moveShadow(shadow, this.#shadowDestination(shadow, dx * step, dz * step));
+      else if (this.tool === "select" && selected && !this.flipped) {
         const moved = this.#run(() => this.editor.move(selected.id, this.#destination(selected, dx * step, dz * step)));
         if (moved && moved !== selected && !event.repeat) this.#audition(moved);
       } else if (this.tool === "pan") {
@@ -322,7 +389,7 @@ export class BuildControls extends EventTarget {
     } else if (event.key === "[" || event.key === "]") {
       event.preventDefault();
       const { rooms, doors, pieces } = this.editor.house;
-      const items = [...rooms, ...doors, ...pieces];
+      const items = this.flipped ? this.side.read(this.editor.house).shadows : [...rooms, ...doors, ...pieces];
       if (!items.length) return;
       const current = items.findIndex(item => item.id === this.selection);
       const index = event.key === "]" ? current + 1 : (current < 0 ? 0 : current) - 1;
@@ -334,6 +401,7 @@ export class BuildControls extends EventTarget {
         else this.#firstCorner(this.pointer);
       } else if (this.tool === "place") this.#placeAt(this.pointer);
       else if (this.tool === "door") this.#doorAt(this.pointer);
+      else if (this.tool === "select" && this.flipped) this.dispatchEvent(new Event("monitor"));
       else if (this.tool === "select") this.arrange();
     } else if (event.key === "Escape") this.use(this.editor.house.rooms.length ? "select" : "room");
     else if (event.key.toLowerCase() === "r" || event.key === "," || event.key === ".") {

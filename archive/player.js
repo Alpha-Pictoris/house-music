@@ -1,6 +1,7 @@
 import { houseFromLink, readHouse } from "./house/library/house-format.js";
 import { Sampler } from "./house/music/sampler.js";
 import { Transport } from "./house/music/transport.js";
+import { recordingNumber } from "./recording-number.js";
 
 const referenceCopy = readHouse({
   title: "Reference copy", mode: "cassette", band: false,
@@ -12,15 +13,6 @@ const referenceCopy = readHouse({
     { id: "rim", kind: "lamp", roomId: "landing", x: 2.75, z: 0, turn: 0, hit: "snare" }
   ]
 });
-
-function recordingNumber(house) {
-  let hash = 0x811c9dc5;
-  for (const byte of new TextEncoder().encode(JSON.stringify(house))) {
-    hash = Math.imul(hash ^ byte, 0x01000193);
-  }
-  const digits = (hash >>> 0).toString(16).toUpperCase().padStart(8, "0");
-  return "041a / " + digits.slice(0, 4) + "-" + digits.slice(4);
-}
 
 export class TapePlayer {
   #request = 0;

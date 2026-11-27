@@ -10,7 +10,7 @@ Keep contributor instructions here. Publish design plans and puzzle explanations
 
 ## Code organisation
 
-- `web/building/` holds the house model. `HouseEditor` owns edits and undo. `FloorPlan` checks placement for both furniture drops and imported houses.
+- `web/building/` holds the house model. `HouseEditor` owns edits and undo. `FloorPlan` checks placement for both furniture drops and imported houses. `BSide` and `Shadows` own the B-side of the house.
 - In `web/music/`, `Score` derives notes from a house, `Transport` schedules them and `Sampler` plays the recordings.
 - In `web/scene/`, `HouseScene` uses the same geometry to draw and pick furniture.
 - `web/library/` owns local saves and validates the house format for files and share links.

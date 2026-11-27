@@ -34,3 +34,18 @@ test("game pages and artwork resolve under the repository path", async t => {
     }
   }
 });
+
+test("the monitor's record office address follows the build setting", async t => {
+  const output = await mkdtemp(join(tmpdir(), "house-music-office-"));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  const address = page => page.match(/name="record-office" content="([^"]*)"/)[1];
+  await buildSite(output);
+  assert.equal(address(await readFile(join(output, "index.html"), "utf8")), "https://archive.portsmouth.technology/");
+
+  process.env.ARCHIVE_URL = "http://office.test:4174";
+  t.after(() => { delete process.env.ARCHIVE_URL; });
+  await buildSite(output);
+  assert.equal(address(await readFile(join(output, "index.html"), "utf8")), "http://office.test:4174/");
+  process.env.ARCHIVE_URL = "office";
+  await assert.rejects(buildSite(output), /Set ARCHIVE_URL/);
+});

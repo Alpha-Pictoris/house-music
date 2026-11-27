@@ -106,6 +106,11 @@ export function readHouse(value) {
       "The house contains an invalid furniture position or turn.");
     const piece = { id, kind, roomId, x, z, turn };
     readFitting(item, piece);
+    if (item.shadow !== undefined) {
+      const { shadow } = item;
+      requireValid(plainRecord(shadow) && Number.isFinite(shadow.x) && Number.isFinite(shadow.z), "The house contains an unreadable shadow.");
+      piece.shadow = { x: shadow.x, z: shadow.z };
+    }
     if (item.contents !== undefined) {
       const slots = FurnitureSpots.slots(kind);
       requireValid(slots.length && Array.isArray(item.contents) && item.contents.length <= slots.length, "The furniture needs a spot for each object.");

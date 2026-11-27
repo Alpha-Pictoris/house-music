@@ -277,3 +277,16 @@
 @media (prefers-reduced-motion: reduce) {
   .workbench #plot-hint { transition: none; }
 }
+
+#monitor-dialog { width: min(92vw, 430px); }
+.glass {
+  display: grid; place-items: center; min-height: 208px; margin: 12px 0 10px; padding: 26px 22px; border-radius: 34px / 30px;
+  border: 10px solid #55554c; box-shadow: inset 0 0 0 2px #2c2d27, inset 0 0 44px #000;
+  background: repeating-linear-gradient(#0000 0 3px, #0005 3px 4px), radial-gradient(ellipse at 50% 42%, #12301c, #06110a 80%);
+}
+.glass p { margin: 0; }
+#monitor-file { display: grid; gap: 9px; justify-items: start; width: 100%; font: 15px/1.2 ui-monospace, "Courier New", monospace; color: #8cf39a; text-shadow: 0 0 7px #3fd05c99; text-transform: uppercase; letter-spacing: .04em; }
+#monitor-file .file-number { font-size: 31px; letter-spacing: .08em; color: #c4ffc9; }
+#monitor-file a { color: inherit; text-underline-offset: 4px; }
+#monitor-file a::before { content: "> "; }
+#monitor-file a:focus-visible { outline: 2px solid #c4ffc9; outline-offset: 4px; }
