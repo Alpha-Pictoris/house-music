@@ -1,13 +1,25 @@
 import { randomBytes } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { RecordOffice } from "../archive-worker/record-office.js";
+import { generateKey, publicKeyLine, writePrivateKey } from "../archive-worker/ssh-keys.js";
 import { TwilioSender } from "../archive-worker/twilio-sender.js";
 import { memoryLedger, PublishedPages } from "./archive-stand-ins.mjs";
 
 const port = 4174;
 const pages = fileURLToPath(new URL("../dist-archive", import.meta.url));
+const boardAuthority = fileURLToPath(new URL("../bbs/user_ca", import.meta.url));
+
+async function authorityKey() {
+  const saved = process.env.BOARD_CA_KEY ?? await readFile(boardAuthority, "utf8").catch(() => null);
+  if (saved) return saved;
+  const key = await generateKey();
+  console.log("Reader’s tickets are signed by a throwaway authority for this run. To try them on a local board,\n"
+    + "save this line as bbs/user_ca.pub and restart the board:\n\n" + publicKeyLine(key, "throwaway archive authority"));
+  return writePrivateKey(key, "throwaway archive authority");
+}
 
 let texts = 0;
 const terminal = {
@@ -20,6 +32,7 @@ const terminal = {
 const env = {
   ...process.env,
   ASSETS: new PublishedPages(pages),
+  BOARD_CA_KEY: await authorityKey(),
   NUMBER_HASH_KEY: process.env.NUMBER_HASH_KEY ?? randomBytes(32).toString("hex"),
 };
 env.LEDGER = memoryLedger(env);

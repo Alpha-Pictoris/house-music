@@ -63,6 +63,7 @@ test("the film, its captions and the ticket desk are built with one board addres
   const film = await readFile(join(output, referencePath("AV/98/019"), "index.html"), "utf8");
   assert.match(film, /<code>ssh caller@board\.portsea\.example<\/code>/);
   assert.match(film, /<track kind="captions"[^>]+src="\/assets\/riggers-yard-sample\.vtt" default>/);
+  assert.match(film, /<details class="sleeve" data-ticket>[^]+<form method="post" action="\/tickets">/);
   const captions = await readFile(join(output, "assets/riggers-yard-sample.vtt"), "utf8");
   assert.match(captions, /^WEBVTT\n/);
   assert.ok(captions.includes("ssh caller@board.portsea.example"));
