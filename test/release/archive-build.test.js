@@ -6,6 +6,9 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildArchive } from "../../scripts/build-archive.mjs";
 import { referencePath } from "../../archive/file-references.js";
+import { RecordOffice } from "../../archive-worker/record-office.js";
+import { consentVersion } from "../../archive-worker/reference-texts.js";
+import { PublishedPages } from "../../scripts/archive-stand-ins.mjs";
 
 test("the case ships with its own navigation, playback modules and credited recordings", async t => {
   const directory = await mkdtemp(join(tmpdir(), "portsmouth-archive-"));
@@ -67,5 +70,30 @@ test("the film, its captions and the ticket desk are built with one board addres
   assert.equal(clip.toString("ascii", 4, 8), "ftyp");
   assert.deepEqual(JSON.parse(await readFile(join(output, "settings.json"), "utf8")),
     { board: { host: "board.portsea.example", port: 22, user: "caller" }, sender: "Portsea Records" });
+
+  const register = await readFile(join(output, referencePath("RO/98/012"), "index.html"), "utf8");
+  assert.ok(register.includes(`name="consent" value="${consentVersion}"`));
+  assert.match(register, /<strong>Portsea Records<\/strong> will send one text about the Rigger’s Yard recording\./);
+  assert.doesNotMatch(register, /AV\/98\/019|\{\{/);
   await assert.rejects(buildArchive(output, { BOARD_PORT: "70000" }), /Set BOARD_PORT to a port number below 65536\./);
+});
+
+test("the local archive opens records by reference and answers a wrong address with the missing page", async t => {
+  const output = await mkdtemp(join(tmpdir(), "portsmouth-archive-"));
+  t.after(() => rm(output, { recursive: true, force: true }));
+  await buildArchive(output, {});
+  const office = new RecordOffice({ ASSETS: new PublishedPages(output) });
+  const open = (path, method = "GET") => office.fetch(new Request("http://localhost:4174" + path, { method }));
+
+  const film = await open(referencePath("AV/98/019"));
+  assert.deepEqual([film.status, film.headers.get("Content-Type")], [200, "text/html; charset=utf-8"]);
+  assert.match(await film.text(), /Video cassette, Rigger’s Yard/);
+  const lookup = await open(referencePath("AV/98/019"), "HEAD");
+  assert.deepEqual([lookup.status, await lookup.text()], [200, ""]);
+  assert.equal((await open("/records/AV-98-019")).headers.get("Location"), "http://localhost:4174/records/AV-98-019/");
+  for (const path of ["/records/AV-98-018/", "/..%2F..%2Fpackage.json", "/archive-worker/index.js"]) {
+    const missing = await open(path);
+    assert.equal(missing.status, 404, path);
+    assert.match(await missing.text(), /Page not found/);
+  }
 });

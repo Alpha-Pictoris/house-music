@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { compileAsync } from "sass";
 import { referencePath } from "../archive/file-references.js";
 import { boardCommand, officeSettings, settingsPath, videoReference } from "../archive-worker/office-settings.js";
+import { consentVersion } from "../archive-worker/reference-texts.js";
 import { testStripURL } from "./archive-return.mjs";
 import { holdings, renderHoldingPage, renderHoldingRow } from "./holdings.mjs";
 
@@ -56,6 +57,8 @@ export async function buildArchive(output, env = process.env) {
     .replace("{{catalogue-total}}", () => holdings.length)
     .replaceAll("{{test-strip-url}}", () => stripURL)
     .replaceAll("{{board-command}}", () => boardCommand(settings.board))
+    .replaceAll("{{sms-sender}}", () => settings.sender)
+    .replace("{{consent-version}}", () => consentVersion)
     .replace(/"(\/([^/"]+\.(?:js|css)))"/g, (_attribute, path, name) => `"${versions.get(name) ?? path}"`);
   await copyPages(archive, output, layout);
   await writeFile(join(output, settingsPath), JSON.stringify(settings));

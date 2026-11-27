@@ -3,3 +3,4 @@
 /dist-archive/
 /.dist-archive-*/
 /.wrangler/
+/.dev.vars

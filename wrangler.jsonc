@@ -1,7 +1,13 @@
 {
+  "main": "archive-worker/index.js",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist-archive",
+    "binding": "ASSETS",
     "not_found_handling": "404-page"
-  }
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "LEDGER", "class_name": "RequestLedger" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RequestLedger"] }]
 }
