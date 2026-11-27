@@ -12,7 +12,7 @@ The earlier file holds a stairwell test strip. Opening it in House Music reveals
 
 ## The video cassette
 
-The register of deposits **RO/98/012** also records a video cassette left at the counter the day after the tape. Below the extract, the Record Office offers to text its reference. The text gives **AV/98/019**. Searching for that reference opens the film, and the label on its sleeve lifts to show a reader’s ticket for the machine named in the footage. [Texting the video reference](video-reference.md)
+The register of deposits **RO/98/012** also records a video cassette left at the counter the day after the tape. A telephone number is written on the blue label under the tape’s white one. A text to that number is answered with **AV/98/019**. Searching for that reference opens the film, and the label on its sleeve lifts to show a reader’s ticket for the machine named in the footage. [Texting the video reference](video-reference.md)
 
 ## From the house
 

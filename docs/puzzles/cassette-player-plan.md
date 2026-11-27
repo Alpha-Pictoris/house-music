@@ -11,9 +11,15 @@ npm run start:archive
 
 The archive opens on [port 4174](http://localhost:4174/). Run `npm start` in a second terminal to open the game on port 5173. On another device, use the computer’s LAN address with the same ports.
 
-## Ask for the text and take the ticket
+## Text the number and take the ticket
 
-Search for **RO/98/012** and ask for the text with a UK mobile number. The local archive prints the text in its terminal and sends nothing. Search for the reference in the text, lift the label on the sleeve and take the ticket.
+Search for **EH/98/041** and lift the white label. The local archive writes a stand-in number on the blue one, from the range Ofcom keeps for drama, so a real text to it reaches nobody. Text it from a second terminal.
+
+```sh
+curl -d From=+447700900001 -d Body=hello http://localhost:4174/texts
+```
+
+The reply Twilio would send is inside `<Message>`. Search for the reference it gives, lift the label on the sleeve and take the ticket. Set `SMS_NUMBER` to write another number on the label.
 
 Tickets are signed with the board’s key in `bbs/user_ca` when that file exists, or with `BOARD_CA_KEY`. Otherwise the archive makes a throwaway key and prints the public line a local board should trust. Set `BOARD_HOST`, `BOARD_PORT` and `BOARD_USER` when building to change the address in the transcript, the captions and the ticket. [Local archive](../../scripts/serve-archive.mjs) · [Texting the video reference](video-reference.md)
 

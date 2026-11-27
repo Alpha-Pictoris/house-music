@@ -1,16 +1,18 @@
 # Texting the video reference
 
-*Playable discovery. The film is a sample until the footage is cut.*
+*Playable discovery. The film is a sample until the footage is cut, and the label has no number until one is bought.*
 
-## The register
+## The blue label
 
-The officer’s visit on **EH/98/041** files its receipt under **RO/98/012**. Searching for that reference opens the register of deposits. The week’s receipts include a video cassette left at the counter on 12 November for the Rigger’s Yard file, with no label and no name. The entry gives no reference.
+The cassette on **EH/98/041** has a white Environmental Health label. Lift it and the blue Housing stores label underneath gives **HO/78/017**. A telephone number is written beside it by hand.
 
-Below the extract, the Record Office asks for a mobile number and offers **Text me the reference**. It names the sender beside the button and sends one text.
+Send that number any text. One text comes back.
 
-> Record Office: Rigger's Yard video. Catalogue reference AV/98/019. Reply STOP to unsubscribe.
+> Record Office: Rigger's Yard video. Catalogue reference AV/98/019.
 
-The page confirms the request and never shows the reference once texting is switched on. Until then it shows the text it would have sent, so the trail can still be followed.
+The register of deposits **RO/98/012** says what the reference is for. It records a video cassette left at the counter on 12 November for the Rigger’s Yard file, with no label and no name.
+
+The number appears once the archive is built with one. Until then the blue label gives the housing reference alone.
 
 ## The film
 
@@ -36,6 +38,6 @@ A visitor carrying a house gets a ticket made out to their cassette, such as `04
 
 ## Limits
 
-A UK mobile number can ask for one text every 15 minutes. One connection can ask five times an hour and take ten tickets an hour. The archive keeps a keyed digest of each number with the time, the wording shown beside the button and Twilio’s message reference. It does not keep the number. A number that replies STOP is left alone for a day, and Twilio keeps refusing it until it replies START.
+A number that texts twice within two minutes gets one reply. The archive answers 400 texts in all unless the ceiling is changed. It keeps a keyed digest of each number for those two minutes and never the number. Twilio answers STOP, START and HELP itself, and the archive stays quiet for those words. One connection can take ten tickets an hour.
 
-[Run the archive locally](cassette-player-plan.md) · [Text requests](../../archive-worker/reference-texts.js) · [Reader’s ticket](../../archive-worker/reader-ticket.js)
+[Run the archive locally](cassette-player-plan.md) · [Answering texts](../../archive-worker/reference-texts.js) · [Reader’s ticket](../../archive-worker/reader-ticket.js)
