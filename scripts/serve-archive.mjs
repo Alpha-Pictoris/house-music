@@ -20,7 +20,7 @@ async function authorityKey() {
   if (saved) return saved;
   const key = await generateKey();
   console.log("Reader’s tickets are signed by a throwaway authority for this run. To try them on a local board,\n"
-    + "save this line as bbs/user_ca.pub and start the board with: uv run ssharg --user-ca user_ca.pub\n\n" + publicKeyLine(key, "throwaway archive authority") + "\n");
+    + "save this line as bbs/user_ca.pub and restart the board:\n\n" + publicKeyLine(key, "throwaway archive authority") + "\n");
   return writePrivateKey(key, "throwaway archive authority");
 }
 

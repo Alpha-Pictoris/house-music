@@ -1,5 +1,4 @@
 import io
-from pathlib import Path
 
 import paramiko
 import pytest
@@ -37,16 +36,7 @@ def server(banner: str = "") -> ArgServer:
     return ArgServer(CA.public_key(), banner)
 
 
-def test_without_a_ca_anyone_logs_in_with_none():
-    s = ArgServer()
-    assert s.get_allowed_auths("dana") == "none"
-    assert s.check_auth_none("dana") == paramiko.AUTH_SUCCESSFUL
-    assert s.username == "dana"
-    assert s.check_auth_password("dana", "hunter2") == paramiko.AUTH_FAILED
-    assert s.check_auth_publickey("dana", certified_key()) == paramiko.AUTH_FAILED
-
-
-def test_with_a_ca_only_certificates_log_in():
+def test_only_certificates_log_in():
     s = server()
     assert s.get_allowed_auths("dana") == "publickey"
     assert s.check_auth_none("dana") == paramiko.AUTH_FAILED
@@ -101,15 +91,3 @@ def test_banner_and_version():
     assert server("a\nb\n").get_banner() == ("a\r\nb\r\n", "en-US")
     assert server("").get_banner() == (None, None)
     assert SERVER_VERSION.startswith("SSH-2.0-OpenSSH_")
-
-
-def test_cli_serves_without_a_ca_unless_one_is_named(tmp_path, monkeypatch):
-    from ssharg import cli
-    served = []
-    monkeypatch.setattr("ssharg.server.serve", lambda cfg, bind, port: served.append(cfg))
-    world = str(Path(__file__).resolve().parents[2] / "world")
-    common = ["--world", world, "--state-dir", str(tmp_path / "state"), "--host-key", str(tmp_path / "host_key")]
-    assert cli.main(common) == 0
-    assert served[-1].user_ca is None
-    assert cli.main([*common, "--user-ca", str(tmp_path / "missing.pub")]) == 1
-    assert len(served) == 1

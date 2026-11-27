@@ -30,18 +30,17 @@ class ServerConfig(BaseModel):
     world: World
     store: StateStore
     host_key: paramiko.PKey
-    user_ca: SSHPublicKeyTypes | None = None
+    user_ca: SSHPublicKeyTypes
 
 
 class ArgServer(paramiko.ServerInterface):
-    """Admits every client with SSH's `none` method, or, given a `user_ca`, only clients holding
-    a certificate that `certs.verify` accepts for their username.
+    """Admits only clients holding a certificate that `certs.verify` accepts for their username.
 
     Every other auth method fails through paramiko's defaults. Players still log in to the BBS
     itself once connected.
     """
 
-    def __init__(self, user_ca: SSHPublicKeyTypes | None = None, banner: str = "") -> None:
+    def __init__(self, user_ca: SSHPublicKeyTypes, banner: str = "") -> None:
         self.user_ca = user_ca
         self.banner = banner
         self.username = "guest"
@@ -53,17 +52,9 @@ class ArgServer(paramiko.ServerInterface):
         self.terminal: Terminal | None = None
 
     def get_allowed_auths(self, username: str) -> str:
-        return "none" if self.user_ca is None else "publickey"
-
-    def check_auth_none(self, username: str) -> int:
-        if self.user_ca is not None:
-            return paramiko.AUTH_FAILED
-        self.username = username
-        return paramiko.AUTH_SUCCESSFUL
+        return "publickey"
 
     def check_auth_publickey(self, username: str, key: paramiko.PKey) -> int:
-        if self.user_ca is None:
-            return paramiko.AUTH_FAILED
         cert = _certificate(key)
         if cert is None:
             return paramiko.AUTH_FAILED
@@ -192,8 +183,7 @@ def serve(cfg: ServerConfig, bind: str, port: int) -> None:
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind((bind, port))
     listener.listen(64)
-    auth = "anyone can connect" if cfg.user_ca is None else "certificates required"
-    print(f"ssharg listening on {bind}:{port} as {cfg.world.name} ({auth})", flush=True)
+    print(f"ssharg listening on {bind}:{port} as {cfg.world.name}", flush=True)
     try:
         while True:
             sock, addr = listener.accept()
