@@ -27,4 +27,4 @@ To check the transfer by ear, make a one-bar house with a late snare. Listen to 
 
 The stairwell test strip carries its own house. In the local preview it opens on port 5173 on the same computer. Set `HOUSE_MUSIC_URL` when building the archive to open the strip in the hosted game. With that setting empty, visitors can download the house file. [Archive build](../../scripts/build-archive.mjs)
 
-The proposed B-side monitor should display the file reference and open the catalogue with `houseLink(transport.view().house, archiveURL)`. Taking the sounding house preserves what the player heard when an edit is waiting for the next loop.
+The monitor on the B-side opens the catalogue with the sounding house, so the tape matches what the player heard while an edit waits for the next loop. In the local preview the game on port 5173 opens the archive on port 4174. Set `ARCHIVE_URL` when building the game to open another address. [Monitor](../../web/ui/monitor.js) · [Game build](../../scripts/build.mjs)

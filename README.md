@@ -53,6 +53,8 @@ Open [House Music on this computer](http://localhost:5173/). Other devices on th
 
 With Node.js 20 or later, run the tests with `npm test`.
 
+The Portsmouth City Record Office is a second site that some houses lead to. Run `npm run start:archive` in another terminal to open it on [port 4174](http://localhost:4174/). Texts it would send print in that terminal. [Running the archive](docs/puzzles/cassette-player-plan.md)
+
 The instrument recordings use Frank Wen’s FluidR3 GM soundfont. [Sound credits and licence](web/credits.html)
 
 ## Dial in to the board

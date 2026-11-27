@@ -14,6 +14,6 @@ The earlier file holds a stairwell test strip. Opening it in House Music reveals
 
 The register of deposits **RO/98/012** also records a video cassette left at the counter the day after the tape. Below the extract, the Record Office offers to text its reference. The text gives **AV/98/019**. Searching for that reference opens the film, and the label on its sleeve lifts to show a reader’s ticket for the machine named in the footage. [Texting the video reference](video-reference.md)
 
-## Later chapters
+## From the house
 
-The proposed entrance from the house is a defunct CRT on the B-side. Leave a gap at the end of a phrase and three notes answer in the same key. On the last note, a green dot fades from the glass. The monitor would display the complaint reference and open the archive catalogue with the sounding house. [The B-side](b-side.md)
+The monitor on the B-side of a house shows **EH/98/041** and opens the catalogue with the sounding house. The cassette then plays both sides of that house in turn. [The B-side](b-side.md)
