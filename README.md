@@ -31,6 +31,8 @@ Open **Furnish → Tables & shelves**. Double-click or double-tap a table or she
 
 Select a bookcase to read the mark on its spine. In some rooms the writing changes. You can fold the note and read it again from the plot.
 
+Lay a rug in a room with a lamp and watch its shadow.
+
 Tap the curved arrow to turn a piece a quarter turn before or after placing it. **Camera** holds **Pan**, **Orbit** and zoom. Two fingers drag or pinch the map in any tool. On a mouse, drag with the middle button to pan and scroll to zoom.
 
 Tap the house name to open your library. Houses save on this device. **Share** gives you a playable link or a house file. Choose **Save a copy** to keep your own version of a shared house.
@@ -51,6 +53,8 @@ Open [House Music on this computer](http://localhost:5173/). Other devices on th
 
 With Node.js 20 or later, run the tests with `npm test`.
 
+The Portsmouth City Record Office is a second site that some houses lead to. Run `npm run start:archive` in another terminal to open it on [port 4174](http://localhost:4174/). [Running the archive](docs/puzzles/cassette-player-plan.md)
+
 The instrument recordings use Frank Wen’s FluidR3 GM soundfont. [Sound credits and licence](web/credits.html)
 
 ## Dial in to the board
@@ -65,4 +69,4 @@ uv run ssharg --local
 
 ## Publish
 
-Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.
+Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`. Set `ARCHIVE_URL` for that build if the record office lives at another address.

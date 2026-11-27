@@ -20,4 +20,4 @@ Rugs fit under furniture, windows attach to outside walls and a path can lead up
 
 A local save, a house file and a share link carry the same rooms, furnishings, fittings and arrangement. Switching records keeps the current beat. Saving the house preserves the chosen record, so a friend opening the link hears the phrase with the same instruments.
 
-The recipient opens a separate draft. They can change the ending and choose **Save a copy** to give it a place in their library. Reopening the original link plays the layout the sender shared. A house file carries the same snapshot when a link grows unwieldy. The proposed cassette would use that snapshot to play the sender’s tune on another site. [The cassette archive](cassette-archive.md)
+The recipient opens a separate draft. They can change the ending and choose **Save a copy** to give it a place in their library. Reopening the original link plays the layout the sender shared. A house file carries the same snapshot when a link grows unwieldy. The cassette in the record office uses that snapshot to play the sender’s tune on another site. [The cassette archive](cassette-archive.md)

@@ -1,6 +1,6 @@
 # The cassette archive
 
-The Portsmouth City Record Office is a fictional municipal archive for House Music. Its public catalogue covers Portsmouth history. Each entry links to its original catalogue or heritage record. The four Rigger’s Yard files open when someone enters their full reference in the catalogue search. They are omitted from the public list and keyword results.
+The Portsmouth City Record Office is a fictional municipal archive for House Music. Its public catalogue covers Portsmouth history. Each entry links to its original catalogue or heritage record. The five Rigger’s Yard files open when someone enters their full reference in the catalogue search. They are omitted from the public list and keyword results.
 
 ## The complaint
 
@@ -10,8 +10,10 @@ The officer’s visit cites the stair plan **BS/82/016** and deposit register **
 
 The earlier file holds a stairwell test strip. Opening it in House Music reveals two landings. Both play the same descending figure. The bass answers half a beat later on the lower landing. The player can rearrange the house and keep their own copy. [Playback and local preview](cassette-player-plan.md)
 
-## Later chapters
+## The video cassette
 
-The proposed entrance from the house is a defunct CRT on the B-side. Leave a gap at the end of a phrase and three notes answer in the same key. On the last note, a green dot fades from the glass. The monitor would display the complaint reference and open the archive catalogue with the sounding house. [The B-side](b-side.md)
+The register of deposits **RO/98/012** also records a video cassette left at the counter the day after the tape. A telephone number is written on the blue label under the tape’s white one. A text to that number is answered with **AV/98/019**. Searching for that reference opens the film, and the label on its sleeve lifts to show a reader’s ticket for the machine named in the footage. [Texting the video reference](video-reference.md)
 
-A possible later chapter would put a telephone number on the sleeve. A text containing the case number could reach the resident through Twilio. The paper trail already leads to the older file.
+## From the house
+
+The monitor on the B-side of a house shows **EH/98/041** and opens the catalogue with the sounding house. The cassette then plays both sides of that house in turn. [The B-side](b-side.md)

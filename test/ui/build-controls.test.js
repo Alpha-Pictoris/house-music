@@ -113,3 +113,82 @@ test("bracket keys cycle through the house in either direction", () => {
     assert.equal(controls.selection, id);
   }
 });
+
+function bedroomControls() {
+  const editor = new HouseEditor();
+  editor.drawRoom({ x: 0, z: 0 }, { x: 8, z: 6 });
+  const wardrobe = editor.place("wardrobe", { x: 1, z: 1 });
+  editor.place("lamp", { x: 6, z: 1 });
+  editor.place("rug", { x: 4, z: 3.5 });
+  const canvas = Object.assign(new EventTarget(), { focus() {}, setPointerCapture() {}, hasPointerCapture: () => false });
+  const picked = [];
+  const scene = { groundAt: (x, z) => ({ x: x / 100, z: z / 100 }), pick: () => picked[0] ?? null, orbit() {}, enter() {} };
+  const controls = new BuildControls(canvas, scene, editor, () => {});
+  controls.use("select");
+  function pointer(action, x, z, pointerType, timeStamp = 0) {
+    const event = Object.assign(new Event("pointer" + action), { pointerId: 1, clientX: x * 100, clientY: z * 100, pointerType, button: 0 });
+    Object.defineProperty(event, "timeStamp", { value: timeStamp });
+    canvas.dispatchEvent(event);
+  }
+  const tap = (x, z, type, time) => { pointer("down", x, z, type, time); pointer("up", x, z, type, time); };
+  const drag = (from, to, type) => {
+    pointer("down", ...from, type);
+    pointer("move", (from[0] + to[0]) / 2, (from[1] + to[1]) / 2, type);
+    pointer("up", ...to, type);
+  };
+  const key = (key, more = {}) => canvas.dispatchEvent(Object.assign(new Event("keydown", { cancelable: true }), { key }, more));
+  return { editor, wardrobe, canvas, controls, picked, tap, drag, key };
+}
+
+for (const type of ["mouse", "touch"]) {
+  test("a " + type + " tap on the rug's shadow turns the house over, and a drag there moves a shadow", () => {
+    const { editor, wardrobe, controls, picked, tap, drag } = bedroomControls();
+    const piece = () => editor.house.pieces.find(item => item.id === wardrobe.id);
+    tap(5, 4, type);
+    assert.equal(controls.flipped, false);
+    tap(6.8, 5.4, type);
+    assert.equal(controls.flipped, true);
+
+    picked.push(wardrobe.id);
+    drag([1.5, 1.5], [3.5, 3.5], type);
+    assert.deepEqual([piece().shadow, piece().x, controls.selection], [{ x: 3, z: 3 }, 1, wardrobe.id]);
+    const before = editor.house;
+    drag([3.5, 3.5], [3.5, 9], type);
+    assert.equal(editor.house, before);
+
+    picked.length = 0;
+    tap(5, 4, type);
+    assert.equal(controls.flipped, false);
+  });
+}
+
+test("on the B-side the arrow keys carry the selected shadow and building turns the house back", () => {
+  const { editor, wardrobe, controls, key } = bedroomControls();
+  const piece = () => editor.house.pieces.find(item => item.id === wardrobe.id);
+  controls.turnOver();
+  key("]");
+  assert.equal(controls.selection, wardrobe.id);
+  key("ArrowRight");
+  assert.deepEqual([piece().shadow, piece().x], [{ x: 1.25, z: 1 }, 1]);
+  key("Delete");
+  assert.ok(piece());
+  controls.callShadow();
+  assert.equal(piece().shadow, undefined);
+  controls.use("room");
+  assert.equal(controls.flipped, false);
+});
+
+test("on the B-side a double tap or Enter asks to open the monitor", () => {
+  const { editor, canvas, controls, picked, tap, key } = bedroomControls();
+  controls.turnOver();
+  const opened = [];
+  controls.addEventListener("monitor", () => opened.push(true));
+  picked.push(controls.side.read(editor.house).monitor.id);
+  for (const time of [0, 200]) {
+    tap(3.9, 0.8, "touch", time);
+    canvas.dispatchEvent(new Event("click"));
+  }
+  assert.equal(opened.length, 1);
+  key("Enter");
+  assert.equal(opened.length, 2);
+});

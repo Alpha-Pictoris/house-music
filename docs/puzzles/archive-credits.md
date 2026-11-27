@@ -36,6 +36,10 @@ Tim Reckmann photographed the black cassette with the blue and white paper label
 
 The label uses Kalam Regular by Indian Type Foundry, distributed under the SIL Open Font License 1.1. [Kalam](https://github.com/google/fonts/tree/main/ofl/kalam) · [Font licence](https://github.com/google/fonts/blob/main/ofl/kalam/OFL.txt)
 
+## Sample film
+
+The eight-second film on AV/98/019 is a stand-in until the footage is cut. FFmpeg draws its colour bars and type in the system monospace face. Run `node scripts/render-sample-footage.mjs` to render it again with the board address from `BOARD_HOST`, `BOARD_PORT` and `BOARD_USER`. [FFmpeg](https://ffmpeg.org/) · [Render script](../../scripts/render-sample-footage.mjs)
+
 ## Design
 
 The catalogue uses GOV.UK Frontend’s service navigation, forms, typography and record layouts. Its stylesheet is built from the official Sass components. [GOV.UK Design System](https://design-system.service.gov.uk/get-started/) · [GOV.UK Frontend licence](https://github.com/alphagov/govuk-frontend/blob/v6.6.0/LICENSE.txt)
