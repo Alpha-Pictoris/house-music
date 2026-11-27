@@ -1,9 +1,10 @@
-const minute = 60e3, hour = 60 * minute;
+const minute = 60e3, hour = 60 * minute, day = 24 * hour;
 
 export const limits = {
   cooldown: 2 * minute,
   visitWindow: hour,
   ticketsPerVisitor: 10,
+  // Texts answered in one day, counted from midnight UTC.
   ceiling: 400,
 };
 
@@ -44,10 +45,11 @@ export class RequestLedger {
   #answer({ number }) {
     const now = this.#now(), key = "number:" + number;
     if (now < (this.#records.get(key) ?? -Infinity) + limits.cooldown) return { outcome: "quiet" };
-    const answered = this.#records.get("texts") ?? 0;
+    const today = Math.floor(now / day), tally = this.#records.get("texts");
+    const answered = tally?.day === today ? tally.count : 0;
     if (answered >= this.#ceiling) return { outcome: "quiet" };
     this.#records.put(key, now);
-    this.#records.put("texts", answered + 1);
+    this.#records.put("texts", { day: today, count: answered + 1 });
     this.#storage.setAlarm(now + 2 * limits.visitWindow);
     return { outcome: "answer" };
   }

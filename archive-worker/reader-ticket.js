@@ -39,13 +39,6 @@ export class TicketDesk {
       `Issued ${day(now)}. Valid until ${day(expires)}.`,
       "Recording: " + holder,
       "",
-      `Keep ${name} and ${name}-cert.pub together in one folder.`,
-      "Show the ticket when you call the address in the film:",
-      "",
-      `    ssh -i ${name} (then the rest of the command as filmed)`,
-      "",
-      `If ssh says the ticket is too open, run: chmod 600 ${name}`,
-      "",
     ].join("\r\n");
     return zip([
       { name, text: writePrivateKey(key, "reader's ticket"), mode: 0o600 },

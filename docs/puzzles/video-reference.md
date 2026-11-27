@@ -14,7 +14,7 @@ The register of deposits **RO/98/012** says what the reference is for. It record
 
 ## The film
 
-Searching for **AV/98/019** opens the video cassette. The tape plays as static, and one line of type shows through it: the address of the next machine as an `ssh` command. The captions and the transcript carry the same command, `ssh reader@board.portsmouth.technology`.
+Searching for **AV/98/019** opens the video cassette. The record describes someone exploring a strange door in their house during a power cut, and notes smudged text on the wall that appeared to be an internet address, `reader@board.portsmouth.technology`. The film on the page is a stand-in until the footage is cut: static, with `ssh reader@board.portsmouth.technology` showing through. Its captions are off unless the viewer turns them on.
 
 ## The reader’s ticket
 
@@ -24,9 +24,9 @@ The cassette sleeve has a Record Office label, like the tape on EH/98/041. Lift 
 | --- | --- |
 | `readers-ticket` | The key `ssh` presents |
 | `readers-ticket-cert.pub` | The Record Office’s signature admitting that key for 30 days |
-| `readers-ticket.txt` | How to show the ticket |
+| `readers-ticket.txt` | The ticket’s dates and the recording it is made out to |
 
-Unzip the three files into one folder and add `-i readers-ticket` to the command in the film.
+The ticket says nothing about how to show it. Unzip the three files into one folder and add `-i readers-ticket` to the command in the film. The key arrives readable by its owner alone, as `ssh` requires.
 
 ```sh
 ssh -i readers-ticket reader@board.portsmouth.technology
@@ -36,6 +36,6 @@ A visitor carrying a house gets a ticket made out to their cassette, such as `04
 
 ## Limits
 
-A number that texts twice within two minutes gets one reply. The archive answers 400 texts in all unless the ceiling is changed. It keeps a keyed digest of each number for those two minutes and never the number. Twilio answers STOP, START and HELP itself, and the archive stays quiet for those words. One connection can take ten tickets an hour.
+A number that texts twice within two minutes gets one reply. The archive answers 400 texts a day, counted from midnight UTC, unless the ceiling is changed. It keeps a keyed digest of each number for those two minutes and never the number. Twilio answers STOP, START and HELP itself, and the archive stays quiet for those words. One connection can take ten tickets an hour.
 
 [Run the archive locally](cassette-player-plan.md) · [Answering texts](../../archive-worker/reference-texts.js) · [Reader’s ticket](../../archive-worker/reader-ticket.js)

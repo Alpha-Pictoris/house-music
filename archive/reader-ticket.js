@@ -35,7 +35,6 @@ form.addEventListener("submit", async event => {
       link.download = "readers-ticket.zip";
       link.click();
       setTimeout(() => URL.revokeObjectURL(link.href), 60e3);
-      status.textContent = "Ticket taken. Unzip it and read readers-ticket.txt first.";
     } else {
       status.textContent = (await response.json()).message;
     }
