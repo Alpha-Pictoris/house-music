@@ -42,7 +42,8 @@ def auth_key(ctx) -> str:
 @program("ELEVATE")
 def elevate(ctx, args: list[str]) -> None:
     out = ctx.term
-    word = " ".join(args) if args else ctx.ask("PASSWORD: ", mask="*", record=False)
+    # Always prompt: a password typed on the command line would land in the session log.
+    word = ctx.ask("PASSWORD: ", mask="*", record=False)
     if word is None:
         return
     if " ".join(word.upper().split()) != PASSWORD:

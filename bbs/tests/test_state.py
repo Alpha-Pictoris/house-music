@@ -98,5 +98,6 @@ def test_add_key_records_and_caps(store):
 
 
 def test_flag_discovery_through_dos_is_persisted(dos, store):
-    dos("ELEVATE too many secrets")
+    dos.ctx.reader.channel.chunks.append(b"too many secrets\n")
+    dos("ELEVATE")
     assert StateStore(store.dir).load("alice").found_flags == ["elevated"]

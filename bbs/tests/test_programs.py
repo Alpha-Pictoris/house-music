@@ -49,7 +49,7 @@ def test_program_runs_by_path_or_from_its_own_directory(run):
 
 
 def test_unregistered_or_missing_program(run):
-    assert run("stub") == "This program cannot be run in DOS mode.\n"
+    assert run("stub") == "This program cannot be run in DOS mode. Try a program in C:\\BIN.\n"
     assert run("nope") == "Bad command or file name\n"
     assert run("bin") == "Bad command or file name\n"
 
@@ -80,3 +80,16 @@ def test_type_renders_files_listed_as_templates(tmp_path, store):
     run_command(ctx, "type note.me")
     run_command(ctx, "type plain.txt")
     assert chan.text == "no picture\nPICTURE\n{% if sixel %}\n"
+
+
+def test_type_shows_a_broken_template_as_plain_text(tmp_path, store, capsys):
+    (tmp_path / "root").mkdir()
+    (tmp_path / "root" / "NOTE.ME").write_text("{% if %}\n")
+    (tmp_path / "meta.json").write_text('{"templates": ["/NOTE.ME"]}')
+    world = load_world(tmp_path)
+    chan = FakeChannel()
+    term = Terminal(chan, tty=False)
+    ctx = Context(world=world, store=store, term=term, reader=LineReader(chan, term), fs=FsView(world))
+    run_command(ctx, "type note.me")
+    assert chan.text == "{% if %}\n"
+    assert "TYPE /NOTE.ME: not a screen template" in capsys.readouterr().err

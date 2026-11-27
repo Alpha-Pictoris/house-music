@@ -14,6 +14,11 @@ def auth_key(world):
     return lambda ip, username: world_auth_key(SimpleNamespace(ip=ip, username=username))
 
 
+def answer(dos, line: str) -> None:
+    """Queue `line` as the player's reply to the next prompt."""
+    dos.ctx.reader.channel.chunks.append((line + "\n").encode())
+
+
 def test_key_is_five_characters_and_depends_on_ip_and_name(auth_key):
     key = auth_key("test", "wren")
     assert re.fullmatch(r"[A-Z2-9]{5}", key)
@@ -37,14 +42,16 @@ def test_note_shows_the_sneaker_on_a_sixel_terminal(dos):
 
 
 def test_elevate_refuses_the_scrambled_password(dos):
-    out = dos("elevate setec astronomy")
+    answer(dos, "setec astronomy")
+    out = dos("elevate")
     assert "ACCESS DENIED." in out and "C:\\USER\\KRONOS" in out
     assert not dos.ctx.has_flag("elevated")
 
 
 def test_elevate_issues_the_callers_key(dos, auth_key):
     dos.ctx.source = "203.0.113.5:60882"
-    out = dos("C:\\BIN\\ELEVATE.EXE  too   many secrets")
+    answer(dos, "too   many secrets")
+    out = dos("C:\\BIN\\ELEVATE.EXE")
     assert f"AUTHORIZATION KEY: {auth_key('203.0.113.5', 'alice')}" in out
     assert "Type EXIT" in out and dos.ctx.has_flag("elevated")
 

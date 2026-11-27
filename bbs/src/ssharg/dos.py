@@ -39,7 +39,7 @@ def command(name: str, summary: str) -> Callable[[Command], Command]:
 
 
 def to_vfs(arg: str) -> str:
-    """`C:\\USERS\\KADE` -> `/USERS/KADE`; relative paths stay relative."""
+    """`C:\\USER\\KRONOS` -> `/USER/KRONOS`; relative paths stay relative."""
     if len(arg) >= 2 and arg[1] == ":":
         if arg[0].upper() != DRIVE:
             raise DosError("Invalid drive specification")
@@ -48,7 +48,7 @@ def to_vfs(arg: str) -> str:
 
 
 def to_dos(path: str) -> str:
-    """`/USERS/kade` -> `C:\\USERS\\KADE`."""
+    """`/USER/kronos` -> `C:\\USER\\KRONOS`."""
     return f"{DRIVE}:\\" + "\\".join(p for p in path.split("/") if p).upper()
 
 
@@ -126,8 +126,11 @@ def type_(ctx: Context, args: list[str], switches: set[str]) -> bool:
         raise DosError("Access denied" if exc.reason == "Access denied" else f"File not found - {args[0].upper()}")
     text = data.decode("utf-8", "replace")
     if canon.casefold() in {path.casefold() for path in ctx.world.meta.get("templates", [])}:
-        ctx.show_rendered(render_text(ctx.world.templates, text, ctx.screen_vars()))
-        return False
+        try:
+            ctx.show_rendered(render_text(ctx.world.templates, text, ctx.screen_vars()))
+            return False
+        except TemplateError as exc:
+            print(f"TYPE {canon}: not a screen template ({exc}); shown as plain text", file=sys.stderr)
     ctx.term.write(text if text.endswith("\n") or not text else text + "\n")
     return False
 
@@ -175,7 +178,7 @@ def help_(ctx: Context, args: list[str], switches: set[str]) -> bool:
     for name, (_, summary) in sorted(COMMANDS.items()):
         ctx.term.line(f"{name:<8} {summary}")
     ctx.term.line(f"{'LS':<8} Same as DIR.")
-    ctx.term.line("To run a program, type its name, e.g. STATUS for STATUS.EXE.")
+    ctx.term.line("To run a program, type the name of its .EXE file, with or without .EXE.")
     return False
 
 
@@ -227,7 +230,7 @@ def run_program(ctx: Context, word: str, args: list[str]) -> None:
         raise DosError("Bad command or file name")
     program = PROGRAMS.get(path.rsplit("/", 1)[1].upper().removesuffix(".EXE"))
     if program is None:
-        raise DosError("This program cannot be run in DOS mode.")
+        raise DosError("This program cannot be run in DOS mode. Try a program in C:\\BIN.")
     program(ctx, args)
 
 
