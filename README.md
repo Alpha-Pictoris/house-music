@@ -31,6 +31,8 @@ Open **Furnish → Tables & shelves**. Double-click or double-tap a table or she
 
 Select a bookcase to read the mark on its spine. In some rooms the writing changes. You can fold the note and read it again from the plot.
 
+Lay a rug in a room with a lamp and watch its shadow.
+
 Tap the curved arrow to turn a piece a quarter turn before or after placing it. **Camera** holds **Pan**, **Orbit** and zoom. Two fingers drag or pinch the map in any tool. On a mouse, drag with the middle button to pan and scroll to zoom.
 
 Tap the house name to open your library. Houses save on this device. **Share** gives you a playable link or a house file. Choose **Save a copy** to keep your own version of a shared house.
@@ -65,4 +67,4 @@ uv run ssharg --local
 
 ## Publish
 
-Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`.
+Merging to `trunk` publishes the game to GitHub Pages and the archive to Cloudflare. To host the game elsewhere, run `npm run build` and serve the contents of `dist/`. Set `ARCHIVE_URL` for that build if the record office lives at another address.
