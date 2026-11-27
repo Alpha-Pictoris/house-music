@@ -192,7 +192,8 @@ def serve(cfg: ServerConfig, bind: str, port: int) -> None:
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind((bind, port))
     listener.listen(64)
-    print(f"ssharg listening on {bind}:{port} as {cfg.world.name}", flush=True)
+    auth = "anyone can connect" if cfg.user_ca is None else "certificates required"
+    print(f"ssharg listening on {bind}:{port} as {cfg.world.name} ({auth})", flush=True)
     try:
         while True:
             sock, addr = listener.accept()

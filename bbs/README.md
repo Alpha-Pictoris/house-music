@@ -25,7 +25,10 @@ ssh -p 2222 wren@127.0.0.1
 ```
 
 Anyone can connect: the server uses SSH's `none` authentication, so `ssh`
-asks for no password or key. To admit only players you have issued a
+asks for no password or key. The startup line says which mode is on
+(`anyone can connect` or `certificates required`). Older images required
+certificates by default; a host that mounts `user_ca.pub` must now also
+pass `--user-ca` to keep them. To admit only players you have issued a
 certificate, see SSH certificates.
 
 Or dial in from your own terminal with no SSH involved:
@@ -244,7 +247,7 @@ from ssharg.scripts import program
 
 @program("ELEVATE")
 def elevate(ctx, args: list[str]) -> None:
-    word = " ".join(args) or ctx.ask("PASSWORD: ", mask="*", record=False) or ""
+    word = ctx.ask("PASSWORD: ", mask="*", record=False) or ""
     ctx.term.line("ACCESS GRANTED." if word.upper() == "OPEN SESAME" else "ACCESS DENIED.")
 ```
 
