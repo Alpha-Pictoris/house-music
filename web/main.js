@@ -1,6 +1,8 @@
 import { HouseEditor } from "./building/house-editor.js";
 import { furniture } from "./building/catalogue.js";
 import { LookingGlass } from "./building/looking-glass.js";
+import { BSide } from "./building/b-side.js";
+import { Monitor } from "./ui/monitor.js";
 import { ToolTrays } from "./ui/tool-trays.js";
 import { WritingMarks } from "./ui/writing-marks.js";
 import { RecordCrate } from "./ui/record-sleeves.js";
@@ -27,6 +29,7 @@ class HouseMusic {
   #playRequest = 0;
   #loading = false;
   #hintTimer;
+  #shownFlipped = false;
   #onEdit = () => {
     const house = this.editor.house;
     this.transport.setHouse(house);
@@ -41,7 +44,9 @@ class HouseMusic {
     this.sampler = new Sampler();
     this.transport = new Transport(() => this.sampler.now, this.sampler);
     this.panel = new ScorePanel();
-    this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text));
+    this.side = new BSide();
+    this.controls = new BuildControls(this.canvas, this.scene, this.editor, text => this.notify(text), this.side);
+    this.monitor = new Monitor();
     this.glass = new LookingGlass();
     this.trays = new ToolTrays(this.controls);
     this.furniturePanel = new FurniturePanel(this.controls, this.trays, piece => this.#audition(piece));
@@ -71,7 +76,7 @@ class HouseMusic {
 
   #audition(piece) {
     if (this.transport.playing || this.#loading) return;
-    const notes = this.transport.preview(piece);
+    const notes = this.transport.preview(piece, this.controls.flipped);
     this.sampler.audition(notes, this.editor.house.mode).catch(error => this.notify(error.message));
   }
 
@@ -103,6 +108,9 @@ class HouseMusic {
       else this.notify(controls.tool === "room" && !this.editor.house.rooms.length ? "" : hints[controls.tool]);
     });
     controls.addEventListener("play", () => this.togglePlay());
+    controls.addEventListener("turn", () => this.#turnOver());
+    controls.addEventListener("monitor", () => this.monitor.open(this.transport.view().house));
+    byId("turn-house").onclick = () => { controls.turnOver(); this.canvas.focus({ preventScroll: true }); };
     controls.addEventListener("audition", event => this.#audition(event.detail));
     byId("undo").onclick = () => this.history("undo");
     byId("redo").onclick = () => this.history("redo");
@@ -137,6 +145,20 @@ class HouseMusic {
     };
     document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
     window.addEventListener("pagehide", pause);
+  }
+
+  #turnOver() {
+    const show = () => {
+      this.#shownFlipped = this.controls.flipped;
+    };
+    const page = this.scene.target;
+    if (!page.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) { show(); return; }
+    const edge = "perspective(1400px) rotateX(89deg)", back = "perspective(1400px) rotateX(-89deg)";
+    page.animate([{ transform: "perspective(1400px) rotateX(0)" }, { transform: edge }], { duration: 240, easing: "ease-in" })
+      .finished.then(() => {
+        show();
+        page.animate([{ transform: back }, { transform: "perspective(1400px) rotateX(0)" }], { duration: 300, easing: "ease-out" });
+      });
   }
 
   history(method) {
@@ -189,7 +211,13 @@ class HouseMusic {
     this.records.show(house.mode);
     byId("band").setAttribute("aria-pressed", String(house.band !== false));
     this.trays.refresh();
-    this.marks.show(this.glass.read(house), controls.selectedPiece, controls.tool);
+    const { open } = this.side.read(house);
+    if (controls.flipped && !open) controls.turnOver(false);
+    const turn = byId("turn-house");
+    turn.hidden = !open;
+    turn.setAttribute("aria-label", controls.flipped ? "Turn the house back" : "Turn the house over");
+    turn.title = turn.getAttribute("aria-label");
+    this.marks.show(this.glass.read(house), controls.selectedPiece, controls.flipped ? "b-side" : controls.tool);
     this.furniturePanel.refresh(house);
     this.objectPanel.refresh();
     this.#playButton();
@@ -201,7 +229,9 @@ class HouseMusic {
       byId("empty-guide").hidden = Boolean(house.rooms.length || house.pieces.length || this.controls.preview);
       this.scene.draw({ house: view.house, draftHouse: house, selection: this.controls.selection,
         preview: this.controls.preview, grid: ["room", "door", "place"].includes(this.controls.tool),
-        discoveries: this.glass.read(house).discoveries, sweepX: view.sweepX, levels: view.levels,
+        discoveries: this.glass.read(house).discoveries, side: this.side.read(view.house), flipped: this.#shownFlipped,
+        sounding: this.transport.playing ? view.flipped : this.#shownFlipped,
+        sweepX: view.sweepX, levels: view.levels,
         beat: this.transport.playing ? view.beat : null, time: ms / 1000 });
       this.marks.project(this.scene.camera);
       this.panel.draw(view);

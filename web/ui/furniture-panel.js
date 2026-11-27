@@ -33,6 +33,7 @@ export class FurniturePanel {
     byId("room-name").onchange = event => controls.editor.styleRoom(controls.selection, { name: event.target.value });
     byId("detail-button").onclick = event => trays.open("detail", event.currentTarget);
     byId("arrange-objects").onclick = () => controls.arrange();
+    byId("call-shadow").onclick = () => { controls.callShadow(); this.#focusPlot(); };
     byId("turn-right").onclick = () => { controls.rotate("right"); this.#focusPlot(); };
     byId("cancel-placement").onclick = () => { controls.select(null); this.#focusPlot(); };
     byId("duplicate").onclick = () => { controls.duplicate(); trays.close(); this.#focusPlot(); };
@@ -114,9 +115,10 @@ export class FurniturePanel {
     byId("context").hidden = !(placing || selected);
     byId("selection-name").textContent = label;
     byId("turn-right").hidden = !controls.rotatingPiece;
-    byId("arrange-objects").hidden = !selected || !piece || !FurnitureSpots.slots(piece.kind).length;
+    byId("arrange-objects").hidden = !selected || !piece || controls.flipped || !FurnitureSpots.slots(piece.kind).length;
+    byId("call-shadow").hidden = !controls.shadowPiece?.shadow;
     const detail = byId("detail-button");
-    detail.hidden = !selected;
+    detail.hidden = !selected || controls.flipped;
     detail.lastChild.textContent = room ? "Style" : indoor ? "Fittings" : "Edit";
     byId("cancel-placement").hidden = !placing;
     if (!selected && this.trays.active === "detail") this.trays.close();

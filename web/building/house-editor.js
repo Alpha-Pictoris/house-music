@@ -2,6 +2,7 @@ import { fittingOf, furniture, isSmallObject, newPiece, roomFinishes } from "./c
 import { fittings, tunings } from "./fittings.js";
 import { FurnitureSpots } from "./furniture-spots.js";
 import { FloorPlan } from "./floor-plan.js";
+import { Shadows } from "./b-side.js";
 import { arrangements, defaultMode } from "../music/arrangements.js";
 import { phrases } from "../music/phrases.js";
 
@@ -134,6 +135,7 @@ export class HouseEditor extends EventTarget {
     placed.roomId = null;
     if (item.layer === "wall") Object.assign(placed, FloorPlan.windowAt(this.house, point));
     else if (!item.garden) placed.roomId = FloorPlan.roomFor(this.house, placed)?.id ?? null;
+    if (placed.roomId !== piece.roomId) delete placed.shadow;
     return placed;
   }
 
@@ -164,6 +166,20 @@ export class HouseEditor extends EventTarget {
 
   move(id, point) { return this.#put(this.preview(this.#piece(id), point)); }
 
+  moveShadow(id, point) {
+    const piece = this.#piece(id);
+    const moved = Shadows.moved(piece, point);
+    const { shadow } = moved, old = piece.shadow;
+    if (shadow && old && shadow.x === old.x && shadow.z === old.z) return piece;
+    return this.#put(moved);
+  }
+
+  callShadow(id) {
+    const piece = { ...this.#piece(id) };
+    delete piece.shadow;
+    return this.#put(piece);
+  }
+
   rotate(id, direction = "left") {
     const piece = this.#piece(id);
     if (isSmallObject(piece.kind)) throw Error("Turn the furniture to turn its objects.");
@@ -185,6 +201,7 @@ export class HouseEditor extends EventTarget {
     const updated = { ...piece, fitting };
     delete updated.pitch;
     delete updated.hit;
+    if (fitting === "plain") delete updated.shadow;
     if (isSmallObject(piece.kind)) {
       if (fitting === "plain") delete updated.phrase;
       else updated.phrase ??= "single";
@@ -212,6 +229,7 @@ export class HouseEditor extends EventTarget {
   duplicate(id, point, turn = this.#piece(id).turn) {
     if (!Number.isInteger(turn) || turn < 0 || turn > 3) throw Error("Choose a quarter turn.");
     const copy = { ...this.#piece(id), turn, id: this.#id("p") };
+    delete copy.shadow;
     if (copy.contents) copy.contents = copy.contents.map(item => ({ ...item, id: this.#id("o") }));
     return this.#put(this.preview(copy, point));
   }

@@ -1,4 +1,4 @@
-import { furniture, isSmallObject } from "./catalogue.js";
+import { fittingOf, furniture, isSmallObject } from "./catalogue.js";
 
 import { RoomShape, overlaps, round, tolerance as epsilon } from "./room-shape.js";
 
@@ -81,6 +81,23 @@ export class FloorPlan {
     return { x: piece.x, z: piece.z, width: sideways ? item.depth : item.width, depth: sideways ? item.width : item.depth };
   }
 
+  static shadowFootprint(piece) {
+    return FloorPlan.footprint({ ...piece, x: piece.shadow?.x ?? piece.x, z: piece.shadow?.z ?? piece.z });
+  }
+
+  static castsShadow(piece) {
+    const item = furniture[piece.kind];
+    return !item.layer && !item.garden && fittingOf(piece) !== "plain";
+  }
+
+  static shadowError(house, piece) {
+    if (!FloorPlan.castsShadow(piece)) return "Give the piece a musical fitting before moving its shadow.";
+    const box = FloorPlan.shadowFootprint(piece);
+    const room = house.rooms.find(candidate => candidate.id === piece.roomId);
+    if (![box.x, box.z].every(Number.isFinite) || !room || !RoomShape.contains(room, box)) return "Keep the whole shadow inside its room.";
+    return "";
+  }
+
   static turn(turn, direction) {
     if (direction === "left") return (turn + 1) % 4;
     if (direction === "right") return (turn + 3) % 4;
@@ -110,6 +127,10 @@ export class FloorPlan {
       if (!room || !FloorPlan.windowFits(house, piece)) return "Choose an outside wall for the window.";
       if (house.doors.some(door => touchesWindow(door, piece))) return "Leave the doorway open.";
     } else if (!room || !RoomShape.contains(room, box)) return "Place the whole piece inside a room.";
+    if (piece.shadow) {
+      const error = FloorPlan.shadowError(house, piece);
+      if (error) return error;
+    }
     if (house.pieces.some(other => other.id !== piece.id && furniture[other.kind].layer === item.layer && overlaps(box, FloorPlan.footprint(other)))) {
       return "Leave enough space between the pieces.";
     }

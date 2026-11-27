@@ -16,8 +16,19 @@ async function readTree(directory, prefix = "") {
   return files;
 }
 
+function recordOffice(address = process.env.ARCHIVE_URL) {
+  if (!address) return null;
+  const office = URL.canParse(address) && new URL(address);
+  if (!office || !["https:", "http:"].includes(office.protocol) || office.username || office.password || office.search || office.hash) {
+    throw Error("Set ARCHIVE_URL to the web address where the record office opens.");
+  }
+  return office.href;
+}
+
 function page(bytes, directory) {
+  const office = recordOffice();
   return bytes.toString("utf8")
+    .replace(/(<meta name="record-office" content=")[^"]*"/, (tag, start) => office ? start + office.replaceAll("&", "&amp;").replaceAll('"', "&quot;") + '"' : tag)
     .replaceAll(/(src|href)="\.\/([^"]+\.(?:js|css|svg))"/g, '$1="./' + directory + '/$2"')
     .replace(/(<div [^>]*id="records"[^>]*>)<\/div>/, (_, start) => start + recordSleeves() + "</div>");
 }

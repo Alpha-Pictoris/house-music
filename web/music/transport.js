@@ -78,8 +78,8 @@ export class Transport {
     if (mode !== this.mode && this.#next) this.setHouse({ ...this.#next.house, mode }, now);
   }
 
-  preview(piece) {
-    return piece ? this.#score.preview(piece, this.#pass) : this.#score.opening();
+  preview(piece, flipped = false) {
+    return piece ? this.#score.preview(piece, this.#pass, flipped) : this.#score.opening();
   }
 
   play() {
@@ -149,7 +149,8 @@ export class Transport {
     }
     return {
       house: this.#score.house, events: this.#score.eventsFor(this.#pass), beat, beats: this.#score.beats,
-      sweepX: this.#played ? this.#score.left + beat : null, levels
+      sweepX: this.#played ? this.#score.left + beat : null, levels,
+      flipped: this.#score.sideOf(this.#pass) === 1
     };
   }
 }

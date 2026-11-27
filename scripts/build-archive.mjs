@@ -18,7 +18,7 @@ const fileReferences = new Map([
 ]);
 const playbackFiles = [
   "audio", "music", "library/house-format.js",
-  "building/catalogue.js", "building/fittings.js", "building/floor-plan.js",
+  "building/b-side.js", "building/catalogue.js", "building/fittings.js", "building/floor-plan.js",
   "building/furniture-spots.js", "building/room-shape.js",
 ];
 
