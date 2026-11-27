@@ -14,7 +14,7 @@ The register of deposits **RO/98/012** says what the reference is for. It record
 
 ## The film
 
-Searching for **AV/98/019** opens the video cassette. The tape plays as static, and one line of type shows through it: the address of the next machine as an `ssh` command. The captions and the transcript carry the same command, `ssh reader@board.portsmouth.technology`.
+Searching for **AV/98/019** opens the video cassette. The record describes someone exploring a strange door in their house during a power cut, and notes smudged text on the wall that appeared to be an internet address, `reader@board.portsmouth.technology`. The film on the page is a stand-in until the footage is cut: static, with `ssh reader@board.portsmouth.technology` showing through. Its captions are off unless the viewer turns them on.
 
 ## The reader’s ticket
 

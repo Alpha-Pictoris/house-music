@@ -112,8 +112,7 @@ figcaption { margin-top: .5rem; color: #505a5f; font-size: .94rem; }
 .ticket-status { margin: .3rem 0 0; }
 .ticket-status:empty { display: none; }
 .film { width: 100%; height: auto; background: #0b0c0c; }
-.transcript li { display: grid; grid-template-columns: 2.6rem 1fr; gap: .6rem; }
-.transcript code { overflow-wrap: anywhere; }
+.record-page code { overflow-wrap: anywhere; }
 .text-preview { width: fit-content; max-width: 22rem; margin: 0 0 1rem; padding: .7rem 1rem; border-radius: 1.1rem 1.1rem 1.1rem .3rem; background: #e3e6e8; }
 .site-footer { background: #f3f4f4; border-top: 1px solid #b1b4b6; padding-block: 1.5rem; }
 .site-footer p { margin: 0; }
