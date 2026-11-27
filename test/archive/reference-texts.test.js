@@ -74,11 +74,24 @@ test("a second text inside two minutes and the words Twilio answers itself get n
   assert.equal((await office.text("+447700900001")).reply, reference);
 });
 
-test("the archive stops answering at the ceiling for the event", async t => {
+test("the archive stops answering at the day's ceiling and starts again after midnight", async t => {
   const office = openOffice(t, { TWILIO_AUTH_TOKEN: token, SMS_SEND_CEILING: "2" });
   const replies = [];
   for (const last of [1, 2, 3]) replies.push((await office.text("+44770090000" + last)).reply);
   assert.deepEqual(replies, [reference, reference, silence]);
+
+  office.time = Date.UTC(2026, 10, 27, 23, 59);
+  assert.equal((await office.text("+447700900004")).reply, silence);
+  office.time = Date.UTC(2026, 10, 28, 0, 1);
+  assert.equal((await office.text("+447700900004")).reply, reference);
+  assert.equal((await office.text("+447700900005")).reply, reference);
+  assert.equal((await office.text("+447700900006")).reply, silence);
+});
+
+test("a count kept before the ceiling became daily does not hold the archive quiet", async t => {
+  const office = openOffice(t, { TWILIO_AUTH_TOKEN: token, SMS_SEND_CEILING: "2" });
+  office.ledger.storage.kv.put("texts", 400);
+  assert.equal((await office.text("+447700900001")).reply, reference);
 });
 
 test("the ledger and the log keep no telephone number", async t => {

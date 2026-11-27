@@ -36,6 +36,6 @@ A visitor carrying a house gets a ticket made out to their cassette, such as `04
 
 ## Limits
 
-A number that texts twice within two minutes gets one reply. The archive answers 400 texts in all unless the ceiling is changed. It keeps a keyed digest of each number for those two minutes and never the number. Twilio answers STOP, START and HELP itself, and the archive stays quiet for those words. One connection can take ten tickets an hour.
+A number that texts twice within two minutes gets one reply. The archive answers 400 texts a day, counted from midnight UTC, unless the ceiling is changed. It keeps a keyed digest of each number for those two minutes and never the number. Twilio answers STOP, START and HELP itself, and the archive stays quiet for those words. One connection can take ten tickets an hour.
 
 [Run the archive locally](cassette-player-plan.md) · [Answering texts](../../archive-worker/reference-texts.js) · [Reader’s ticket](../../archive-worker/reader-ticket.js)
