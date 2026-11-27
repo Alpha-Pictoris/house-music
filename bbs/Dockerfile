@@ -24,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD \
     python -c "import socket; s = socket.create_connection(('127.0.0.1', 2222), 3); assert s.recv(8) == b'SSH-2.0-'"
 ENTRYPOINT ["ssharg"]
 CMD ["--bind", "0.0.0.0", "--port", "2222", "--world", "/app/world", \
-     "--state-dir", "/data/state", "--host-key", "/data/host_key", "--user-ca", "/ca/user_ca.pub"]
+     "--state-dir", "/data/state", "--host-key", "/data/host_key"]

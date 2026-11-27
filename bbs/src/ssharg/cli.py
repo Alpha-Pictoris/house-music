@@ -36,8 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--world", default="world", help="world directory (default ./world)")
     p.add_argument("--state-dir", default="state", help="per-user progress directory (default ./state)")
     p.add_argument("--host-key", default="host_key", help="RSA host key file, created if missing")
-    p.add_argument("--user-ca", default="user_ca.pub",
-                   help="public key of the CA that signs player certificates (default user_ca.pub)")
+    p.add_argument("--user-ca", metavar="PATH",
+                   help="admit only players with a certificate signed by this CA public key "
+                        "(default: anyone can connect)")
     p.add_argument("--reset-user", metavar="NAME", help="clear NAME's saved progress and exit")
     p.add_argument("--list-users", action="store_true", help="print saved players and exit")
     return p
@@ -68,12 +69,15 @@ def main(argv: list[str] | None = None) -> int:
         return run_local(world, store)
     from .certs import load_ca_public
     from .server import ServerConfig, serve
-    user_ca = Path(args.user_ca)
-    if not user_ca.exists():
-        print(f"{user_ca} not found. Create the player CA with: ssharg-cert ca --out {user_ca.with_suffix('')}")
-        return 1
+    user_ca = None
+    if args.user_ca:
+        path = Path(args.user_ca)
+        if not path.exists():
+            print(f"{path} not found. Create the player CA with: ssharg-cert ca --out {path.with_suffix('')}")
+            return 1
+        user_ca = load_ca_public(path)
     cfg = ServerConfig(world=world, store=store, host_key=load_or_create_host_key(Path(args.host_key)),
-                       user_ca=load_ca_public(user_ca))
+                       user_ca=user_ca)
     serve(cfg, args.bind, args.port)
     return 0
 

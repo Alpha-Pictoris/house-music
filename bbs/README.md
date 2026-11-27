@@ -2,7 +2,7 @@
 
 A small server that pretends to be an old bulletin board system that's still
 online, for alternate reality games. Players dial in with an ordinary `ssh`
-client and a certificate you issue them (or locally from a terminal), log in,
+client (or locally from a terminal), log in,
 watch it boot, and land on the
 BBS menu. From there they can enter an authorization key or browse a
 read-only file area with a DOS-style prompt.
@@ -20,17 +20,13 @@ Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync                       # create .venv and install deps from uv.lock
-uv run ssharg-cert ca         # once: writes user_ca and user_ca.pub
 uv run ssharg --port 2222     # or: uv run python -m ssharg
+ssh -p 2222 wren@127.0.0.1
 ```
 
-Issue each player a certificate, then send them the three files in
-`players/`:
-
-```sh
-uv run ssharg-cert issue wren --userdata "lamp in the hall"
-ssh -p 2222 -i players/wren wren@127.0.0.1
-```
+Anyone can connect: the server uses SSH's `none` authentication, so `ssh`
+asks for no password or key. To admit only players you have issued a
+certificate, see SSH certificates.
 
 Or dial in from your own terminal with no SSH involved:
 
@@ -40,8 +36,20 @@ uv run ssharg --local
 
 ### SSH certificates
 
-The server only admits clients whose certificate was signed by `user_ca`.
-Passwords and plain keys are refused. A certificate is refused if it:
+Certificates are off unless you name a CA with `--user-ca`. Create the CA
+once, start the server with it, and issue each player a certificate. Send
+them the three files in `players/`:
+
+```sh
+uv run ssharg-cert ca         # writes user_ca and user_ca.pub
+uv run ssharg --port 2222 --user-ca user_ca.pub
+uv run ssharg-cert issue wren --userdata "lamp in the hall"
+ssh -p 2222 -i players/wren wren@127.0.0.1
+```
+
+With `--user-ca`, the server only admits clients whose certificate was
+signed by that CA. `none` authentication, passwords and plain keys are
+refused. A certificate is refused if it:
 
 - was signed by another CA or its signature does not check out,
 - has expired or is not valid yet,
@@ -76,7 +84,7 @@ Options:
 | `--world` | `world` | world directory |
 | `--state-dir` | `state` | where per-player progress JSON lives |
 | `--host-key` | `host_key` | RSA host key; generated on first run |
-| `--user-ca` | `user_ca.pub` | CA public key that signs player certificates |
+| `--user-ca` | | admit only certificates signed by this CA public key; without it anyone can connect |
 | `--list-users` | | print saved players and exit |
 | `--reset-user NAME` | | delete NAME's progress and exit |
 
@@ -95,8 +103,7 @@ Each merge to `trunk` that changes the board publishes its image as
 `compose.yaml` runs it on port 2222. Set `SSHARG_PORT` to publish another
 port.
 
-To host the board, copy `compose.yaml` and `user_ca.pub` into one
-directory on the host:
+To host the board, copy `compose.yaml` to the host:
 
 ```sh
 docker compose pull
@@ -107,26 +114,44 @@ The image must be public for a host to pull it without logging in. If the
 pull is denied, make the `house-music-board` package public on GitHub, or
 run `docker login ghcr.io` on the host first.
 
-To work on the board from a checkout, build the image here. Create the CA
-and certificates with the `cert` tool, which writes to this directory as
-your own user:
+To work on the board from a checkout, build the image here:
 
 ```sh
-export HOST_UID=$(id -u) HOST_GID=$(id -g)
 docker compose build
-docker compose run --rm cert ca
-docker compose run --rm cert issue wren --userdata "lamp in the hall"
 docker compose up -d
-ssh -p 2222 -i players/wren wren@127.0.0.1
+ssh -p 2222 wren@127.0.0.1
 ```
 
 After editing `world/`, rebuild and restart: `docker compose up -d --build`.
+The host key and player progress live in the `data` volume. `docker compose
+down -v` deletes them, and players will then see a host key warning.
+
+To require certificates in Docker, create the CA and certificates with the
+`cert` tool, which writes to this directory as your own user:
+
+```sh
+export HOST_UID=$(id -u) HOST_GID=$(id -g)
+docker compose run --rm cert ca
+docker compose run --rm cert issue wren --userdata "lamp in the hall"
+```
+
+Then give the `bbs` service the CA's public key, in a
+`compose.override.yaml` beside `compose.yaml`, and run `docker compose up
+-d`:
+
+```yaml
+services:
+  bbs:
+    volumes:
+      - ./user_ca.pub:/ca/user_ca.pub:ro
+    command: ["--bind", "0.0.0.0", "--port", "2222", "--world", "/app/world",
+              "--state-dir", "/data/state", "--host-key", "/data/host_key",
+              "--user-ca", "/ca/user_ca.pub"]
+```
 
 The `bbs` container only sees `user_ca.pub`, never the CA's private key.
-If it says `bind source path does not exist`, run `docker compose run
---rm cert ca` first, or copy `user_ca.pub` beside `compose.yaml`. The host
-key and player progress live in the `data` volume. `docker compose down
--v` deletes them, and players will then see a host key warning.
+If it says `user_ca.pub not found`, run `docker compose run --rm cert ca`
+first, or copy `user_ca.pub` beside `compose.yaml`.
 
 ## The session
 

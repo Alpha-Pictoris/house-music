@@ -7,13 +7,6 @@ services:
       - "${SSHARG_PORT:-2222}:2222"
     volumes:
       - data:/data
-      - type: bind
-        source: ./user_ca.pub
-        target: /ca/user_ca.pub
-        read_only: true
-        bind:
-          # Fail with "no such file" instead of creating an empty directory.
-          create_host_path: false
     read_only: true
     tmpfs:
       - /tmp
