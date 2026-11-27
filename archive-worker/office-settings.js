@@ -9,12 +9,12 @@ function setting(value, pattern, remedy) {
 // The build stamps these into the pages and publishes them for the Worker, so the film,
 // its transcript and the ticket agree on one address.
 export function officeSettings(env = process.env) {
-  const port = Number(setting(env.BOARD_PORT || "2222", /^[1-9]\d{0,4}$/, "Set BOARD_PORT to the board’s port number, such as 2222."));
+  const port = Number(setting(env.BOARD_PORT || "22", /^[1-9]\d{0,4}$/, "Set BOARD_PORT to the board’s port number, such as 2222."));
   if (port > 65535) throw Error("Set BOARD_PORT to a port number below 65536.");
   return {
     board: {
-      host: setting(env.BOARD_HOST || "board.example", /^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/i,
-        "Set BOARD_HOST to the board’s host name, such as board.example."),
+      host: setting(env.BOARD_HOST || "board.portsmouth.technology", /^[a-z0-9]([a-z0-9.-]{0,251}[a-z0-9])?$/i,
+        "Set BOARD_HOST to the board’s host name, such as board.portsmouth.technology."),
       port,
       user: setting(env.BOARD_USER || "reader", /^[a-z_][a-z0-9_-]{0,31}$/,
         "Set BOARD_USER to the lower-case SSH username shown in the film, such as reader."),
