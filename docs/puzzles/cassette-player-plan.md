@@ -2,7 +2,7 @@
 
 ## Run the archive
 
-From the repository root, use Node.js 20.19 or later and Python 3.
+From the repository root, use Node.js 20.19 or later. The game also needs Python 3.
 
 ```sh
 npm ci
@@ -10,6 +10,12 @@ npm run start:archive
 ```
 
 The archive opens on [port 4174](http://localhost:4174/). Run `npm start` in a second terminal to open the game on port 5173. On another device, use the computer’s LAN address with the same ports.
+
+## Ask for the text and take the ticket
+
+Search for **RO/98/012** and ask for the text with a UK mobile number. The local archive prints the text in its terminal and sends nothing. Search for the reference in the text, lift the label on the sleeve and take the ticket.
+
+Tickets are signed with the board’s key in `bbs/user_ca` when that file exists, or with `BOARD_CA_KEY`. Otherwise the archive makes a throwaway key and prints the public line a local board should trust. Set `BOARD_HOST`, `BOARD_PORT` and `BOARD_USER` when building to change the address in the transcript, the captions and the ticket. [Local archive](../../scripts/serve-archive.mjs) · [Texting the video reference](video-reference.md)
 
 ## Bring a house to the case
 

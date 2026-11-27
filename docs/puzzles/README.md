@@ -9,7 +9,8 @@
 ## The record office
 
 - [The cassette archive](cassette-archive.md) follows the Rigger’s Yard complaint through the Portsea catalogue and back to House Music.
-- [Cassette playback](cassette-player-plan.md) covers the local preview, shared recordings and the return address for a separate deployment.
+- [Texting the video reference](video-reference.md) follows the register of deposits to a text, a film and a reader’s ticket for the board.
+- [Cassette playback](cassette-player-plan.md) covers the local preview, shared recordings, captured texts and the return address for a separate deployment.
 - [Archive credits](archive-credits.md) lists sources and licences for the archive images, type, components and recordings.
 
 ## The bulletin board
