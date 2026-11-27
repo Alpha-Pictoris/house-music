@@ -64,3 +64,19 @@ def test_ip_drops_the_port(run):
     for source, ip in (("203.0.113.5:60882", "203.0.113.5"), ("::1:22", "::1"), ("local", "local"), ("", "")):
         ctx.source = source
         assert ctx.ip == ip
+
+
+def test_type_renders_files_listed_as_templates(tmp_path, store):
+    (tmp_path / "root").mkdir()
+    (tmp_path / "root" / "NOTE.ME").write_text("{% if sixel %}\nPICTURE\n{% else %}\nno picture\n{% endif %}\n")
+    (tmp_path / "root" / "PLAIN.TXT").write_text("{% if sixel %}\n")
+    (tmp_path / "meta.json").write_text('{"templates": ["/note.me"]}')
+    world = load_world(tmp_path)
+    chan = FakeChannel()
+    term = Terminal(chan, tty=False)
+    ctx = Context(world=world, store=store, term=term, reader=LineReader(chan, term), fs=FsView(world))
+    run_command(ctx, "type note.me")
+    ctx.sixel = True
+    run_command(ctx, "type note.me")
+    run_command(ctx, "type plain.txt")
+    assert chan.text == "no picture\nPICTURE\n{% if sixel %}\n"

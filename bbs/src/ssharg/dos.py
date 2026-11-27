@@ -120,10 +120,14 @@ def type_(ctx: Context, args: list[str], switches: set[str]) -> bool:
     if not args:
         raise DosError("Required parameter missing")
     try:
-        data = ctx.fs.read(to_vfs(args[0]))
+        canon = ctx.fs.resolve(to_vfs(args[0]))
+        data = ctx.fs.read(canon)
     except FsError as exc:
         raise DosError("Access denied" if exc.reason == "Access denied" else f"File not found - {args[0].upper()}")
     text = data.decode("utf-8", "replace")
+    if canon.casefold() in {path.casefold() for path in ctx.world.meta.get("templates", [])}:
+        ctx.show_rendered(render_text(ctx.world.templates, text, ctx.screen_vars()))
+        return False
     ctx.term.write(text if text.endswith("\n") or not text else text + "\n")
     return False
 

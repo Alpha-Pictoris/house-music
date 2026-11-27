@@ -272,6 +272,7 @@ world/
 | `boot_delay` | default seconds per line for the boot screen (default 0.05; other screens default to 0) |
 | `flags` | flag names and descriptions, for the game master's reference |
 | `node_flags` | files that record a flag when read with `TYPE` |
+| `templates` | files that `TYPE` renders as screens, so they can use `{% if sixel %}` and timing |
 
 ### Screens
 
