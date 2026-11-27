@@ -68,7 +68,7 @@ test("the sleeve holds a ticket the board will admit", async t => {
   assert.deepEqual(Object.entries(files).map(([name, file]) => [name, file.mode]),
     [["readers-ticket", 0o600], ["readers-ticket-cert.pub", 0o644], ["readers-ticket.txt", 0o644]]);
   assert.match(files["readers-ticket.txt"].text, /Recording: 041a \/ 1A2B-3C4D · The blue room\r\n/);
-  assert.match(files["readers-ticket.txt"].text, /ssh -i readers-ticket /);
+  assert.doesNotMatch(files["readers-ticket.txt"].text, /ssh|chmod|folder/);
 
   const certificate = readCertificate(files["readers-ticket-cert.pub"].text);
   const text = new TextEncoder();

@@ -32,6 +32,11 @@ export function writtenNumber(number) {
   return mobile ? `0${mobile[1]} ${mobile[2]}` : number;
 }
 
+// The address as someone would copy it off a wall.
+export function boardAddress({ host, port, user }) {
+  return port === 22 ? `${user}@${host}` : `${user}@${host}, port ${port}`;
+}
+
 export function boardCommand({ host, port, user }) {
   return port === 22 ? `ssh ${user}@${host}` : `ssh -p ${port} ${user}@${host}`;
 }

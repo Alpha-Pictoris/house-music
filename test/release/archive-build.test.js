@@ -61,8 +61,10 @@ test("the film, its captions and the ticket desk are built with one board addres
     SMS_SENDER_NAME: "Portsea Records", SMS_NUMBER: "+447700900982" });
 
   const film = await readFile(join(output, referencePath("AV/98/019"), "index.html"), "utf8");
-  assert.match(film, /<code>ssh caller@board\.portsea\.example<\/code>/);
-  assert.match(film, /<track kind="captions"[^>]+src="\/assets\/riggers-yard\.vtt" default>/);
+  assert.match(film, /appeared to be an internet address, <code>caller@board\.portsea\.example<\/code>/);
+  assert.match(film, /<video class="film" controls autoplay muted loop playsinline/);
+  assert.match(film, /<track kind="captions"[^>]+src="\/assets\/riggers-yard\.vtt">/);
+  assert.doesNotMatch(film, /\{\{/);
   assert.match(film, /<details class="sleeve" data-ticket>[^]+<form method="post" action="\/tickets">/);
   const captions = await readFile(join(output, "assets/riggers-yard.vtt"), "utf8");
   assert.match(captions, /^WEBVTT\n/);

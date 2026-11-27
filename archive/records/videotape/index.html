@@ -23,21 +23,17 @@
   <div class="case-columns">
     <section aria-labelledby="description">
       <h2 class="govuk-heading-m" id="description">Description</h2>
-      <p class="govuk-body">One VHS-C cassette, left at the counter for the Rigger’s Yard file. No label and no name. The tape holds no picture. One line of type shows through the static.</p>
-      <p class="govuk-body">The Record Office made the viewing copy. The cassette is shelved in its card sleeve.</p>
+      <p class="govuk-body">A video left at the counter. It shows someone exploring a strange door in their house during a power cut. According to the video, the space beyond the door should be someone else’s house. No information about the person in the video could be found.</p>
       <p class="govuk-body-s file-ref">Related file &nbsp; / &nbsp; EH/98/041</p>
-      <h2 class="govuk-heading-m" id="transcript">Transcript</h2>
-      <p class="govuk-body">Silent. The viewing copy repeats four seconds of the tape.</p>
-      <ol class="govuk-list transcript">
-        <li><span class="mono">0:00</span><span>Static. Green type reads <code>{{board-command}}</code>. The date stamp in the corner reads 12 November 1998.</span></li>
-      </ol>
+      <h2 class="govuk-heading-m" id="notes">Extra notes</h2>
+      <p class="govuk-body">Smudged text on the wall appeared to be an internet address, <code>{{board-address}}</code>.</p>
     </section>
     <section class="evidence" aria-labelledby="film-heading">
       <div class="evidence-head"><span class="kind">Viewing copy</span><span class="mono">AV/98/019</span></div>
       <h2 class="govuk-heading-m" id="film-heading">Video recording</h2>
-      <video class="film" controls loop playsinline preload="metadata" width="640" height="480" aria-describedby="transcript">
+      <video class="film" controls autoplay muted loop playsinline width="640" height="480" aria-describedby="description notes">
         <source src="/assets/riggers-yard.mp4" type="video/mp4">
-        <track kind="captions" srclang="en-GB" label="English" src="/assets/riggers-yard.vtt" default>
+        <track kind="captions" srclang="en-GB" label="English" src="/assets/riggers-yard.vtt">
       </video>
       <details class="sleeve" data-ticket>
         <summary aria-label="Cassette sleeve, Record Office label"><span>Record Office · Audio-visual</span><strong>AV/98/019</strong><small>12 NOV 1998</small></summary>
