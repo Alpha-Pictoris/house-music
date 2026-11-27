@@ -1,7 +1,7 @@
 """World hooks. World authors register handlers from `world/scripts.py`.
 
-Currently one hook: the authorization-key handler, which receives the decoded bytes of a
-base64 key a player entered on the BBS and decides whether it is accepted.
+Currently one hook: the authorization-key handler, which receives the key a player entered
+on the BBS and decides whether it is accepted.
 """
 from __future__ import annotations
 
@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING, Callable
 if TYPE_CHECKING:
     from .context import Context
 
-KeyHandler = Callable[["Context", bytes], bool]
+KeyHandler = Callable[["Context", str], bool]
 HOOKS: dict[str, KeyHandler] = {}
 
 
 def key_handler(fn: KeyHandler) -> KeyHandler:
-    """Register `fn(ctx, payload) -> bool` to judge authorization keys.
+    """Register `fn(ctx, key) -> bool` to judge authorization keys.
 
-    `payload` is the base64-decoded key. Return True to accept it (the `key_accepted`
+    `key` is the text the player typed, with all whitespace removed. Return True to accept it (the `key_accepted`
     screen is shown) or False to reject it (`key_rejected`). The handler may print its
     own output with `ctx.term` first, and record progress with `ctx.grant_flag()`.
     """

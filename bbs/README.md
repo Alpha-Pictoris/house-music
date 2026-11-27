@@ -82,7 +82,7 @@ Options:
 Each finished SSH session logs one line to stdout:
 
 ```
-session user=wren src=127.0.0.1:60882 history=["F", "dir", "exit", "K", "Tk9S...", "G"]
+session user=wren src=127.0.0.1:60882 history=["F", "dir", "exit", "K", "7QX2M", "G"]
 ```
 
 Run the tests with `uv run pytest`. They open no sockets.
@@ -162,20 +162,18 @@ Screens can branch on the result:
 
 ### Authorization keys
 
-The player pastes a key at `AUTHORIZATION KEY:`. The key must be base64
-(standard or URL-safe, padding optional, whitespace ignored). Anything else
-is rejected without being saved. A valid key's decoded bytes go to the
-world's key handler, which returns True to accept it or False to reject it.
-Every valid key a player submits is saved in their progress file with a
-timestamp and the verdict. With no handler registered, any valid base64 key
-is accepted.
+The player types a key at `AUTHORIZATION KEY:`. Whitespace is removed and
+the text goes to the world's key handler, which returns True to accept it
+or False to reject it. A blank key goes back to the menu. Every key a
+player submits is saved in their progress file with a timestamp and the
+verdict. With no handler registered, any key is accepted.
 
 ```python
 from ssharg.scripts import key_handler
 
 @key_handler
-def check_key(ctx, payload: bytes) -> bool:
-    if payload != b"expected":
+def check_key(ctx, key: str) -> bool:
+    if key.upper() != "EXPECTED":
         return False
     ctx.term.line("TRANSMISSION RECEIVED.")
     ctx.grant_flag("transmission")

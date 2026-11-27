@@ -1,13 +1,6 @@
-import base64
 import re
 
-from ssharg.bbs import decode_key
-
 ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
-
-
-def b64(text: str) -> str:
-    return base64.b64encode(text.encode()).decode()
 
 
 def test_password_is_masked_on_tty(dial):
@@ -35,21 +28,13 @@ def test_invalid_menu_choice_and_redisplay(dial):
     assert chan.text.count("MAIN MENU") == 3
 
 
-def test_decode_key_variants():
-    assert decode_key("Zm9vYmFy") == b"foobar"
-    assert decode_key("Zm9vYg") == b"foob"
-    assert decode_key("_-8") == b"\xff\xef"
-    assert decode_key("not base64!") is None
-
-
-def test_non_base64_key_rejected_and_not_recorded(dial, store):
-    _, _, chan = dial("wren", "", "K", "hello world!", "G")
-    assert "INVALID AUTHORIZATION KEY" in chan.text
-    assert store.load("wren").keys == []
+def test_key_whitespace_is_removed_and_blank_key_skipped(dial, store):
+    dial("wren", "", "K", "  ", "K", "keys tone", "G")
+    assert [k["key"] for k in store.load("wren").keys] == ["keystone"]
 
 
 def test_key_needs_override_then_restores_nomos(dial, store):
-    key = b64("KEYSTONE")
+    key = "KEYSTONE"
     _, _, chan = dial("wren", "", "K", key, "G")
     assert "override not engaged" in chan.text and "INVALID AUTHORIZATION KEY" in chan.text
     _, _, chan = dial("wren", "", "F", "type \\users\\kade\\.notes\\.override", "exit", "K", key, "G")
@@ -59,26 +44,19 @@ def test_key_needs_override_then_restores_nomos(dial, store):
     assert [(k["key"], k["accepted"]) for k in state.keys] == [(key, False), (key, True)]
 
 
-def test_journal_note_works_as_a_key(dial, store):
-    note = "d2l0aCB0aGUgb3ZlcnJpZGUgZW5nYWdlZCwgZ2l2ZSBOT01PUyB0aGUgd29yZCBLRVlTVE9ORQ=="
-    store.add_flag("wren", "override")
-    _, _, chan = dial("wren", "", "k", note, "G")
-    assert "KEY ACCEPTED" in chan.text
-
-
-def test_key_handler_absent_accepts_any_base64(dial, store, monkeypatch):
+def test_key_handler_absent_accepts_any_key(dial, store, monkeypatch):
     from ssharg import scripts
     monkeypatch.setattr(scripts, "HOOKS", {})
     monkeypatch.setattr("ssharg.bbs.HOOKS", {})
-    _, _, chan = dial("wren", "", "K", b64("anything"), "G")
+    _, _, chan = dial("wren", "", "K", "anything", "G")
     assert "KEY ACCEPTED" in chan.text
 
 
 def test_key_handler_crash_rejects(dial, store, monkeypatch):
-    def boom(ctx, payload):
+    def boom(ctx, key):
         raise RuntimeError("bad handler")
     monkeypatch.setattr("ssharg.bbs.HOOKS", {"key": boom})
-    code, _, chan = dial("wren", "", "K", b64("x"), "G")
+    code, _, chan = dial("wren", "", "K", "x", "G")
     assert code == 0 and "INVALID AUTHORIZATION KEY" in chan.text
 
 

@@ -5,8 +5,6 @@ byte channel. Screens are Jinja templates from `world/screens/`, falling back to
 """
 from __future__ import annotations
 
-import base64
-import binascii
 import traceback
 
 from .context import Context
@@ -37,17 +35,6 @@ def show(ctx: Context, name: str, line_delay: float = 0.0) -> None:
     ctx.show_rendered(render(ctx, name), line_delay)
 
 
-def decode_key(key: str) -> bytes | None:
-    """Decode a base64 (standard or URL-safe, padding optional) key, or None if it isn't one."""
-    padded = key + "=" * (-len(key) % 4)
-    for altchars in (None, b"-_"):
-        try:
-            return base64.b64decode(padded, altchars=altchars, validate=True)
-        except (binascii.Error, ValueError):
-            continue
-    return None
-
-
 def login(ctx: Context) -> bool:
     """Ask for a handle and a password (anything goes). False if the caller hung up."""
     show(ctx, "login")
@@ -74,17 +61,15 @@ def enter_key(ctx: Context) -> bool:
     key = "".join(raw.split())
     if not key:
         return True
-    payload = decode_key(key)
     accepted = False
-    if payload is not None:
-        handler = HOOKS.get("key")
-        try:
-            accepted = bool(handler(ctx, payload)) if handler else True
-        except SessionClosed:
-            raise
-        except Exception:
-            traceback.print_exc()
-        ctx.store.add_key(ctx.username, key, accepted)
+    handler = HOOKS.get("key")
+    try:
+        accepted = bool(handler(ctx, key)) if handler else True
+    except SessionClosed:
+        raise
+    except Exception:
+        traceback.print_exc()
+    ctx.store.add_key(ctx.username, key, accepted)
     show(ctx, "key_accepted" if accepted else "key_rejected")
     return True
 
